@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useState } from 'react'
 import Login from './components/Login'
 import Home from './pages/Home'
+import Register from './components/Register'
 import Clientes from './pages/Clientes'
 import Productos from './pages/Productos'
 import Pedidos from './pages/Pedidos'
@@ -63,7 +64,14 @@ function App() {
             <Navigate to="/login" />
           } 
         />
-        
+        <Route 
+          path="/register" 
+          element={
+            isAuthenticated ? 
+            <Navigate to="/home" /> : 
+            <Register setIsAuthenticated={setIsAuthenticated} setUser={setUser} />
+          } 
+        />
         <Route path="/" element={<Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>

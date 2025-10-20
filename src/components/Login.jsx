@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import axios from 'axios'
 
 function Login({ setIsAuthenticated, setUser }) {
@@ -138,9 +139,13 @@ function Login({ setIsAuthenticated, setUser }) {
 
             <p className="mt-8 text-center text-sm text-gray-600">
               ¿No tienes una cuenta?{' '}
-              <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
-                Regístrate aquí
-              </a>
+              <Link 
+  to="/register" 
+  className="font-medium text-indigo-600 hover:text-indigo-500"
+>
+  Regístrate aquí
+</Link>
+
             </p>
           </div>
         </div>
