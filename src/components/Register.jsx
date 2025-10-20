@@ -7,10 +7,17 @@ function Register({ setIsAuthenticated, setUser }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [rol, setRol] = useState('vendedor') // rol por defecto
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const navigate = useNavigate()
+
+  const roles = [
+    { value: 'admin', label: 'Administrador' },
+    { value: 'vendedor', label: 'Vendedor' },
+    { value: 'entregas', label: 'Entregas' }
+  ]
 
   const validateForm = () => {
     if (!nombre.trim()) {
@@ -37,6 +44,10 @@ function Register({ setIsAuthenticated, setUser }) {
       setError('Las contraseñas no coinciden')
       return false
     }
+    if (!rol) {
+      setError('Debes seleccionar un rol')
+      return false
+    }
     return true
   }
 
@@ -58,7 +69,7 @@ function Register({ setIsAuthenticated, setUser }) {
           nombre,
           email,
           contrasena: password,
-          rol: 'usuario'
+          rol
         }
       )
 
@@ -81,7 +92,7 @@ function Register({ setIsAuthenticated, setUser }) {
       console.error(error)
       
       if (error.response?.status === 400) {
-        setError('Este correo electrónico ya está registrado')
+        setError(error.response.data?.message || 'Este correo electrónico ya está registrado')
       } else if (error.response?.data?.message) {
         setError(error.response.data.message)
       } else {
@@ -159,6 +170,31 @@ function Register({ setIsAuthenticated, setUser }) {
                     className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200"
                     placeholder="tu@email.com"
                   />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="rol" className="block text-sm font-medium text-gray-700 mb-2">
+                  Selecciona tu rol
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <select
+                    id="rol"
+                    value={rol}
+                    onChange={(e) => setRol(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 bg-white appearance-none cursor-pointer"
+                  >
+                    {roles.map((role) => (
+                      <option key={role.value} value={role.value}>
+                        {role.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
