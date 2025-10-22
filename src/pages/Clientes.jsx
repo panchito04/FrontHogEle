@@ -14,6 +14,15 @@ function Clientes({ user }) {
     direccion: ''
   })
 
+   useEffect(() => {
+    if (location.state?.openModal) {
+      setShowModal(true)
+      // Limpia el state para que no se reabra si el usuario navega de vuelta
+      window.history.replaceState({}, document.title)
+    }
+  }, [location])
+
+  
   useEffect(() => {
     fetchClientes()
   }, [])

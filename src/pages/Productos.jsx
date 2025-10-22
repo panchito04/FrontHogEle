@@ -2,94 +2,267 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import Sidebar from '../components/Sidebar'
 
+
 function Productos({ user }) {
   const [productos, setProductos] = useState([])
+  const [categorias, setCategorias] = useState([])
+  const [stats, setStats] = useState({ total: 0, vendidos: 0, disponibles: 0, porCategoria: {} })
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [filterEstado, setFilterEstado] = useState('todos') // todos, disponibles, vendidos
+  const [filterCategoria, setFilterCategoria] = useState('todas')
   const [showModal, setShowModal] = useState(false)
+  const [showCategoryModal, setShowCategoryModal] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [editingProduct, setEditingProduct] = useState(null)
+  const [deletingProductId, setDeletingProductId] = useState(null)
   const [newProducto, setNewProducto] = useState({
     nombre: '',
     descripcion: '',
     precio: '',
-    stock: '',
+    id_categoria: '',
     imagen_url: ''
+  })
+  const [newCategoria, setNewCategoria] = useState({
+    nombre: '',
+    descripcion: ''
   })
 
   useEffect(() => {
+    if (location.state?.openModal) {
+      openCreateModal()
+      window.history.replaceState({}, document.title)
+    }
+  }, [location])
+
+  useEffect(() => {
     fetchProductos()
+    fetchCategorias()
   }, [])
 
-const fetchProductos = async () => {
-  try {
-    setIsLoading(true)
-    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/productos`)
-    setProductos(response.data)
-  } catch (error) {
-    console.error('Error al obtener productos:', error)
-    alert('Error al cargar los productos')
-  } finally {
-    setIsLoading(false)
+  const fetchProductos = async () => {
+    try {
+      setIsLoading(true)
+      const response = await axios.get('http://localhost:4000/api/productos')
+      setProductos(response.data)
+      
+      // Obtener estadísticas
+      const statsResponse = await axios.get('http://localhost:4000/api/productos/stats/resumen')
+      setStats(statsResponse.data)
+    } catch (error) {
+      console.error('Error al obtener productos:', error)
+      alert('Error al cargar los productos')
+    } finally {
+      setIsLoading(false)
+    }
   }
-}
 
-const handleCreateProducto = async (e) => {
-  e.preventDefault()
-  try {
-    await axios.post(`${import.meta.env.VITE_API_URL}/api/productos`, {
-      ...newProducto,
-      precio: parseFloat(newProducto.precio),
-      stock: parseInt(newProducto.stock)
-    })
-    alert('Producto creado exitosamente')
-    setShowModal(false)
-    setNewProducto({ nombre: '', descripcion: '', precio: '', stock: '', imagen_url: '' })
-    fetchProductos()
-  } catch (error) {
-    console.error('Error al crear producto:', error)
-    alert('Error al crear el producto')
+  const fetchCategorias = async () => {
+    try {
+      const response = await axios.get('http://localhost:4000/api/categorias')
+      setCategorias(response.data)
+    } catch (error) {
+      console.error('Error al obtener categorías:', error)
+    }
   }
-}
 
+  const handleCreateProducto = async (e) => {
+    e.preventDefault()
+    try {
+      const productoData = {
+        ...newProducto,
+        precio: parseFloat(newProducto.precio),
+        id_categoria: newProducto.id_categoria ? parseInt(newProducto.id_categoria) : null
+      }
+      await axios.post('http://localhost:4000/api/productos', productoData)
+      alert('✅ Producto único creado exitosamente')
+      setShowModal(false)
+      setNewProducto({ nombre: '', descripcion: '', precio: '', id_categoria: '', imagen_url: '' })
+      fetchProductos()
+    } catch (error) {
+      console.error('Error al crear producto:', error)
+      alert(error.response?.data?.error || 'Error al crear el producto')
+    }
+  }
 
-  const filteredProductos = productos.filter(producto =>
-    producto.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    producto.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const handleUpdateProducto = async (e) => {
+    e.preventDefault()
+    try {
+      const productoData = {
+        ...editingProduct,
+        precio: parseFloat(editingProduct.precio),
+        id_categoria: editingProduct.id_categoria ? parseInt(editingProduct.id_categoria) : null
+      }
+      await axios.put(`http://localhost:4000/api/productos/${editingProduct.id_producto}`, productoData)
+      alert('✅ Producto actualizado exitosamente')
+      setShowModal(false)
+      setEditingProduct(null)
+      fetchProductos()
+    } catch (error) {
+      console.error('Error al actualizar producto:', error)
+      alert(error.response?.data?.error || 'Error al actualizar el producto')
+    }
+  }
+
+  const confirmDelete = (id) => {
+    setDeletingProductId(id)
+    setShowDeleteConfirm(true)
+  }
+
+  const handleDeleteProducto = async () => {
+    try {
+      await axios.delete(`http://localhost:4000/api/productos/${deletingProductId}`)
+      alert('✅ Producto eliminado exitosamente')
+      setShowDeleteConfirm(false)
+      setDeletingProductId(null)
+      fetchProductos()
+    } catch (error) {
+      console.error('Error al eliminar producto:', error)
+      alert(error.response?.data?.error || 'Error al eliminar el producto')
+      setShowDeleteConfirm(false)
+    }
+  }
+
+  const handleCreateCategoria = async (e) => {
+    e.preventDefault()
+    try {
+      await axios.post('http://localhost:4000/api/categorias', newCategoria)
+      alert('✅ Categoría creada exitosamente')
+      setShowCategoryModal(false)
+      setNewCategoria({ nombre: '', descripcion: '' })
+      fetchCategorias()
+    } catch (error) {
+      console.error('Error al crear categoría:', error)
+      alert('Error al crear la categoría')
+    }
+  }
+
+  const openEditModal = (producto) => {
+    if (producto.vendido) {
+      alert('⚠️ No puedes editar un producto que ya ha sido vendido')
+      return
+    }
+    setEditingProduct(producto)
+    setShowModal(true)
+  }
+
+  const openCreateModal = () => {
+    setEditingProduct(null)
+    setNewProducto({ nombre: '', descripcion: '', precio: '', id_categoria: '', imagen_url: '' })
+    setShowModal(true)
+  }
+
+  const filteredProductos = productos.filter(producto => {
+    const matchesSearch = producto.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      producto.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    const matchesEstado = filterEstado === 'todos' || 
+      (filterEstado === 'disponibles' && producto.disponible) ||
+      (filterEstado === 'vendidos' && producto.vendido)
+    
+    const matchesCategoria = filterCategoria === 'todas' || 
+      producto.id_categoria?.toString() === filterCategoria
+
+    return matchesSearch && matchesEstado && matchesCategoria
+  })
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Sidebar user={user} />
       
       <div className="flex-1 overflow-auto lg:ml-0 pt-16 lg:pt-0">
         {/* Header */}
-        <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+        <div className="bg-white shadow-md border-b border-gray-200 sticky top-0 z-20">
           <div className="px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                  Gestión de Productos
+                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  Productos Únicos
                 </h1>
-                <p className="text-gray-600 mt-1 text-sm sm:text-base">Administra tu inventario de productos</p>
+                <p className="text-gray-600 mt-1 text-sm sm:text-base flex items-center">
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Cada producto es exclusivo
+                </p>
               </div>
-              <button
-                onClick={() => setShowModal(true)}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition duration-200 flex items-center justify-center space-x-2 shadow-lg transform hover:scale-105 text-sm sm:text-base"
-              >
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                <span>Nuevo Producto</span>
-              </button>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  onClick={() => setShowCategoryModal(true)}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2.5 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-200 flex items-center justify-center space-x-2 text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                  <span>Nueva Categoría</span>
+                </button>
+                <button
+                  onClick={openCreateModal}
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2.5 rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <span>Nuevo Producto</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Contenido principal */}
         <div className="p-4 sm:p-6 lg:p-8">
-          {/* Barra de búsqueda */}
-          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+          {/* Estadísticas */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-5 text-white shadow-xl transform hover:scale-105 transition-all duration-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-indigo-100 text-xs font-medium uppercase tracking-wide mb-1">Total Productos</p>
+                  <h3 className="text-3xl font-bold">{stats.total}</h3>
+                  <p className="text-indigo-200 text-xs mt-1">Piezas únicas</p>
+                </div>
+                <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-5 text-white shadow-xl transform hover:scale-105 transition-all duration-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-green-100 text-xs font-medium uppercase tracking-wide mb-1">Disponibles</p>
+                  <h3 className="text-3xl font-bold">{stats.disponibles}</h3>
+                  <p className="text-green-200 text-xs mt-1">Para venta</p>
+                </div>
+                <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-5 text-white shadow-xl transform hover:scale-105 transition-all duration-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-orange-100 text-xs font-medium uppercase tracking-wide mb-1">Vendidos</p>
+                  <h3 className="text-3xl font-bold">{stats.vendidos}</h3>
+                  <p className="text-orange-200 text-xs mt-1">Completados</p>
+                </div>
+                <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Barra de búsqueda y filtros */}
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mb-6 space-y-4">
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -99,285 +272,462 @@ const handleCreateProducto = async (e) => {
                 placeholder="Buscar por nombre o descripción..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 text-sm sm:text-base"
+                className="block w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 text-sm sm:text-base"
               />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <select
+                value={filterEstado}
+                onChange={(e) => setFilterEstado(e.target.value)}
+                className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 text-sm"
+              >
+                <option value="todos">📦 Todos los estados</option>
+                <option value="disponibles">✅ Disponibles</option>
+                <option value="vendidos">🔴 Vendidos</option>
+              </select>
+
+              <select
+                value={filterCategoria}
+                onChange={(e) => setFilterCategoria(e.target.value)}
+                className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 text-sm"
+              >
+                <option value="todas">🏷️ Todas las categorías</option>
+                {categorias.map((cat) => (
+                  <option key={cat.id_categoria} value={cat.id_categoria}>
+                    {cat.nombre}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
-          {/* Vista Desktop - Tabla */}
-          <div className="hidden md:block bg-white rounded-xl shadow-lg overflow-hidden">
+          {/* Vista de tarjetas (Siempre visible, responsive) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {isLoading ? (
-              <div className="flex items-center justify-center py-20">
-                <svg className="animate-spin h-12 w-12 text-indigo-600" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+              <div className="col-span-full flex items-center justify-center py-20">
+                <div className="relative">
+                  <div className="w-20 h-20 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <svg className="w-10 h-10 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                      <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
               </div>
             ) : filteredProductos.length === 0 ? (
-              <div className="text-center py-20">
-                <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-                <p className="text-gray-500 text-lg">No se encontraron productos</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gradient-to-r from-indigo-50 to-purple-50">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">ID</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Producto</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Descripción</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Precio</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Stock</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredProductos.map((producto) => (
-                      <tr key={producto.id_producto} className="hover:bg-gray-50 transition-colors duration-150">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-medium text-gray-900">{producto.id_producto}</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold mr-3">
-                              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                              </svg>
-                            </div>
-                            <span className="text-sm font-medium text-gray-900">{producto.nombre}</span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm text-gray-600">{producto.descripcion || 'N/A'}</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-bold text-green-600">Bs. {producto.precio?.toFixed(2)}</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            producto.stock > 10 
-                              ? 'bg-green-100 text-green-800' 
-                              : producto.stock > 0 
-                              ? 'bg-yellow-100 text-yellow-800' 
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {producto.stock} unidades
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <button className="text-indigo-600 hover:text-indigo-900 mr-3 transition-colors">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                          </button>
-                          <button className="text-red-600 hover:text-red-900 transition-colors">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* Vista Mobile - Cards */}
-          <div className="md:hidden space-y-4">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-20">
-                <svg className="animate-spin h-12 w-12 text-indigo-600" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              </div>
-            ) : filteredProductos.length === 0 ? (
-              <div className="text-center py-20 bg-white rounded-xl">
-                <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-                <p className="text-gray-500 text-lg">No se encontraron productos</p>
+              <div className="col-span-full text-center py-20 bg-white rounded-2xl">
+                <div className="bg-gray-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                  </svg>
+                </div>
+                <p className="text-gray-500 text-lg font-semibold">No se encontraron productos</p>
+                <p className="text-gray-400 text-sm mt-2">Intenta cambiar los filtros de búsqueda</p>
               </div>
             ) : (
               filteredProductos.map((producto) => (
-                <div key={producto.id_producto} className="bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition-shadow duration-200">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center text-white">
-                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div 
+                  key={producto.id_producto} 
+                  className={`bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-2 ${
+                    producto.vendido ? 'border-red-200' : 'border-green-200'
+                  }`}
+                >
+                  {/* Imagen */}
+                  <div className="relative h-52 bg-gradient-to-br from-indigo-500 to-purple-500 overflow-hidden">
+                    {producto.imagen_url ? (
+                      <img 
+                        src={producto.imagen_url} 
+                        alt={producto.nombre} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <svg className="w-20 h-20 text-white opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                         </svg>
                       </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-900">{producto.nombre}</h3>
-                        <p className="text-xs text-gray-500">ID: {producto.id_producto}</p>
+                    )}
+                    
+                    {/* Badge de estado */}
+                    <div className="absolute top-3 right-3">
+                      {producto.vendido ? (
+                        <span className="bg-red-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center">
+                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          VENDIDO
+                        </span>
+                      ) : (
+                        <span className="bg-green-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center animate-pulse">
+                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          DISPONIBLE
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Badge de ID */}
+                    <div className="absolute top-3 left-3">
+                      <span className="bg-black bg-opacity-50 backdrop-blur-sm text-white px-2 py-1 rounded-lg text-xs font-semibold">
+                        ID: {producto.id_producto}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Contenido */}
+                  <div className="p-5">
+                    <div className="mb-3">
+                      <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-2 min-h-[3.5rem]">
+                        {producto.nombre}
+                      </h3>
+                      <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                        {producto.categoria?.nombre || 'Sin categoría'}
+                      </span>
+                    </div>
+
+                    <p className="text-sm text-gray-600 mb-4 line-clamp-2 min-h-[2.5rem]">
+                      {producto.descripcion || 'Sin descripción disponible'}
+                    </p>
+
+                    {/* Precio */}
+                    <div className="flex items-center justify-between mb-4 pb-4 border-b-2 border-gray-100">
+                      <div className="flex items-center">
+                        <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="text-2xl font-bold text-green-600">
+                          Bs. {producto.precio?.toFixed(2)}
+                        </span>
                       </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <button className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                    {/* Botones de acción */}
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => openEditModal(producto)}
+                        disabled={producto.vendido}
+                        className={`flex-1 px-4 py-2.5 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center space-x-2 ${
+                          producto.vendido 
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                            : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-md hover:shadow-lg transform hover:-translate-y-0.5'
+                        }`}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
+                        <span className="text-sm">Editar</span>
                       </button>
-                      <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                      <button 
+                        onClick={() => confirmDelete(producto.id_producto)}
+                        disabled={producto.vendido}
+                        className={`px-4 py-2.5 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center ${
+                          producto.vendido 
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                            : 'bg-red-500 text-white hover:bg-red-600 shadow-md hover:shadow-lg transform hover:-translate-y-0.5'
+                        }`}
+                      >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                       </button>
                     </div>
-                  </div>
 
-                  <div className="space-y-2 border-t border-gray-100 pt-3">
-                    <p className="text-sm text-gray-600">{producto.descripcion || 'Sin descripción'}</p>
-                    
-                    <div className="flex items-center justify-between pt-2">
-                      <div className="flex items-center">
-                        <svg className="w-4 h-4 mr-1 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span className="text-lg font-bold text-green-600">Bs. {producto.precio?.toFixed(2)}</span>
-                      </div>
-                      
-                      <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                        producto.stock > 10 
-                          ? 'bg-green-100 text-green-800' 
-                          : producto.stock > 0 
-                          ? 'bg-yellow-100 text-yellow-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        Stock: {producto.stock}
-                      </span>
-                    </div>
+                    {producto.vendido && (
+                      <p className="text-center text-xs text-gray-500 mt-3 italic">
+                        🔒 Este producto ya fue vendido y no puede ser modificado
+                      </p>
+                    )}
                   </div>
                 </div>
               ))
             )}
           </div>
 
-          {/* Información adicional */}
-          <div className="mt-4 sm:mt-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 sm:p-6 border-2 border-indigo-100">
+          {/* Resumen de resultados */}
+          <div className="mt-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 border-2 border-indigo-100">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center space-x-3 sm:space-x-4">
-                <div className="bg-white rounded-lg p-2 sm:p-3 shadow-sm">
-                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center space-x-4">
+                <div className="bg-white rounded-xl p-3 shadow-sm">
+                  <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-xs sm:text-sm text-gray-600 font-medium">Total de Productos</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-gray-800">{productos.length}</p>
+                  <p className="text-sm text-gray-600 font-medium">Mostrando</p>
+                  <p className="text-3xl font-bold text-gray-800">{filteredProductos.length}</p>
+                  <p className="text-xs text-gray-500">de {productos.length} productos</p>
                 </div>
               </div>
-              <div className="text-center sm:text-right">
-                <p className="text-xs sm:text-sm text-gray-600">Resultados mostrados</p>
-                <p className="text-xl sm:text-2xl font-bold text-indigo-600">{filteredProductos.length}</p>
-              </div>
+              <button
+                onClick={fetchProductos}
+                className="bg-white text-indigo-600 px-6 py-3 rounded-xl font-semibold hover:bg-indigo-50 transition-all duration-200 shadow-md hover:shadow-lg flex items-center space-x-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>Actualizar</span>
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Modal para crear producto */}
+      {/* Modal Crear/Editar Producto */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-6 text-white">
-              <h3 className="text-xl sm:text-2xl font-bold">Nuevo Producto</h3>
-              <p className="text-indigo-100 mt-1 text-sm sm:text-base">Completa los datos del producto</p>
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold">
+                    {editingProduct ? '✏️ Editar Producto' : '✨ Nuevo Producto Único'}
+                  </h3>
+                  <p className="text-indigo-100 mt-1">
+                    {editingProduct ? 'Modifica los datos del producto' : 'Cada producto es una pieza exclusiva'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowModal(false)
+                    setEditingProduct(null)
+                  }}
+                  className="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-all"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
             
-            <form onSubmit={handleCreateProducto} className="p-4 sm:p-6 space-y-4">
+            <form onSubmit={editingProduct ? handleUpdateProducto : handleCreateProducto} className="p-6 space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nombre del Producto *
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  📝 Nombre del Producto *
                 </label>
                 <input
                   type="text"
                   required
-                  value={newProducto.nombre}
-                  onChange={(e) => setNewProducto({...newProducto, nombre: e.target.value})}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm sm:text-base"
-                  placeholder="Ej: Smartphone X100"
+                  value={editingProduct ? editingProduct.nombre : newProducto.nombre}
+                  onChange={(e) => editingProduct 
+                    ? setEditingProduct({...editingProduct, nombre: e.target.value})
+                    : setNewProducto({...newProducto, nombre: e.target.value})
+                  }
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all"
+                  placeholder="Ej: Collar de Plata Artesanal"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Descripción
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  📄 Descripción
                 </label>
                 <textarea
                   rows="3"
-                  value={newProducto.descripcion}
-                  onChange={(e) => setNewProducto({...newProducto, descripcion: e.target.value})}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm sm:text-base"
-                  placeholder="Ej: Teléfono inteligente de última generación"
+                  value={editingProduct ? editingProduct.descripcion : newProducto.descripcion}
+                  onChange={(e) => editingProduct
+                    ? setEditingProduct({...editingProduct, descripcion: e.target.value})
+                    : setNewProducto({...newProducto, descripcion: e.target.value})
+                  }
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all resize-none"
+                  placeholder="Describe las características únicas de este producto..."
                 ></textarea>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Precio (Bs.) *
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    🏷️ Categoría *
+                  </label>
+                  <select
+                    required
+                    value={editingProduct ? editingProduct.id_categoria : newProducto.id_categoria}
+                    onChange={(e) => editingProduct
+                      ? setEditingProduct({...editingProduct, id_categoria: e.target.value})
+                      : setNewProducto({...newProducto, id_categoria: e.target.value})
+                    }
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all"
+                  >
+                    <option value="">Selecciona...</option>
+                    {categorias.map((cat) => (
+                      <option key={cat.id_categoria} value={cat.id_categoria}>
+                        {cat.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    💰 Precio (Bs.) *
                   </label>
                   <input
                     type="number"
                     step="0.01"
                     required
-                    value={newProducto.precio}
-                    onChange={(e) => setNewProducto({...newProducto, precio: e.target.value})}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm sm:text-base"
+                    value={editingProduct ? editingProduct.precio : newProducto.precio}
+                    onChange={(e) => editingProduct
+                      ? setEditingProduct({...editingProduct, precio: e.target.value})
+                      : setNewProducto({...newProducto, precio: e.target.value})
+                    }
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all"
                     placeholder="0.00"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Stock *
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={newProducto.stock}
-                    onChange={(e) => setNewProducto({...newProducto, stock: e.target.value})}
-                    className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm sm:text-base"
-                    placeholder="0"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  URL de Imagen
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  🖼️ URL de Imagen
                 </label>
                 <input
                   type="url"
-                  value={newProducto.imagen_url}
-                  onChange={(e) => setNewProducto({...newProducto, imagen_url: e.target.value})}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm sm:text-base"
-                  placeholder="https://example.com/imagen.jpg"
+                  value={editingProduct ? editingProduct.imagen_url : newProducto.imagen_url}
+                  onChange={(e) => editingProduct
+                    ? setEditingProduct({...editingProduct, imagen_url: e.target.value})
+                    : setNewProducto({...newProducto, imagen_url: e.target.value})
+                  }
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all"
+                  placeholder="https://ejemplo.com/imagen.jpg"
                 />
+                <p className="text-xs text-gray-500 mt-2">💡 Tip: Usa enlaces de Imgur, Cloudinary o similar</p>
               </div>
 
-              <div className="flex space-x-3 pt-4">
+              <div className="flex gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition duration-200 text-sm sm:text-base"
+                  onClick={() => {
+                    setShowModal(false)
+                    setEditingProduct(null)
+                  }}
+                  className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition-all duration-200"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition duration-200 text-sm sm:text-base"
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
                 >
-                  Guardar
+                  {editingProduct ? '💾 Actualizar' : '✨ Crear Producto'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Nueva Categoría */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full">
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-2xl font-bold">🏷️ Nueva Categoría</h3>
+                  <p className="text-purple-100 mt-1">Organiza tus productos únicos</p>
+                </div>
+                <button
+                  onClick={() => setShowCategoryModal(false)}
+                  className="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-all"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <form onSubmit={handleCreateCategoria} className="p-6 space-y-5">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  📝 Nombre de Categoría *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newCategoria.nombre}
+                  onChange={(e) => setNewCategoria({...newCategoria, nombre: e.target.value})}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all"
+                  placeholder="Ej: Joyería Artesanal"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  📄 Descripción
+                </label>
+                <textarea
+                  rows="3"
+                  value={newCategoria.descripcion}
+                  onChange={(e) => setNewCategoria({...newCategoria, descripcion: e.target.value})}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all resize-none"
+                  placeholder="Describe esta categoría..."
+                ></textarea>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCategoryModal(false)}
+                  className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition-all duration-200"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  ✨ Crear Categoría
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Confirmación de Eliminación */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full">
+            <div className="bg-gradient-to-r from-red-500 to-red-600 p-6 text-white">
+              <div className="flex items-center space-x-3">
+                <div className="bg-white bg-opacity-20 p-3 rounded-full">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold">⚠️ Confirmar Eliminación</h3>
+                  <p className="text-red-100 mt-1">Esta acción no se puede deshacer</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              <p className="text-gray-700 text-center mb-6 text-lg">
+                ¿Estás seguro de que deseas eliminar este producto único?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirm(false)
+                    setDeletingProductId(null)
+                  }}
+                  className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition-all duration-200"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDeleteProducto}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-bold hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  🗑️ Eliminar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

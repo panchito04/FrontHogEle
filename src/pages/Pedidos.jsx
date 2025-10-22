@@ -23,6 +23,13 @@ function Pedidos({ user }) {
   })
 
   useEffect(() => {
+    if (location.state?.openModal) {
+      setShowModal(true)
+      window.history.replaceState({}, document.title)
+    }
+  }, [location])
+
+  useEffect(() => {
     fetchData()
   }, [])
 
