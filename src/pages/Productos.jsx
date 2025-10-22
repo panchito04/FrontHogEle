@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import Sidebar from '../components/Sidebar'
-
+const API_URL = import.meta.env.VITE_API_URL
 
 function Productos({ user }) {
   const [productos, setProductos] = useState([])
@@ -40,102 +40,105 @@ function Productos({ user }) {
     fetchCategorias()
   }, [])
 
-  const fetchProductos = async () => {
-    try {
-      setIsLoading(true)
-      const response = await axios.get('http://localhost:4000/api/productos')
-      setProductos(response.data)
-      
-      // Obtener estadísticas
-      const statsResponse = await axios.get('http://localhost:4000/api/productos/stats/resumen')
-      setStats(statsResponse.data)
-    } catch (error) {
-      console.error('Error al obtener productos:', error)
-      alert('Error al cargar los productos')
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const API_URL = import.meta.env.VITE_API_URL
 
-  const fetchCategorias = async () => {
-    try {
-      const response = await axios.get('http://localhost:4000/api/categorias')
-      setCategorias(response.data)
-    } catch (error) {
-      console.error('Error al obtener categorías:', error)
-    }
-  }
+const fetchProductos = async () => {
+  try {
+    setIsLoading(true)
+    const response = await axios.get(`${API_URL}/api/productos`)
+    setProductos(response.data)
 
-  const handleCreateProducto = async (e) => {
-    e.preventDefault()
-    try {
-      const productoData = {
-        ...newProducto,
-        precio: parseFloat(newProducto.precio),
-        id_categoria: newProducto.id_categoria ? parseInt(newProducto.id_categoria) : null
-      }
-      await axios.post('http://localhost:4000/api/productos', productoData)
-      alert('✅ Producto único creado exitosamente')
-      setShowModal(false)
-      setNewProducto({ nombre: '', descripcion: '', precio: '', id_categoria: '', imagen_url: '' })
-      fetchProductos()
-    } catch (error) {
-      console.error('Error al crear producto:', error)
-      alert(error.response?.data?.error || 'Error al crear el producto')
-    }
+    // Obtener estadísticas
+    const statsResponse = await axios.get(`${API_URL}/api/productos/stats/resumen`)
+    setStats(statsResponse.data)
+  } catch (error) {
+    console.error('Error al obtener productos:', error)
+    alert('Error al cargar los productos')
+  } finally {
+    setIsLoading(false)
   }
+}
 
-  const handleUpdateProducto = async (e) => {
-    e.preventDefault()
-    try {
-      const productoData = {
-        ...editingProduct,
-        precio: parseFloat(editingProduct.precio),
-        id_categoria: editingProduct.id_categoria ? parseInt(editingProduct.id_categoria) : null
-      }
-      await axios.put(`http://localhost:4000/api/productos/${editingProduct.id_producto}`, productoData)
-      alert('✅ Producto actualizado exitosamente')
-      setShowModal(false)
-      setEditingProduct(null)
-      fetchProductos()
-    } catch (error) {
-      console.error('Error al actualizar producto:', error)
-      alert(error.response?.data?.error || 'Error al actualizar el producto')
-    }
+const fetchCategorias = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/api/categorias`)
+    setCategorias(response.data)
+  } catch (error) {
+    console.error('Error al obtener categorías:', error)
   }
+}
 
-  const confirmDelete = (id) => {
-    setDeletingProductId(id)
-    setShowDeleteConfirm(true)
-  }
-
-  const handleDeleteProducto = async () => {
-    try {
-      await axios.delete(`http://localhost:4000/api/productos/${deletingProductId}`)
-      alert('✅ Producto eliminado exitosamente')
-      setShowDeleteConfirm(false)
-      setDeletingProductId(null)
-      fetchProductos()
-    } catch (error) {
-      console.error('Error al eliminar producto:', error)
-      alert(error.response?.data?.error || 'Error al eliminar el producto')
-      setShowDeleteConfirm(false)
+const handleCreateProducto = async (e) => {
+  e.preventDefault()
+  try {
+    const productoData = {
+      ...newProducto,
+      precio: parseFloat(newProducto.precio),
+      id_categoria: newProducto.id_categoria ? parseInt(newProducto.id_categoria) : null
     }
+    await axios.post(`${API_URL}/api/productos`, productoData)
+    alert('✅ Producto único creado exitosamente')
+    setShowModal(false)
+    setNewProducto({ nombre: '', descripcion: '', precio: '', id_categoria: '', imagen_url: '' })
+    fetchProductos()
+  } catch (error) {
+    console.error('Error al crear producto:', error)
+    alert(error.response?.data?.error || 'Error al crear el producto')
   }
+}
 
-  const handleCreateCategoria = async (e) => {
-    e.preventDefault()
-    try {
-      await axios.post('http://localhost:4000/api/categorias', newCategoria)
-      alert('✅ Categoría creada exitosamente')
-      setShowCategoryModal(false)
-      setNewCategoria({ nombre: '', descripcion: '' })
-      fetchCategorias()
-    } catch (error) {
-      console.error('Error al crear categoría:', error)
-      alert('Error al crear la categoría')
+const handleUpdateProducto = async (e) => {
+  e.preventDefault()
+  try {
+    const productoData = {
+      ...editingProduct,
+      precio: parseFloat(editingProduct.precio),
+      id_categoria: editingProduct.id_categoria ? parseInt(editingProduct.id_categoria) : null
     }
+    await axios.put(`${API_URL}/api/productos/${editingProduct.id_producto}`, productoData)
+    alert('✅ Producto actualizado exitosamente')
+    setShowModal(false)
+    setEditingProduct(null)
+    fetchProductos()
+  } catch (error) {
+    console.error('Error al actualizar producto:', error)
+    alert(error.response?.data?.error || 'Error al actualizar el producto')
   }
+}
+
+const confirmDelete = (id) => {
+  setDeletingProductId(id)
+  setShowDeleteConfirm(true)
+}
+
+const handleDeleteProducto = async () => {
+  try {
+    await axios.delete(`${API_URL}/api/productos/${deletingProductId}`)
+    alert('✅ Producto eliminado exitosamente')
+    setShowDeleteConfirm(false)
+    setDeletingProductId(null)
+    fetchProductos()
+  } catch (error) {
+    console.error('Error al eliminar producto:', error)
+    alert(error.response?.data?.error || 'Error al eliminar el producto')
+    setShowDeleteConfirm(false)
+  }
+}
+
+const handleCreateCategoria = async (e) => {
+  e.preventDefault()
+  try {
+    await axios.post(`${API_URL}/api/categorias`, newCategoria)
+    alert('✅ Categoría creada exitosamente')
+    setShowCategoryModal(false)
+    setNewCategoria({ nombre: '', descripcion: '' })
+    fetchCategorias()
+  } catch (error) {
+    console.error('Error al crear categoría:', error)
+    alert('Error al crear la categoría')
+  }
+}
+
 
   const openEditModal = (producto) => {
     if (producto.vendido) {

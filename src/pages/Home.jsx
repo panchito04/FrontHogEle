@@ -19,19 +19,40 @@ function Home({ user }) {
     fetchStats()
   }, [])
 
-  const fetchStats = async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      const response = await axios.get('http://localhost:4000/api/home')
-      setStats(response.data)
-    } catch (error) {
-      console.error('Error al cargar estadísticas:', error)
-      setError('No se pudieron cargar las estadísticas. Por favor, intenta de nuevo.')
-    } finally {
-      setIsLoading(false)
-    }
+// const API_BASE_URL =
+//   import.meta.env.MODE === 'development'
+//     ? import.meta.env.VITE_API_URL_LOCAL
+//     : import.meta.env.VITE_API_URL_PROD
+
+// const fetchStats = async () => {
+//   try {
+//     setIsLoading(true)
+//     setError(null)
+//     const response = await axios.get(`${API_BASE_URL}/api/home`)
+//     setStats(response.data)
+//   } catch (error) {
+//     console.error('Error al cargar estadísticas:', error)
+//     setError('No se pudieron cargar las estadísticas. Por favor, intenta de nuevo.')
+//   } finally {
+//     setIsLoading(false)
+//   }
+// }
+
+const fetchStats = async () => {
+  try {
+    setIsLoading(true)
+    setError(null)
+    const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/home`)
+    setStats(response.data)
+  } catch (error) {
+    console.error('Error al cargar estadísticas:', error)
+    setError('No se pudieron cargar las estadísticas. Por favor, intenta de nuevo.')
+  } finally {
+    setIsLoading(false)
   }
+}
+
+
 
   const formatCurrency = (value) => `Bs. ${parseFloat(value).toFixed(2)}`
 
