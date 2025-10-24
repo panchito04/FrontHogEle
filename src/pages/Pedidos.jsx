@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
 
 function Pedidos({ user }) {
+  const location = useLocation()
   const [pedidos, setPedidos] = useState([])
   const [clientes, setClientes] = useState([])
   const [productos, setProductos] = useState([])
@@ -10,7 +12,10 @@ function Pedidos({ user }) {
   const [searchTerm, setSearchTerm] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [showDetalleModal, setShowDetalleModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null)
+  const [deletingPedidoId, setDeletingPedidoId] = useState(null)
   const [newPedido, setNewPedido] = useState({
     id_cliente: '',
     observaciones: '',
@@ -21,7 +26,9 @@ function Pedidos({ user }) {
     cantidad: '',
     precio_unitario: ''
   })
+  const [editEstado, setEditEstado] = useState('')
 
+  // Abrir modal automáticamente si viene del Dashboard
   useEffect(() => {
     if (location.state?.openModal) {
       setShowModal(true)
@@ -37,10 +44,10 @@ function Pedidos({ user }) {
     try {
       setIsLoading(true)
       const [pedidosRes, clientesRes, productosRes] = await Promise.all([
-  fetch(`${import.meta.env.VITE_API_URL}/api/pedidos`),
-  fetch(`${import.meta.env.VITE_API_URL}/api/clientes`),
-  fetch(`${import.meta.env.VITE_API_URL}/api/productos`)
-])
+        fetch(`${import.meta.env.VITE_API_URL}/api/pedidos`),
+        fetch(`${import.meta.env.VITE_API_URL}/api/clientes`),
+        fetch(`${import.meta.env.VITE_API_URL}/api/productos`)
+      ])
       
       const pedidosData = await pedidosRes.json()
       const clientesData = await clientesRes.json()
@@ -81,23 +88,74 @@ function Pedidos({ user }) {
 
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pedidos`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(newPedido)
-})
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPedido)
+      })
       
       if (response.ok) {
-        alert('Pedido creado exitosamente')
+        alert('✅ Pedido creado exitosamente')
         setShowModal(false)
         setNewPedido({ id_cliente: '', observaciones: '', detalles: [] })
         setNewDetalle({ id_producto: '', cantidad: '', precio_unitario: '' })
         fetchData()
       } else {
-        alert('Error al crear el pedido')
+        const errorData = await response.json()
+        alert(`Error: ${errorData.error || 'Error al crear el pedido'}`)
       }
     } catch (error) {
       console.error('Error al crear pedido:', error)
       alert('Error al crear el pedido')
+    }
+  }
+
+  const handleUpdateEstado = async (e) => {
+    e.preventDefault()
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pedidos/${pedidoSeleccionado.id_pedido}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: editEstado })
+      })
+      
+      if (response.ok) {
+        alert('✅ Estado actualizado exitosamente')
+        setShowEditModal(false)
+        setPedidoSeleccionado(null)
+        setEditEstado('')
+        fetchData()
+      } else {
+        alert('Error al actualizar el estado')
+      }
+    } catch (error) {
+      console.error('Error al actualizar estado:', error)
+      alert('Error al actualizar el estado')
+    }
+  }
+
+  const confirmDelete = (id) => {
+    setDeletingPedidoId(id)
+    setShowDeleteConfirm(true)
+  }
+
+  const handleDeletePedido = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pedidos/${deletingPedidoId}`, {
+        method: 'DELETE'
+      })
+      
+      if (response.ok) {
+        alert('✅ Pedido eliminado exitosamente')
+        setShowDeleteConfirm(false)
+        setDeletingPedidoId(null)
+        fetchData()
+      } else {
+        alert('Error al eliminar el pedido')
+      }
+    } catch (error) {
+      console.error('Error al eliminar pedido:', error)
+      alert('Error al eliminar el pedido')
     }
   }
 
@@ -168,6 +226,12 @@ function Pedidos({ user }) {
   const verDetalle = (pedido) => {
     setPedidoSeleccionado(pedido)
     setShowDetalleModal(true)
+  }
+
+  const editarEstado = (pedido) => {
+    setPedidoSeleccionado(pedido)
+    setEditEstado(pedido.estado)
+    setShowEditModal(true)
   }
 
   const filteredPedidos = pedidos.filter(pedido => {
@@ -323,18 +387,27 @@ function Pedidos({ user }) {
                             <button 
                               onClick={() => verDetalle(pedido)}
                               className="text-indigo-600 hover:text-indigo-900 mr-3 transition-colors"
+                              title="Ver detalles"
                             >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                               </svg>
                             </button>
-                            <button className="text-green-600 hover:text-green-900 mr-3 transition-colors">
+                            <button 
+                              onClick={() => editarEstado(pedido)}
+                              className="text-green-600 hover:text-green-900 mr-3 transition-colors"
+                              title="Editar estado"
+                            >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                               </svg>
                             </button>
-                            <button className="text-red-600 hover:text-red-900 transition-colors">
+                            <button 
+                              onClick={() => confirmDelete(pedido.id_pedido)}
+                              className="text-red-600 hover:text-red-900 transition-colors"
+                              title="Eliminar"
+                            >
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                               </svg>
@@ -433,13 +506,19 @@ function Pedidos({ user }) {
                         </svg>
                         <span className="text-sm">Ver</span>
                       </button>
-                      <button className="flex-1 p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors flex items-center justify-center">
+                      <button 
+                        onClick={() => editarEstado(pedido)}
+                        className="flex-1 p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors flex items-center justify-center"
+                      >
                         <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
                         <span className="text-sm">Editar</span>
                       </button>
-                      <button className="flex-1 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center">
+                      <button 
+                        onClick={() => confirmDelete(pedido.id_pedido)}
+                        className="flex-1 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center"
+                      >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
@@ -615,6 +694,101 @@ function Pedidos({ user }) {
                   className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition duration-200 text-sm sm:text-base"
                 >
                   Crear Pedido
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Editar Estado */}
+      {showEditModal && pedidoSeleccionado && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+            <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-4 sm:p-6 text-white">
+              <h3 className="text-xl sm:text-2xl font-bold">Editar Estado</h3>
+              <p className="text-green-100 mt-1 text-sm">Pedido #{pedidoSeleccionado.id_pedido}</p>
+            </div>
+            
+            <form onSubmit={handleUpdateEstado} className="p-4 sm:p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Estado del Pedido *
+                </label>
+                <select
+                  required
+                  value={editEstado}
+                  onChange={(e) => setEditEstado(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                >
+                  <option value="pendiente">Pendiente</option>
+                  <option value="pagado">Pagado</option>
+                  <option value="entregado">Entregado</option>
+                  <option value="cancelado">Cancelado</option>
+                </select>
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false)
+                    setPedidoSeleccionado(null)
+                    setEditEstado('')
+                  }}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition duration-200"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition duration-200"
+                >
+                  Actualizar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Confirmación Eliminar */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+            <div className="bg-gradient-to-r from-red-500 to-red-600 p-6 text-white">
+              <div className="flex items-center space-x-3">
+                <div className="bg-white bg-opacity-20 p-3 rounded-full">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold">⚠️ Confirmar Eliminación</h3>
+                  <p className="text-red-100 mt-1">Esta acción no se puede deshacer</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              <p className="text-gray-700 text-center mb-6 text-lg">
+                ¿Estás seguro de que deseas eliminar este pedido y todos sus detalles?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirm(false)
+                    setDeletingPedidoId(null)
+                  }}
+                  className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition-all duration-200"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDeletePedido}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-bold hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                >
+                  🗑️ Eliminar
                 </button>
               </div>
             </div>

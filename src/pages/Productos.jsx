@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import Sidebar from '../components/Sidebar'
-const API_URL = import.meta.env.VITE_API_URL
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000'
 
 function Productos({ user }) {
   const [productos, setProductos] = useState([])
@@ -9,19 +10,22 @@ function Productos({ user }) {
   const [stats, setStats] = useState({ total: 0, vendidos: 0, disponibles: 0, porCategoria: {} })
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [filterEstado, setFilterEstado] = useState('todos') // todos, disponibles, vendidos
+  const [filterEstado, setFilterEstado] = useState('todos')
   const [filterCategoria, setFilterCategoria] = useState('todas')
   const [showModal, setShowModal] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
   const [deletingProductId, setDeletingProductId] = useState(null)
+  const [filePreview, setFilePreview] = useState(null)
+  const [isUploading, setIsUploading] = useState(false)
   const [newProducto, setNewProducto] = useState({
     nombre: '',
     descripcion: '',
     precio: '',
     id_categoria: '',
-    imagen_url: ''
+    imagen_url: '',
+    imagen_file: null
   })
   const [newCategoria, setNewCategoria] = useState({
     nombre: '',
@@ -29,129 +33,183 @@ function Productos({ user }) {
   })
 
   useEffect(() => {
-    if (location.state?.openModal) {
-      openCreateModal()
-      window.history.replaceState({}, document.title)
-    }
-  }, [location])
-
-  useEffect(() => {
     fetchProductos()
     fetchCategorias()
   }, [])
 
-  const API_URL = import.meta.env.VITE_API_URL
+  const fetchProductos = async () => {
+    try {
+      setIsLoading(true)
+      const response = await axios.get(`${API_URL}/api/productos`)
+      setProductos(response.data)
 
-const fetchProductos = async () => {
-  try {
-    setIsLoading(true)
-    const response = await axios.get(`${API_URL}/api/productos`)
-    setProductos(response.data)
-
-    // Obtener estadísticas
-    const statsResponse = await axios.get(`${API_URL}/api/productos/stats/resumen`)
-    setStats(statsResponse.data)
-  } catch (error) {
-    console.error('Error al obtener productos:', error)
-    alert('Error al cargar los productos')
-  } finally {
-    setIsLoading(false)
-  }
-}
-
-const fetchCategorias = async () => {
-  try {
-    const response = await axios.get(`${API_URL}/api/categorias`)
-    setCategorias(response.data)
-  } catch (error) {
-    console.error('Error al obtener categorías:', error)
-  }
-}
-
-const handleCreateProducto = async (e) => {
-  e.preventDefault()
-  try {
-    const productoData = {
-      ...newProducto,
-      precio: parseFloat(newProducto.precio),
-      id_categoria: newProducto.id_categoria ? parseInt(newProducto.id_categoria) : null
+      const statsResponse = await axios.get(`${API_URL}/api/productos/stats/resumen`)
+      setStats(statsResponse.data)
+    } catch (error) {
+      console.error('Error al obtener productos:', error)
+      alert('Error al cargar los productos')
+    } finally {
+      setIsLoading(false)
     }
-    await axios.post(`${API_URL}/api/productos`, productoData)
-    alert('✅ Producto único creado exitosamente')
-    setShowModal(false)
-    setNewProducto({ nombre: '', descripcion: '', precio: '', id_categoria: '', imagen_url: '' })
-    fetchProductos()
-  } catch (error) {
-    console.error('Error al crear producto:', error)
-    alert(error.response?.data?.error || 'Error al crear el producto')
   }
-}
 
-const handleUpdateProducto = async (e) => {
-  e.preventDefault()
-  try {
-    const productoData = {
-      ...editingProduct,
-      precio: parseFloat(editingProduct.precio),
-      id_categoria: editingProduct.id_categoria ? parseInt(editingProduct.id_categoria) : null
+  const fetchCategorias = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/categorias`)
+      setCategorias(response.data)
+    } catch (error) {
+      console.error('Error al obtener categorías:', error)
     }
-    await axios.put(`${API_URL}/api/productos/${editingProduct.id_producto}`, productoData)
-    alert('✅ Producto actualizado exitosamente')
-    setShowModal(false)
-    setEditingProduct(null)
-    fetchProductos()
-  } catch (error) {
-    console.error('Error al actualizar producto:', error)
-    alert(error.response?.data?.error || 'Error al actualizar el producto')
   }
-}
 
-const confirmDelete = (id) => {
-  setDeletingProductId(id)
-  setShowDeleteConfirm(true)
-}
+  const handleFileChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    
+    if (file.size > 5 * 1024 * 1024) {
+      alert('⚠️ La imagen no puede pesar más de 5MB')
+      return
+    }
 
-const handleDeleteProducto = async () => {
-  try {
-    await axios.delete(`${API_URL}/api/productos/${deletingProductId}`)
-    alert('✅ Producto eliminado exitosamente')
-    setShowDeleteConfirm(false)
-    setDeletingProductId(null)
-    fetchProductos()
-  } catch (error) {
-    console.error('Error al eliminar producto:', error)
-    alert(error.response?.data?.error || 'Error al eliminar el producto')
-    setShowDeleteConfirm(false)
+    if (!file.type.startsWith('image/')) {
+      alert('⚠️ Solo se permiten archivos de imagen')
+      return
+    }
+
+    setFilePreview(URL.createObjectURL(file))
+    
+    if (editingProduct) {
+      setEditingProduct({ ...editingProduct, imagen_file: file, imagen_url: '' })
+    } else {
+      setNewProducto({ ...newProducto, imagen_file: file, imagen_url: '' })
+    }
   }
-}
 
-const handleCreateCategoria = async (e) => {
-  e.preventDefault()
-  try {
-    await axios.post(`${API_URL}/api/categorias`, newCategoria)
-    alert('✅ Categoría creada exitosamente')
-    setShowCategoryModal(false)
-    setNewCategoria({ nombre: '', descripcion: '' })
-    fetchCategorias()
-  } catch (error) {
-    console.error('Error al crear categoría:', error)
-    alert('Error al crear la categoría')
+  const handleCreateProducto = async (e) => {
+    e.preventDefault()
+    setIsUploading(true)
+    
+    try {
+      const formData = new FormData()
+      formData.append('nombre', newProducto.nombre)
+      formData.append('descripcion', newProducto.descripcion || '')
+      formData.append('precio', parseFloat(newProducto.precio))
+      
+      if (newProducto.id_categoria) {
+        formData.append('id_categoria', parseInt(newProducto.id_categoria))
+      }
+      
+      if (newProducto.imagen_file) {
+        formData.append('imagen', newProducto.imagen_file)
+      } else if (newProducto.imagen_url) {
+        formData.append('imagen_url', newProducto.imagen_url)
+      }
+
+      await axios.post(`${API_URL}/api/productos`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+
+      alert('✅ Producto único creado exitosamente')
+      setShowModal(false)
+      setFilePreview(null)
+      setNewProducto({ nombre: '', descripcion: '', precio: '', id_categoria: '', imagen_url: '', imagen_file: null })
+      fetchProductos()
+    } catch (error) {
+      console.error('Error al crear producto:', error)
+      alert(error.response?.data?.error || 'Error al crear el producto')
+    } finally {
+      setIsUploading(false)
+    }
   }
-}
 
+  const handleUpdateProducto = async (e) => {
+    e.preventDefault()
+    setIsUploading(true)
+    
+    try {
+      const formData = new FormData()
+      formData.append('nombre', editingProduct.nombre)
+      formData.append('descripcion', editingProduct.descripcion || '')
+      formData.append('precio', parseFloat(editingProduct.precio))
+      
+      if (editingProduct.id_categoria) {
+        formData.append('id_categoria', parseInt(editingProduct.id_categoria))
+      }
+      
+      if (editingProduct.imagen_file) {
+        formData.append('imagen', editingProduct.imagen_file)
+      } else if (editingProduct.imagen_url) {
+        formData.append('imagen_url', editingProduct.imagen_url)
+      }
+
+      await axios.put(`${API_URL}/api/productos/${editingProduct.id_producto}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+
+      alert('✅ Producto actualizado exitosamente')
+      setShowModal(false)
+      setFilePreview(null)
+      setEditingProduct(null)
+      fetchProductos()
+    } catch (error) {
+      console.error('Error al actualizar producto:', error)
+      alert(error.response?.data?.error || 'Error al actualizar el producto')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const confirmDelete = (id) => {
+    setDeletingProductId(id)
+    setShowDeleteConfirm(true)
+  }
+
+  const handleDeleteProducto = async () => {
+    try {
+      await axios.delete(`${API_URL}/api/productos/${deletingProductId}`)
+      alert('✅ Producto eliminado exitosamente')
+      setShowDeleteConfirm(false)
+      setDeletingProductId(null)
+      fetchProductos()
+    } catch (error) {
+      console.error('Error al eliminar producto:', error)
+      alert(error.response?.data?.error || 'Error al eliminar el producto')
+      setShowDeleteConfirm(false)
+    }
+  }
+
+  const handleCreateCategoria = async (e) => {
+    e.preventDefault()
+    try {
+      await axios.post(`${API_URL}/api/categorias`, newCategoria)
+      alert('✅ Categoría creada exitosamente')
+      setShowCategoryModal(false)
+      setNewCategoria({ nombre: '', descripcion: '' })
+      fetchCategorias()
+    } catch (error) {
+      console.error('Error al crear categoría:', error)
+      alert('Error al crear la categoría')
+    }
+  }
 
   const openEditModal = (producto) => {
     if (producto.vendido) {
       alert('⚠️ No puedes editar un producto que ya ha sido vendido')
       return
     }
-    setEditingProduct(producto)
+    setEditingProduct({...producto, imagen_file: null})
+    setFilePreview(producto.imagen_url || null)
     setShowModal(true)
   }
 
   const openCreateModal = () => {
     setEditingProduct(null)
-    setNewProducto({ nombre: '', descripcion: '', precio: '', id_categoria: '', imagen_url: '' })
+    setFilePreview(null)
+    setNewProducto({ nombre: '', descripcion: '', precio: '', id_categoria: '', imagen_url: '', imagen_file: null })
     setShowModal(true)
   }
 
@@ -174,7 +232,6 @@ const handleCreateCategoria = async (e) => {
       <Sidebar user={user} />
       
       <div className="flex-1 overflow-auto lg:ml-0 pt-16 lg:pt-0">
-        {/* Header */}
         <div className="bg-white shadow-md border-b border-gray-200 sticky top-0 z-20">
           <div className="px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -214,7 +271,6 @@ const handleCreateCategoria = async (e) => {
         </div>
 
         <div className="p-4 sm:p-6 lg:p-8">
-          {/* Estadísticas */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-5 text-white shadow-xl transform hover:scale-105 transition-all duration-200">
               <div className="flex items-center justify-between">
@@ -262,7 +318,6 @@ const handleCreateCategoria = async (e) => {
             </div>
           </div>
 
-          {/* Barra de búsqueda y filtros */}
           <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mb-6 space-y-4">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -305,7 +360,6 @@ const handleCreateCategoria = async (e) => {
             </div>
           </div>
 
-          {/* Vista de tarjetas (Siempre visible, responsive) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {isLoading ? (
               <div className="col-span-full flex items-center justify-center py-20">
@@ -337,7 +391,6 @@ const handleCreateCategoria = async (e) => {
                     producto.vendido ? 'border-red-200' : 'border-green-200'
                   }`}
                 >
-                  {/* Imagen */}
                   <div className="relative h-52 bg-gradient-to-br from-indigo-500 to-purple-500 overflow-hidden">
                     {producto.imagen_url ? (
                       <img 
@@ -353,7 +406,6 @@ const handleCreateCategoria = async (e) => {
                       </div>
                     )}
                     
-                    {/* Badge de estado */}
                     <div className="absolute top-3 right-3">
                       {producto.vendido ? (
                         <span className="bg-red-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center">
@@ -372,7 +424,6 @@ const handleCreateCategoria = async (e) => {
                       )}
                     </div>
 
-                    {/* Badge de ID */}
                     <div className="absolute top-3 left-3">
                       <span className="bg-black bg-opacity-50 backdrop-blur-sm text-white px-2 py-1 rounded-lg text-xs font-semibold">
                         ID: {producto.id_producto}
@@ -380,7 +431,6 @@ const handleCreateCategoria = async (e) => {
                     </div>
                   </div>
 
-                  {/* Contenido */}
                   <div className="p-5">
                     <div className="mb-3">
                       <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-2 min-h-[3.5rem]">
@@ -395,7 +445,6 @@ const handleCreateCategoria = async (e) => {
                       {producto.descripcion || 'Sin descripción disponible'}
                     </p>
 
-                    {/* Precio */}
                     <div className="flex items-center justify-between mb-4 pb-4 border-b-2 border-gray-100">
                       <div className="flex items-center">
                         <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -407,7 +456,6 @@ const handleCreateCategoria = async (e) => {
                       </div>
                     </div>
 
-                    {/* Botones de acción */}
                     <div className="flex gap-2">
                       <button 
                         onClick={() => openEditModal(producto)}
@@ -449,8 +497,7 @@ const handleCreateCategoria = async (e) => {
             )}
           </div>
 
-          {/* Resumen de resultados */}
-          <div className="mt-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 border-2 border-indigo-100">
+<div className="mt-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-6 border-2 border-indigo-100">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center space-x-4">
                 <div className="bg-white rounded-xl p-3 shadow-sm">
@@ -478,7 +525,7 @@ const handleCreateCategoria = async (e) => {
         </div>
       </div>
 
-      {/* Modal Crear/Editar Producto */}
+      {/* MODAL CREAR/EDITAR PRODUCTO CON CLOUDINARY */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -496,8 +543,10 @@ const handleCreateCategoria = async (e) => {
                   onClick={() => {
                     setShowModal(false)
                     setEditingProduct(null)
+                    setFilePreview(null)
                   }}
-                  className="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-all"
+                  disabled={isUploading}
+                  className="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-all disabled:opacity-50"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -514,12 +563,13 @@ const handleCreateCategoria = async (e) => {
                 <input
                   type="text"
                   required
+                  disabled={isUploading}
                   value={editingProduct ? editingProduct.nombre : newProducto.nombre}
                   onChange={(e) => editingProduct 
                     ? setEditingProduct({...editingProduct, nombre: e.target.value})
                     : setNewProducto({...newProducto, nombre: e.target.value})
                   }
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all disabled:opacity-50"
                   placeholder="Ej: Collar de Plata Artesanal"
                 />
               </div>
@@ -530,12 +580,13 @@ const handleCreateCategoria = async (e) => {
                 </label>
                 <textarea
                   rows="3"
+                  disabled={isUploading}
                   value={editingProduct ? editingProduct.descripcion : newProducto.descripcion}
                   onChange={(e) => editingProduct
                     ? setEditingProduct({...editingProduct, descripcion: e.target.value})
                     : setNewProducto({...newProducto, descripcion: e.target.value})
                   }
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all resize-none"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all resize-none disabled:opacity-50"
                   placeholder="Describe las características únicas de este producto..."
                 ></textarea>
               </div>
@@ -547,12 +598,13 @@ const handleCreateCategoria = async (e) => {
                   </label>
                   <select
                     required
+                    disabled={isUploading}
                     value={editingProduct ? editingProduct.id_categoria : newProducto.id_categoria}
                     onChange={(e) => editingProduct
                       ? setEditingProduct({...editingProduct, id_categoria: e.target.value})
                       : setNewProducto({...newProducto, id_categoria: e.target.value})
                     }
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all disabled:opacity-50"
                   >
                     <option value="">Selecciona...</option>
                     {categorias.map((cat) => (
@@ -571,33 +623,117 @@ const handleCreateCategoria = async (e) => {
                     type="number"
                     step="0.01"
                     required
+                    disabled={isUploading}
                     value={editingProduct ? editingProduct.precio : newProducto.precio}
                     onChange={(e) => editingProduct
                       ? setEditingProduct({...editingProduct, precio: e.target.value})
                       : setNewProducto({...newProducto, precio: e.target.value})
                     }
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all disabled:opacity-50"
                     placeholder="0.00"
                   />
                 </div>
               </div>
 
-              <div>
+              {/* SECCIÓN DE IMAGEN CON CLOUDINARY */}
+              <div className="space-y-4 bg-gradient-to-br from-indigo-50 to-purple-50 p-5 rounded-xl border-2 border-indigo-100">
                 <label className="block text-sm font-bold text-gray-700 mb-2">
-                  🖼️ URL de Imagen
+                  📸 Imagen del Producto
                 </label>
-                <input
-                  type="url"
-                  value={editingProduct ? editingProduct.imagen_url : newProducto.imagen_url}
-                  onChange={(e) => editingProduct
-                    ? setEditingProduct({...editingProduct, imagen_url: e.target.value})
-                    : setNewProducto({...newProducto, imagen_url: e.target.value})
-                  }
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all"
-                  placeholder="https://ejemplo.com/imagen.jpg"
-                />
-                <p className="text-xs text-gray-500 mt-2">💡 Tip: Usa enlaces de Imgur, Cloudinary o similar</p>
+                
+                {filePreview && (
+                  <div className="relative mb-4">
+                    <img 
+                      src={filePreview} 
+                      alt="Preview" 
+                      className="w-full h-64 object-cover rounded-xl shadow-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFilePreview(null)
+                        if (editingProduct) {
+                          setEditingProduct({...editingProduct, imagen_file: null, imagen_url: ''})
+                        } else {
+                          setNewProducto({...newProducto, imagen_file: null, imagen_url: ''})
+                        }
+                      }}
+                      disabled={isUploading}
+                      className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition-all shadow-lg disabled:opacity-50"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-semibold text-indigo-700 mb-2">
+                    📷 Tomar foto o elegir archivo
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleFileChange}
+                    disabled={isUploading}
+                    className="w-full px-4 py-3 border-2 border-indigo-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer disabled:opacity-50"
+                  />
+                  <p className="text-xs text-gray-600 mt-2">
+                    📱 En móvil: toca para usar la cámara | 💻 En PC: elige un archivo (máx. 5MB)
+                  </p>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t-2 border-gray-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-4 bg-gradient-to-br from-indigo-50 to-purple-50 text-gray-600 font-semibold">O</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-indigo-700 mb-2">
+                    🔗 Pegar URL de imagen
+                  </label>
+                  <input
+                    type="url"
+                    disabled={isUploading}
+                    value={editingProduct ? editingProduct.imagen_url || '' : newProducto.imagen_url || ''}
+                    onChange={(e) => {
+                      const url = e.target.value
+                      if (url) {
+                        setFilePreview(url)
+                      }
+                      if (editingProduct) {
+                        setEditingProduct({...editingProduct, imagen_url: url, imagen_file: null})
+                      } else {
+                        setNewProducto({...newProducto, imagen_url: url, imagen_file: null})
+                      }
+                    }}
+                    className="w-full px-4 py-3 border-2 border-indigo-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all disabled:opacity-50"
+                    placeholder="https://ejemplo.com/imagen.jpg"
+                  />
+                  <p className="text-xs text-gray-600 mt-2">
+                    💡 Tip: La imagen se subirá automáticamente a Cloudinary
+                  </p>
+                </div>
               </div>
+
+              {isUploading && (
+                <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-4 flex items-center space-x-3">
+                  <svg className="animate-spin h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <div>
+                    <p className="text-sm font-semibold text-yellow-800">Subiendo imagen...</p>
+                    <p className="text-xs text-yellow-600">Por favor espera, esto puede tomar unos segundos</p>
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-3 pt-4">
                 <button
@@ -605,16 +741,29 @@ const handleCreateCategoria = async (e) => {
                   onClick={() => {
                     setShowModal(false)
                     setEditingProduct(null)
+                    setFilePreview(null)
                   }}
-                  className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition-all duration-200"
+                  disabled={isUploading}
+                  className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition-all duration-200 disabled:opacity-50"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                  disabled={isUploading}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {editingProduct ? '💾 Actualizar' : '✨ Crear Producto'}
+                  {isUploading ? (
+                    <span className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Subiendo...
+                    </span>
+                  ) : (
+                    editingProduct ? '💾 Actualizar' : '✨ Crear Producto'
+                  )}
                 </button>
               </div>
             </form>
@@ -622,7 +771,7 @@ const handleCreateCategoria = async (e) => {
         </div>
       )}
 
-      {/* Modal Nueva Categoría */}
+      {/* MODAL NUEVA CATEGORÍA */}
       {showCategoryModal && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full">
@@ -691,7 +840,7 @@ const handleCreateCategoria = async (e) => {
         </div>
       )}
 
-      {/* Modal Confirmación de Eliminación */}
+      {/* MODAL CONFIRMACIÓN ELIMINACIÓN */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full">
