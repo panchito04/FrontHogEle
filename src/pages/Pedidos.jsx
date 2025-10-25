@@ -14,6 +14,7 @@ function Pedidos({ user }) {
   const [showDetalleModal, setShowDetalleModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showPagoModal, setShowPagoModal] = useState(false)
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null)
   const [deletingPedidoId, setDeletingPedidoId] = useState(null)
   const [newPedido, setNewPedido] = useState({
@@ -23,10 +24,14 @@ function Pedidos({ user }) {
   })
   const [newDetalle, setNewDetalle] = useState({
     id_producto: '',
-    cantidad: '',
     precio_unitario: ''
   })
   const [editEstado, setEditEstado] = useState('')
+  const [pagoData, setPagoData] = useState({
+    monto: '',
+    metodo: '',
+    comprobante_url: ''
+  })
 
   // Abrir modal automáticamente si viene del Dashboard
   useEffect(() => {
@@ -78,6 +83,19 @@ function Pedidos({ user }) {
     }
   }
 
+  // Obtener productos disponibles (no vendidos o en pedidos)
+  const getProductosDisponibles = () => {
+    return productos.filter(producto => {
+      // Verificar si el producto ya está en algún pedido activo
+      const estaEnPedido = pedidos.some(pedido => {
+        if (pedido.estado === 'cancelado') return false
+        const detalles = detallesPedidos[pedido.id_pedido] || []
+        return detalles.some(d => d.id_producto === producto.id_producto)
+      })
+      return !estaEnPedido
+    })
+  }
+
   const handleCreatePedido = async (e) => {
     e.preventDefault()
     
@@ -97,7 +115,7 @@ function Pedidos({ user }) {
         alert('✅ Pedido creado exitosamente')
         setShowModal(false)
         setNewPedido({ id_cliente: '', observaciones: '', detalles: [] })
-        setNewDetalle({ id_producto: '', cantidad: '', precio_unitario: '' })
+        setNewDetalle({ id_producto: '', precio_unitario: '' })
         fetchData()
       } else {
         const errorData = await response.json()
@@ -134,8 +152,13 @@ function Pedidos({ user }) {
     }
   }
 
-  const confirmDelete = (id) => {
-    setDeletingPedidoId(id)
+  const confirmDelete = (pedido) => {
+    // Verificar si el pedido está pagado o entregado
+    if (pedido.estado === 'pagado' || pedido.estado === 'entregado') {
+      alert('❌ No se puede eliminar un pedido que está pagado o entregado')
+      return
+    }
+    setDeletingPedidoId(pedido.id_pedido)
     setShowDeleteConfirm(true)
   }
 
@@ -146,12 +169,13 @@ function Pedidos({ user }) {
       })
       
       if (response.ok) {
-        alert('✅ Pedido eliminado exitosamente')
+        alert('✅ Pedido eliminado exitosamente. Los productos están nuevamente disponibles.')
         setShowDeleteConfirm(false)
         setDeletingPedidoId(null)
         fetchData()
       } else {
-        alert('Error al eliminar el pedido')
+        const errorData = await response.json()
+        alert(`Error: ${errorData.error || 'Error al eliminar el pedido'}`)
       }
     } catch (error) {
       console.error('Error al eliminar pedido:', error)
@@ -160,25 +184,31 @@ function Pedidos({ user }) {
   }
 
   const agregarDetalle = () => {
-    if (!newDetalle.id_producto || !newDetalle.cantidad || !newDetalle.precio_unitario) {
+    if (!newDetalle.id_producto || !newDetalle.precio_unitario) {
       alert('Completa todos los campos del producto')
       return
     }
 
     const producto = productos.find(p => p.id_producto === parseInt(newDetalle.id_producto))
     
+    // Verificar si el producto ya está en el pedido
+    if (newPedido.detalles.some(d => d.id_producto === parseInt(newDetalle.id_producto))) {
+      alert('Este producto ya está agregado al pedido')
+      return
+    }
+    
     setNewPedido({
       ...newPedido,
       detalles: [...newPedido.detalles, {
         ...newDetalle,
         id_producto: parseInt(newDetalle.id_producto),
-        cantidad: parseInt(newDetalle.cantidad),
+        cantidad: 1, // Siempre es 1 porque los productos son únicos
         precio_unitario: parseFloat(newDetalle.precio_unitario),
         nombre_producto: producto?.nombre
       }]
     })
     
-    setNewDetalle({ id_producto: '', cantidad: '', precio_unitario: '' })
+    setNewDetalle({ id_producto: '', precio_unitario: '' })
   }
 
   const eliminarDetalle = (index) => {
@@ -192,9 +222,51 @@ function Pedidos({ user }) {
     const producto = productos.find(p => p.id_producto === parseInt(id_producto))
     setNewDetalle({
       id_producto,
-      cantidad: newDetalle.cantidad,
       precio_unitario: producto?.precio || ''
     })
+  }
+
+  const abrirModalPago = (pedido) => {
+    setPedidoSeleccionado(pedido)
+    const total = calcularTotalPedido(pedido.id_pedido)
+    setPagoData({
+      monto: total.toFixed(2),
+      metodo: '',
+      comprobante_url: ''
+    })
+    setShowPagoModal(true)
+  }
+
+  const handleRegistrarPago = async (e) => {
+    e.preventDefault()
+    
+    try {
+      // Registrar el pago
+      const pagoResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/pagos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_pedido: pedidoSeleccionado.id_pedido,
+          monto: parseFloat(pagoData.monto),
+          metodo: pagoData.metodo,
+          comprobante_url: pagoData.comprobante_url || null
+        })
+      })
+      
+      if (!pagoResponse.ok) {
+        const errorData = await pagoResponse.json()
+        throw new Error(errorData.error || 'Error al registrar el pago')
+      }
+
+      alert('✅ Pago registrado exitosamente y pedido marcado como pagado')
+      setShowPagoModal(false)
+      setPedidoSeleccionado(null)
+      setPagoData({ monto: '', metodo: '', comprobante_url: '' })
+      fetchData()
+    } catch (error) {
+      console.error('Error al registrar pago:', error)
+      alert(`Error: ${error.message}`)
+    }
   }
 
   const getClienteNombre = (id_cliente) => {
@@ -211,7 +283,6 @@ function Pedidos({ user }) {
     const estados = {
       'pendiente': 'bg-yellow-100 text-yellow-800',
       'pagado': 'bg-green-100 text-green-800',
-      'enviado': 'bg-blue-100 text-blue-800',
       'entregado': 'bg-purple-100 text-purple-800',
       'cancelado': 'bg-red-100 text-red-800'
     }
@@ -394,6 +465,17 @@ function Pedidos({ user }) {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                               </svg>
                             </button>
+                            {pedido.estado === 'pendiente' && (
+                              <button 
+                                onClick={() => abrirModalPago(pedido)}
+                                className="text-blue-600 hover:text-blue-900 mr-3 transition-colors"
+                                title="Registrar pago"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                              </button>
+                            )}
                             <button 
                               onClick={() => editarEstado(pedido)}
                               className="text-green-600 hover:text-green-900 mr-3 transition-colors"
@@ -404,7 +486,7 @@ function Pedidos({ user }) {
                               </svg>
                             </button>
                             <button 
-                              onClick={() => confirmDelete(pedido.id_pedido)}
+                              onClick={() => confirmDelete(pedido)}
                               className="text-red-600 hover:text-red-900 transition-colors"
                               title="Eliminar"
                             >
@@ -506,6 +588,17 @@ function Pedidos({ user }) {
                         </svg>
                         <span className="text-sm">Ver</span>
                       </button>
+                      {pedido.estado === 'pendiente' && (
+                        <button 
+                          onClick={() => abrirModalPago(pedido)}
+                          className="flex-1 p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center"
+                        >
+                          <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                          </svg>
+                          <span className="text-sm">Pagar</span>
+                        </button>
+                      )}
                       <button 
                         onClick={() => editarEstado(pedido)}
                         className="flex-1 p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors flex items-center justify-center"
@@ -516,7 +609,7 @@ function Pedidos({ user }) {
                         <span className="text-sm">Editar</span>
                       </button>
                       <button 
-                        onClick={() => confirmDelete(pedido.id_pedido)}
+                        onClick={() => confirmDelete(pedido)}
                         className="flex-1 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -598,29 +691,23 @@ function Pedidos({ user }) {
               <div className="border-t pt-4">
                 <h4 className="text-lg font-bold text-gray-900 mb-3">Productos del Pedido</h4>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                   <div>
                     <select
                       value={newDetalle.id_producto}
                       onChange={(e) => handleProductoChange(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 text-sm"
                     >
-                      <option value="">Producto</option>
-                      {productos.map(producto => (
+                      <option value="">Seleccionar producto</option>
+                      {getProductosDisponibles().map(producto => (
                         <option key={producto.id_producto} value={producto.id_producto}>
                           {producto.nombre}
                         </option>
                       ))}
                     </select>
-                  </div>
-                  <div>
-                    <input
-                      type="number"
-                      value={newDetalle.cantidad}
-                      onChange={(e) => setNewDetalle({...newDetalle, cantidad: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 text-sm"
-                      placeholder="Cantidad"
-                    />
+                    {getProductosDisponibles().length === 0 && (
+                      <p className="text-xs text-red-500 mt-1">No hay productos disponibles</p>
+                    )}
                   </div>
                   <div>
                     <input
@@ -683,7 +770,7 @@ function Pedidos({ user }) {
                   onClick={() => {
                     setShowModal(false)
                     setNewPedido({ id_cliente: '', observaciones: '', detalles: [] })
-                    setNewDetalle({ id_producto: '', cantidad: '', precio_unitario: '' })
+                    setNewDetalle({ id_producto: '', precio_unitario: '' })
                   }}
                   className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition duration-200 text-sm sm:text-base"
                 >
@@ -722,10 +809,11 @@ function Pedidos({ user }) {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent"
                 >
                   <option value="pendiente">Pendiente</option>
-                  <option value="pagado">Pagado</option>
                   <option value="entregado">Entregado</option>
-                  <option value="cancelado">Cancelado</option>
                 </select>
+                <p className="text-xs text-gray-500 mt-2">
+                  Nota: Para marcar como "Pagado" registra el pago directamente en el pedido
+                </p>
               </div>
 
               <div className="flex space-x-3 pt-4">
@@ -745,6 +833,94 @@ function Pedidos({ user }) {
                   className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition duration-200"
                 >
                   Actualizar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Registrar Pago */}
+      {showPagoModal && pedidoSeleccionado && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 sm:p-6 text-white">
+              <h3 className="text-xl sm:text-2xl font-bold">💳 Registrar Pago</h3>
+              <p className="text-blue-100 mt-1 text-sm">Pedido #{pedidoSeleccionado.id_pedido}</p>
+            </div>
+            
+            <form onSubmit={handleRegistrarPago} className="p-4 sm:p-6 space-y-4">
+              <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+                <p className="text-sm text-gray-600 mb-1">Cliente</p>
+                <p className="text-lg font-bold text-gray-900">{getClienteNombre(pedidoSeleccionado.id_cliente)}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Monto (Bs.) *
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  value={pagoData.monto}
+                  onChange={(e) => setPagoData({...pagoData, monto: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  placeholder="0.00"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Total del pedido: Bs. {calcularTotalPedido(pedidoSeleccionado.id_pedido).toFixed(2)}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Método de Pago *
+                </label>
+                <select
+                  required
+                  value={pagoData.metodo}
+                  onChange={(e) => setPagoData({...pagoData, metodo: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                >
+                  <option value="">Seleccionar método</option>
+                  <option value="efectivo">Efectivo</option>
+                  <option value="transferencia">Transferencia Bancaria</option>
+                  <option value="qr">QR</option>
+                  <option value="tarjeta">Tarjeta</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  URL del Comprobante (Opcional)
+                </label>
+                <input
+                  type="url"
+                  value={pagoData.comprobante_url}
+                  onChange={(e) => setPagoData({...pagoData, comprobante_url: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPagoModal(false)
+                    setPedidoSeleccionado(null)
+                    setPagoData({ monto: '', metodo: '', comprobante_url: '' })
+                  }}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition duration-200"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition duration-200"
+                >
+                  Registrar Pago
                 </button>
               </div>
             </form>
