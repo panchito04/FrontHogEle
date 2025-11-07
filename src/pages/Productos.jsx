@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import Sidebar from '../components/Sidebar'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000'
 
@@ -345,7 +346,9 @@ function Productos({ user }) {
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="flex-1 overflow-auto pt-16 lg:pt-0">
+    <Sidebar user={user} />  {/* ← AGREGAR ESTA LÍNEA */}
+    
+    <div className="flex-1 overflow-auto pt-16 lg:pt-0">
         <div className="bg-white shadow-md border-b border-gray-200 sticky top-0 z-20">
           <div className="px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
