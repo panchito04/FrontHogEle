@@ -23,6 +23,7 @@ function Clientes({ user }) {
   }, [location])
 
   
+  
   useEffect(() => {
     fetchClientes()
   }, [])
