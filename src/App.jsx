@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useState } from 'react'
+
 import Login from './components/Login'
 import Home from './pages/Home'
 import Register from './components/Register'
@@ -8,12 +9,16 @@ import Productos from './pages/Productos'
 import Pedidos from './pages/Pedidos'
 import Pagos from './pages/Pagos'
 
+import DoubleBackHandler from './components/DoubleBackHandler'   // ← IMPORTANTE
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState(null)
 
   return (
     <BrowserRouter>
+      <DoubleBackHandler />   {/* ← APLICA A TODA LA APP */}
+
       <Routes>
         <Route 
           path="/login" 
@@ -23,6 +28,7 @@ function App() {
             <Login setIsAuthenticated={setIsAuthenticated} setUser={setUser} />
           } 
         />
+
         <Route 
           path="/home" 
           element={
@@ -31,6 +37,7 @@ function App() {
             <Navigate to="/login" />
           } 
         />
+
         <Route 
           path="/clientes" 
           element={
@@ -39,6 +46,7 @@ function App() {
             <Navigate to="/login" />
           } 
         />
+
         <Route 
           path="/productos"
           element={
@@ -56,6 +64,7 @@ function App() {
             <Navigate to="/login" />
           } 
         />
+
         <Route 
           path="/pagos"
           element={
@@ -64,6 +73,7 @@ function App() {
             <Navigate to="/login" />
           } 
         />
+
         <Route 
           path="/register" 
           element={
@@ -72,6 +82,7 @@ function App() {
             <Register setIsAuthenticated={setIsAuthenticated} setUser={setUser} />
           } 
         />
+
         <Route path="/" element={<Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>
