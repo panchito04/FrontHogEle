@@ -34,7 +34,8 @@ function Productos({ user }) {
     id_categoria: '',
     id_caja: '',
     imagen_url: '',
-    imagen_file: null
+    imagen_file: null,
+    cantidad: 1
   })
   
   const [newCategoria, setNewCategoria] = useState({
@@ -122,6 +123,7 @@ function Productos({ user }) {
       formData.append('nombre', newProducto.nombre)
       formData.append('descripcion', newProducto.descripcion || '')
       formData.append('precio', parseFloat(newProducto.precio))
+      formData.append('cantidad', parseInt(newProducto.cantidad) || 1)
       
       if (newProducto.id_categoria) {
         formData.append('id_categoria', parseInt(newProducto.id_categoria))
@@ -144,7 +146,7 @@ function Productos({ user }) {
       alert('✅ Producto creado exitosamente')
       setShowModal(false)
       setFilePreview(null)
-      setNewProducto({ nombre: '', descripcion: '', precio: '', id_categoria: '', id_caja: '', imagen_url: '', imagen_file: null })
+      setNewProducto({ nombre: '', descripcion: '', precio: '', id_categoria: '', id_caja: '', imagen_url: '', imagen_file: null,cantidad: 1 })
       fetchProductos()
       fetchCajas()
     } catch (error) {
@@ -164,6 +166,7 @@ function Productos({ user }) {
       formData.append('nombre', editingProduct.nombre)
       formData.append('descripcion', editingProduct.descripcion || '')
       formData.append('precio', parseFloat(editingProduct.precio))
+      formData.append('cantidad', parseInt(editingProduct.cantidad) || 1) 
       
       if (editingProduct.id_categoria) {
         formData.append('id_categoria', parseInt(editingProduct.id_categoria))
@@ -609,15 +612,21 @@ function Productos({ user }) {
                         </p>
 
                         <div className="flex items-center justify-between mb-4 pb-4 border-b-2 border-gray-100">
-                          <div className="flex items-center">
-                            <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span className="text-2xl font-bold text-green-600">
-                              Bs. {producto.precio?.toFixed(2)}
-                            </span>
-                          </div>
-                        </div>
+  <div className="flex items-center">
+    <svg className="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span className="text-2xl font-bold text-green-600">
+      Bs. {producto.precio?.toFixed(2)}
+    </span>
+  </div>
+  <div className="text-right">
+    <p className="text-xs text-gray-500">Stock</p>
+    <p className="text-lg font-bold text-indigo-600">
+      {producto.cantidad_disponible || 0}/{producto.cantidad || 0}
+    </p>
+  </div>
+</div>
 
                         <div className="flex gap-2">
                           <button 
@@ -847,6 +856,24 @@ function Productos({ user }) {
                     placeholder="0.00"
                   />
                 </div>
+                <div>
+    <label className="block text-sm font-bold text-gray-700 mb-2">
+      📦 Cantidad *
+    </label>
+    <input
+      type="number"
+      min="1"
+      required
+      disabled={isUploading}
+      value={editingProduct ? editingProduct.cantidad : newProducto.cantidad}
+      onChange={(e) => editingProduct
+        ? setEditingProduct({...editingProduct, cantidad: e.target.value})
+        : setNewProducto({...newProducto, cantidad: e.target.value})
+      }
+      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all disabled:opacity-50"
+      placeholder="1"
+    />
+  </div>
 
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">
