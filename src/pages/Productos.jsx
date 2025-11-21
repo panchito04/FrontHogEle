@@ -60,51 +60,94 @@ function Productos({ user }) {
     fetchCajas()
   }, [])
 
-  useEffect(() => {
+  // Manejo del botón "atrás" con doble confirmación
+useEffect(() => {
+  let backPressCount = 0
+  let resetTimeout = null
+
   const handlePopState = () => {
-    if (showCamera) {
-      setShowCamera(false)
+    // Si hay modal abierto, cerrarlo directamente sin confirmación
+    if (showCamera || showModal || showBoxModal || showBoxDetailModal || showCategoryModal || showDeleteConfirm) {
+      if (showCamera) setShowCamera(false)
+      else if (showModal) {
+        setShowModal(false)
+        setEditingProduct(null)
+        setFilePreview(null)
+      }
+      else if (showBoxModal) {
+        setShowBoxModal(false)
+        setEditingBox(null)
+      }
+      else if (showBoxDetailModal) {
+        setShowBoxDetailModal(false)
+        setSelectedBox(null)
+      }
+      else if (showCategoryModal) setShowCategoryModal(false)
+      else if (showDeleteConfirm) {
+        setShowDeleteConfirm(false)
+        setDeletingProductId(null)
+      }
       window.history.pushState(null, '', window.location.href)
-    } else if (showModal) {
-      setShowModal(false)
-      setEditingProduct(null)
-      setFilePreview(null)
+      return
+    }
+
+    // Si no hay modal, aplicar confirmación de doble back
+    backPressCount++
+
+    if (backPressCount === 1) {
+      // Primera vez: mostrar mensaje
+      const existingToast = document.getElementById('back-toast')
+      if (existingToast) existingToast.remove()
+
+      const toast = document.createElement('div')
+      toast.id = 'back-toast'
+      toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-[9999] flex items-center space-x-2 animate-slide-up'
+      toast.innerHTML = `
+        <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span class="font-medium">Presiona atrás nuevamente para volver</span>
+      `
+      document.body.appendChild(toast)
+
+      setTimeout(() => {
+        const t = document.getElementById('back-toast')
+        if (t) t.remove()
+      }, 3000)
+
       window.history.pushState(null, '', window.location.href)
-    } else if (showBoxModal) {
-      setShowBoxModal(false)
-      setEditingBox(null)
-      window.history.pushState(null, '', window.location.href)
-    } else if (showBoxDetailModal) {
-      setShowBoxDetailModal(false)
-      setSelectedBox(null)
-      window.history.pushState(null, '', window.location.href)
-    } else if (showCategoryModal) {
-      setShowCategoryModal(false)
-      window.history.pushState(null, '', window.location.href)
-    } else if (showDeleteConfirm) {
-      setShowDeleteConfirm(false)
-      setDeletingProductId(null)
-      window.history.pushState(null, '', window.location.href)
+
+      if (resetTimeout) clearTimeout(resetTimeout)
+      resetTimeout = setTimeout(() => {
+        backPressCount = 0
+      }, 3000)
+    } else if (backPressCount === 2) {
+      // Segunda vez: permitir navegación
+      backPressCount = 0
+      if (resetTimeout) clearTimeout(resetTimeout)
+      const toast = document.getElementById('back-toast')
+      if (toast) toast.remove()
+      // No hacer nada, dejar que el navegador maneje la navegación naturalmente
+      window.history.back()
     }
   }
 
-  // Agregar entrada al historial cuando se abre un modal
-  if (showCamera || showModal || showBoxModal || showBoxDetailModal || showCategoryModal || showDeleteConfirm) {
+  // Solo agregar listener si no hay modales abiertos
+  const hasModalOpen = showCamera || showModal || showBoxModal || showBoxDetailModal || showCategoryModal || showDeleteConfirm
+  
+  if (hasModalOpen) {
     window.history.pushState(null, '', window.location.href)
-    window.addEventListener('popstate', handlePopState)
   }
+
+  window.addEventListener('popstate', handlePopState)
 
   return () => {
     window.removeEventListener('popstate', handlePopState)
+    if (resetTimeout) clearTimeout(resetTimeout)
+    const toast = document.getElementById('back-toast')
+    if (toast) toast.remove()
   }
-}, [
-  showCamera,
-  showModal,
-  showBoxModal,
-  showBoxDetailModal,
-  showCategoryModal,
-  showDeleteConfirm
-])
+}, [showCamera, showModal, showBoxModal, showBoxDetailModal, showCategoryModal, showDeleteConfirm])
   const fetchProductos = async () => {
     try {
       setIsLoading(true)
