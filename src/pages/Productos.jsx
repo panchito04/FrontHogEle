@@ -62,9 +62,10 @@ function Productos({ user }) {
     fetchCajas()
   }, [])
 
+
   // Manejo del botón "atrás" con doble confirmación
 useEffect(() => {
-  let backPressCount = 0
+  const backPressCountRef = { current: 0 }
   let resetTimeout = null
 
   const handlePopState = () => {
@@ -94,10 +95,12 @@ useEffect(() => {
     }
 
     // Si no hay modal, aplicar confirmación de doble back
-    backPressCount++
+    backPressCountRef.current++
 
-    if (backPressCount === 1) {
-      // Primera vez: mostrar mensaje
+    if (backPressCountRef.current === 1) {
+      // Primera vez: mostrar mensaje y agregar entrada al historial
+      window.history.pushState(null, '', window.location.href)
+      
       const existingToast = document.getElementById('back-toast')
       if (existingToast) existingToast.remove()
 
@@ -117,32 +120,23 @@ useEffect(() => {
         if (t) t.remove()
       }, 3000)
 
-      window.history.pushState(null, '', window.location.href)
-
       if (resetTimeout) clearTimeout(resetTimeout)
       resetTimeout = setTimeout(() => {
-        backPressCount = 0
+        backPressCountRef.current = 0
       }, 3000)
-    } else if (backPressCount === 2) {
-  // Segunda vez: navegar usando React Router
-  backPressCount = 0
-  if (resetTimeout) clearTimeout(resetTimeout)
-  const toast = document.getElementById('back-toast')
-  if (toast) toast.remove()
-  
-  // Remover el listener temporalmente para evitar loop
-  window.removeEventListener('popstate', handlePopState)
-  navigate(-1)
-}
+    } else if (backPressCountRef.current >= 2) {
+      // Segunda vez: navegar usando React Router
+      backPressCountRef.current = 0
+      if (resetTimeout) clearTimeout(resetTimeout)
+      const toast = document.getElementById('back-toast')
+      if (toast) toast.remove()
+      
+      navigate(-1)
+    }
   }
 
-  // Solo agregar listener si no hay modales abiertos
-  const hasModalOpen = showCamera || showModal || showBoxModal || showBoxDetailModal || showCategoryModal || showDeleteConfirm
-  
-  if (hasModalOpen) {
-    window.history.pushState(null, '', window.location.href)
-  }
-
+  // Agregar entrada al historial cuando se monta el componente
+  window.history.pushState(null, '', window.location.href)
   window.addEventListener('popstate', handlePopState)
 
   return () => {
@@ -151,8 +145,7 @@ useEffect(() => {
     const toast = document.getElementById('back-toast')
     if (toast) toast.remove()
   }
-}, [showCamera, showModal, showBoxModal, showBoxDetailModal, showCategoryModal, showDeleteConfirm])
-
+}, [navigate, showCamera, showModal, showBoxModal, showBoxDetailModal, showCategoryModal, showDeleteConfirm])
 
   const fetchProductos = async () => {
     try {
