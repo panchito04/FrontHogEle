@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import Sidebar from '../components/Sidebar'
+import CameraCapture from '../components/CameraCapture'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000'
 
@@ -26,6 +27,7 @@ function Productos({ user }) {
   const [filePreview, setFilePreview] = useState(null)
   const [isUploading, setIsUploading] = useState(false)
   const [activeTab, setActiveTab] = useState('productos')
+  const [showCamera, setShowCamera] = useState(false)
   
   const [newProducto, setNewProducto] = useState({
     nombre: '',
@@ -91,28 +93,42 @@ function Productos({ user }) {
     }
   }
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    
-    if (file.size > 5 * 1024 * 1024) {
-      alert('⚠️ La imagen no puede pesar más de 5MB')
-      return
-    }
-
-    if (!file.type.startsWith('image/')) {
-      alert('⚠️ Solo se permiten archivos de imagen')
-      return
-    }
-
-    setFilePreview(URL.createObjectURL(file))
-    
-    if (editingProduct) {
-      setEditingProduct({ ...editingProduct, imagen_file: file, imagen_url: '' })
-    } else {
-      setNewProducto({ ...newProducto, imagen_file: file, imagen_url: '' })
-    }
+  // Reemplaza la función handleFileChange existente (alrededor de la línea 90)
+const handleFileChange = (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+  
+  if (file.size > 5 * 1024 * 1024) {
+    alert('⚠️ La imagen no puede pesar más de 5MB')
+    return
   }
+
+  if (!file.type.startsWith('image/')) {
+    alert('⚠️ Solo se permiten archivos de imagen')
+    return
+  }
+
+  setFilePreview(URL.createObjectURL(file))
+  
+  if (editingProduct) {
+    setEditingProduct({ ...editingProduct, imagen_file: file, imagen_url: '' })
+  } else {
+    setNewProducto({ ...newProducto, imagen_file: file, imagen_url: '' })
+  }
+}
+
+// AGREGAR esta nueva función
+const handleCameraCapture = (file, previewUrl) => {
+  setFilePreview(previewUrl)
+  
+  if (editingProduct) {
+    setEditingProduct({ ...editingProduct, imagen_file: file, imagen_url: '' })
+  } else {
+    setNewProducto({ ...newProducto, imagen_file: file, imagen_url: '' })
+  }
+  
+  setShowCamera(false)
+}
 
   const handleCreateProducto = async (e) => {
     e.preventDefault()
@@ -953,19 +969,38 @@ function Productos({ user }) {
                   </div>
                 )}
 
-                <div>
-                  <label className="block text-sm font-semibold text-indigo-700 mb-2">
-                    📷 Subir imagen
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    onChange={handleFileChange}
-                    disabled={isUploading}
-                    className="w-full px-4 py-3 border-2 border-indigo-300 rounded-xl transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer disabled:opacity-50"
-                  />
-                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+  <div>
+    <label className="block text-sm font-semibold text-indigo-700 mb-2">
+      📷 Tomar foto
+    </label>
+    <button
+      type="button"
+      onClick={() => setShowCamera(true)}
+      disabled={isUploading}
+      className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 transition-all disabled:opacity-50 flex items-center justify-center space-x-2"
+    >
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+      <span>Abrir Cámara</span>
+    </button>
+  </div>
+
+  <div>
+    <label className="block text-sm font-semibold text-indigo-700 mb-2">
+      📁 Subir archivo
+    </label>
+    <input
+      type="file"
+      accept="image/*"
+      onChange={handleFileChange}
+      disabled={isUploading}
+      className="w-full px-4 py-3 border-2 border-indigo-300 rounded-xl transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer disabled:opacity-50"
+    />
+  </div>
+</div>
 
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
@@ -1460,6 +1495,13 @@ function Productos({ user }) {
           </div>
         </div>
       )}
+
+{showCamera && (
+  <CameraCapture
+    onCapture={handleCameraCapture}
+    onClose={() => setShowCamera(false)}
+  />
+)}
     </div>
   )
 }
