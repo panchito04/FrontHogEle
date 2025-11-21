@@ -54,11 +54,67 @@ function Productos({ user }) {
     observaciones: ''
   })
 
-  useEffect(() => {
-    fetchProductos()
-    fetchCategorias()
-    fetchCajas()
-  }, [])
+useEffect(() => {
+  fetchProductos()
+  fetchCategorias()
+  fetchCajas()
+}, [])
+
+// AGREGAR ESTE useEffect AQUÍ:
+useEffect(() => {
+  const handleModalBack = () => {
+    // Si hay un modal abierto, cerrarlo
+    if (showCamera) {
+      setShowCamera(false)
+      return true
+    }
+    if (showModal) {
+      setShowModal(false)
+      setEditingProduct(null)
+      setFilePreview(null)
+      return true
+    }
+    if (showBoxModal) {
+      setShowBoxModal(false)
+      setEditingBox(null)
+      return true
+    }
+    if (showBoxDetailModal) {
+      setShowBoxDetailModal(false)
+      setSelectedBox(null)
+      return true
+    }
+    if (showCategoryModal) {
+      setShowCategoryModal(false)
+      return true
+    }
+    if (showDeleteConfirm) {
+      setShowDeleteConfirm(false)
+      setDeletingProductId(null)
+      return true
+    }
+    return false
+  }
+
+  // Cuando se abre un modal, agregar entrada al historial
+  if (showCamera || showModal || showBoxModal || showBoxDetailModal || showCategoryModal || showDeleteConfirm) {
+    window.history.pushState({ modal: true }, '')
+    
+    const handlePopState = (e) => {
+      if (e.state?.modal) {
+        handleModalBack()
+        // Prevenir que App.jsx maneje este evento
+        e.stopImmediatePropagation()
+      }
+    }
+    
+    window.addEventListener('popstate', handlePopState, true)
+    
+    return () => {
+      window.removeEventListener('popstate', handlePopState, true)
+    }
+  }
+}, [showCamera, showModal, showBoxModal, showBoxDetailModal, showCategoryModal, showDeleteConfirm])
 
   const fetchProductos = async () => {
     try {
