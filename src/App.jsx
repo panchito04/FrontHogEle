@@ -7,12 +7,10 @@ import Clientes from './pages/Clientes'
 import Productos from './pages/Productos'
 import Pedidos from './pages/Pedidos'
 import Pagos from './pages/Pagos'
-import { usePreventBackNavigation } from './hooks/usePreventBackNavigation'
 
 // Componente wrapper que aplica el hook a todas las rutas
 function AppContent({ isAuthenticated, setIsAuthenticated, user, setUser }) {
   // Aplicar el hook de prevención globalmente
-  usePreventBackNavigation();
 
   return (
     <Routes>

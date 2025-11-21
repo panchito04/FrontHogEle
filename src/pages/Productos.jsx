@@ -60,6 +60,51 @@ function Productos({ user }) {
     fetchCajas()
   }, [])
 
+  useEffect(() => {
+  const handlePopState = () => {
+    if (showCamera) {
+      setShowCamera(false)
+      window.history.pushState(null, '', window.location.href)
+    } else if (showModal) {
+      setShowModal(false)
+      setEditingProduct(null)
+      setFilePreview(null)
+      window.history.pushState(null, '', window.location.href)
+    } else if (showBoxModal) {
+      setShowBoxModal(false)
+      setEditingBox(null)
+      window.history.pushState(null, '', window.location.href)
+    } else if (showBoxDetailModal) {
+      setShowBoxDetailModal(false)
+      setSelectedBox(null)
+      window.history.pushState(null, '', window.location.href)
+    } else if (showCategoryModal) {
+      setShowCategoryModal(false)
+      window.history.pushState(null, '', window.location.href)
+    } else if (showDeleteConfirm) {
+      setShowDeleteConfirm(false)
+      setDeletingProductId(null)
+      window.history.pushState(null, '', window.location.href)
+    }
+  }
+
+  // Agregar entrada al historial cuando se abre un modal
+  if (showCamera || showModal || showBoxModal || showBoxDetailModal || showCategoryModal || showDeleteConfirm) {
+    window.history.pushState(null, '', window.location.href)
+    window.addEventListener('popstate', handlePopState)
+  }
+
+  return () => {
+    window.removeEventListener('popstate', handlePopState)
+  }
+}, [
+  showCamera,
+  showModal,
+  showBoxModal,
+  showBoxDetailModal,
+  showCategoryModal,
+  showDeleteConfirm
+])
   const fetchProductos = async () => {
     try {
       setIsLoading(true)
@@ -1497,7 +1542,7 @@ const handleCameraCapture = (file, previewUrl) => {
       )}
 
 {showCamera && (
-  <CameraCapture
+  <CameraCaptureh
     onCapture={handleCameraCapture}
     onClose={() => setShowCamera(false)}
   />
