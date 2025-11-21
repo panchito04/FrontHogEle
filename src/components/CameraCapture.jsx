@@ -1,13 +1,19 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 
 function CameraCapture({ onCapture, onClose }) {
   const fileInputRef = useRef(null)
   const canvasRef = useRef(null)
+  const imageContainerRef = useRef(null)
   const [capturedImage, setCapturedImage] = useState(null)
   const [isProcessing, setIsProcessing] = useState(false)
-
-  // Dimensiones del recuadro de captura
-  const CAPTURE_SIZE = 400
+  
+  // Posición del recuadro (porcentajes de la imagen)
+  const [cropPosition, setCropPosition] = useState({ x: 50, y: 50 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  
+  // Tamaño del recuadro más pequeño
+  const CAPTURE_SIZE = 250 // Reducido de 400 a 250
 
   const handleNativeCapture = (e) => {
     const file = e.target.files[0]
@@ -20,6 +26,7 @@ function CameraCapture({ onCapture, onClose }) {
       const img = new Image()
       img.onload = () => {
         setCapturedImage({ img, file })
+        setCropPosition({ x: 50, y: 50 }) // Reset posición al centro
         setIsProcessing(false)
       }
       img.src = event.target.result
@@ -28,47 +35,146 @@ function CameraCapture({ onCapture, onClose }) {
     reader.readAsDataURL(file)
   }
 
-  const cropAndSave = () => {
-  if (!capturedImage) return
+  const handleTouchStart = (e) => {
+    if (!capturedImage) return
+    e.preventDefault()
+    
+    const touch = e.touches[0]
+    setIsDragging(true)
+    setDragStart({
+      x: touch.clientX,
+      y: touch.clientY,
+      cropX: cropPosition.x,
+      cropY: cropPosition.y
+    })
+  }
 
-  const canvas = canvasRef.current
-  const ctx = canvas.getContext('2d')
-  const { img } = capturedImage
+  const handleTouchMove = (e) => {
+    if (!isDragging || !capturedImage || !imageContainerRef.current) return
+    e.preventDefault()
 
-  // Calcular el tamaño real del recuadro en la imagen original
-  // El recuadro es de CAPTURE_SIZE px en pantalla, pero necesitamos su tamaño real en la imagen
-  
-  const minDimension = Math.min(img.width, img.height)
-  
-  // El recuadro cubre el área cuadrada central SIN ESCALAR
-  // Tomamos exactamente minDimension x minDimension píxeles del centro
-  canvas.width = minDimension
-  canvas.height = minDimension
+    const touch = e.touches[0]
+    const container = imageContainerRef.current.getBoundingClientRect()
+    
+    // Calcular movimiento en píxeles
+    const deltaX = touch.clientX - dragStart.x
+    const deltaY = touch.clientY - dragStart.y
+    
+    // Convertir a porcentaje de la imagen
+    const percentX = (deltaX / container.width) * 100
+    const percentY = (deltaY / container.height) * 100
+    
+    // Nueva posición con límites
+    let newX = dragStart.cropX + percentX
+    let newY = dragStart.cropY + percentY
+    
+    // Límites para que el recuadro no salga de la imagen
+    const margin = (CAPTURE_SIZE / Math.min(container.width, container.height)) * 50
+    newX = Math.max(margin, Math.min(100 - margin, newX))
+    newY = Math.max(margin, Math.min(100 - margin, newY))
+    
+    setCropPosition({ x: newX, y: newY })
+  }
 
-  // Calcular posición del centro
-  const sx = (img.width - minDimension) / 2
-  const sy = (img.height - minDimension) / 2
+  const handleTouchEnd = () => {
+    setIsDragging(false)
+  }
 
-  // Dibujar SIN ESCALAR - tamaño 1:1
-  ctx.drawImage(
-    img,
-    sx, sy,                    // Inicio en la imagen original
-    minDimension, minDimension, // Tamaño a capturar
-    0, 0,                      // Posición en canvas
-    minDimension, minDimension  // MISMO tamaño en canvas (sin escalar)
-  )
+  const handleMouseDown = (e) => {
+    if (!capturedImage) return
+    e.preventDefault()
+    
+    setIsDragging(true)
+    setDragStart({
+      x: e.clientX,
+      y: e.clientY,
+      cropX: cropPosition.x,
+      cropY: cropPosition.y
+    })
+  }
 
-  // Convertir a blob con alta calidad
-  canvas.toBlob((blob) => {
-    if (blob) {
-      const file = new File([blob], 'producto.jpg', { type: 'image/jpeg' })
-      onCapture(file, URL.createObjectURL(blob))
+  const handleMouseMove = (e) => {
+    if (!isDragging || !capturedImage || !imageContainerRef.current) return
+    e.preventDefault()
+
+    const container = imageContainerRef.current.getBoundingClientRect()
+    
+    const deltaX = e.clientX - dragStart.x
+    const deltaY = e.clientY - dragStart.y
+    
+    const percentX = (deltaX / container.width) * 100
+    const percentY = (deltaY / container.height) * 100
+    
+    let newX = dragStart.cropX + percentX
+    let newY = dragStart.cropY + percentY
+    
+    const margin = (CAPTURE_SIZE / Math.min(container.width, container.height)) * 50
+    newX = Math.max(margin, Math.min(100 - margin, newX))
+    newY = Math.max(margin, Math.min(100 - margin, newY))
+    
+    setCropPosition({ x: newX, y: newY })
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
+  }
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+      }
     }
-  }, 'image/jpeg', 0.95)
-}
+  }, [isDragging, dragStart, cropPosition])
+
+  const cropAndSave = () => {
+    if (!capturedImage || !imageContainerRef.current) return
+
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    const { img } = capturedImage
+    const container = imageContainerRef.current.getBoundingClientRect()
+
+    // Calcular el tamaño del recuadro en píxeles de la imagen original
+    const displayWidth = container.width
+    const displayHeight = container.height
+    const scale = img.width / displayWidth
+
+    // Tamaño del recuadro en píxeles de la imagen original
+    const cropSizeInImage = CAPTURE_SIZE * scale
+
+    // Posición del recuadro en píxeles de la imagen original
+    const cropX = (cropPosition.x / 100) * img.width - (cropSizeInImage / 2)
+    const cropY = (cropPosition.y / 100) * img.height - (cropSizeInImage / 2)
+
+    // Establecer tamaño del canvas al tamaño real del recorte
+    canvas.width = cropSizeInImage
+    canvas.height = cropSizeInImage
+
+    // Dibujar el recorte SIN ESCALAR
+    ctx.drawImage(
+      img,
+      cropX, cropY,                      // Posición en imagen original
+      cropSizeInImage, cropSizeInImage,  // Tamaño a capturar
+      0, 0,                              // Posición en canvas
+      cropSizeInImage, cropSizeInImage   // Mismo tamaño en canvas
+    )
+
+    // Convertir a blob
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const file = new File([blob], 'producto.jpg', { type: 'image/jpeg' })
+        onCapture(file, URL.createObjectURL(blob))
+      }
+    }, 'image/jpeg', 0.95)
+  }
 
   const retake = () => {
     setCapturedImage(null)
+    setCropPosition({ x: 50, y: 50 })
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -93,7 +199,6 @@ function CameraCapture({ onCapture, onClose }) {
         </button>
       </div>
 
-      {/* Input oculto para cámara nativa */}
       <input
         ref={fileInputRef}
         type="file"
@@ -103,50 +208,76 @@ function CameraCapture({ onCapture, onClose }) {
         className="hidden"
       />
 
-      {/* Canvas oculto para procesamiento */}
       <canvas ref={canvasRef} className="hidden" />
 
       {/* Vista principal */}
-      <div className="flex-1 relative flex items-center justify-center overflow-hidden">
+      <div className="flex-1 relative flex items-center justify-center overflow-hidden bg-gray-900">
         {isProcessing ? (
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mb-4"></div>
             <p className="text-white font-semibold">Procesando imagen...</p>
           </div>
         ) : capturedImage ? (
-          /* Preview con recuadro de recorte */
-          <div className="relative w-full h-full flex items-center justify-center p-4">
-            <div className="relative" style={{ maxWidth: '90%', maxHeight: '90%' }}>
-              <img
-                src={capturedImage.img.src}
-                alt="Preview"
-                className="max-w-full max-h-[70vh] object-contain rounded-lg"
-              />
-              
-              {/* Overlay con recuadro */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div
-                  className="border-4 border-green-400 rounded-2xl shadow-2xl"
-                  style={{
-                    width: `${CAPTURE_SIZE}px`,
-                    height: `${CAPTURE_SIZE}px`,
-                    maxWidth: '90%',
-                    maxHeight: '90%'
-                  }}
-                >
-                  {/* Esquinas decorativas */}
-                  <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white -mt-1 -ml-1"></div>
-                  <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white -mt-1 -mr-1"></div>
-                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white -mb-1 -ml-1"></div>
-                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white -mb-1 -mr-1"></div>
+          /* Preview con recuadro movible */
+          <div 
+            ref={imageContainerRef}
+            className="relative w-full h-full flex items-center justify-center"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onMouseDown={handleMouseDown}
+            style={{ touchAction: 'none' }}
+          >
+            {/* Imagen completa */}
+            <img
+              src={capturedImage.img.src}
+              alt="Preview"
+              className="max-w-full max-h-full object-contain select-none"
+              draggable="false"
+            />
+            
+            {/* Overlay oscuro */}
+            <div className="absolute inset-0 bg-black bg-opacity-40 pointer-events-none" />
+
+            {/* Recuadro movible */}
+            <div
+              className="absolute border-4 border-green-400 rounded-xl shadow-2xl cursor-move"
+              style={{
+                width: `${CAPTURE_SIZE}px`,
+                height: `${CAPTURE_SIZE}px`,
+                left: `${cropPosition.x}%`,
+                top: `${cropPosition.y}%`,
+                transform: 'translate(-50%, -50%)',
+                pointerEvents: 'none',
+                boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)'
+              }}
+            >
+              {/* Esquinas decorativas */}
+              <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-white -mt-1 -ml-1"></div>
+              <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-white -mt-1 -mr-1"></div>
+              <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-white -mb-1 -ml-1"></div>
+              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-white -mb-1 -mr-1"></div>
+
+              {/* Cruz central */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-8 h-8 border-2 border-white rounded-full bg-green-400 bg-opacity-50 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" />
+                  </svg>
                 </div>
               </div>
             </div>
 
-            <div className="absolute bottom-20 left-0 right-0 text-center px-4">
-              <p className="text-white font-semibold text-sm drop-shadow-lg bg-black bg-opacity-50 rounded-lg py-2 px-4 inline-block">
-                ✂️ Se guardará solo el área dentro del recuadro verde
-              </p>
+            {/* Instrucciones */}
+            <div className="absolute top-4 left-0 right-0 text-center px-4 pointer-events-none">
+              <div className="bg-black bg-opacity-70 rounded-lg py-2 px-4 inline-flex items-center space-x-2">
+                <svg className="w-5 h-5 text-green-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
+                </svg>
+                <p className="text-white font-semibold text-sm">
+                  Arrastra el recuadro para ajustar
+                </p>
+              </div>
             </div>
           </div>
         ) : (
@@ -165,9 +296,9 @@ function CameraCapture({ onCapture, onClose }) {
               <p className="text-yellow-200 text-sm font-semibold mb-2">💡 Consejos:</p>
               <ul className="text-yellow-100 text-xs space-y-1 text-left">
                 <li>✓ Coloca el producto en un fondo limpio</li>
-                <li>✓ Asegúrate de tener buena luz natural o artificial</li>
-                <li>✓ Mantén el teléfono estable al tomar la foto</li>
-                <li>✓ Centra el producto en el recuadro que aparecerá</li>
+                <li>✓ Asegúrate de tener buena luz</li>
+                <li>✓ Mantén el teléfono estable</li>
+                <li>✓ Podrás ajustar el recuadro después</li>
               </ul>
             </div>
           </div>
