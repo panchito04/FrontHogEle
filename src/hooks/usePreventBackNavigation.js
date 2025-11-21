@@ -7,16 +7,21 @@ export const usePreventBackNavigation = () => {
   const location = useLocation();
   const backPressCount = useRef(0);
   const resetTimeout = useRef(null);
+  const isNavigating = useRef(false);
 
   useEffect(() => {
     // Reset el contador cuando cambia la ruta
     backPressCount.current = 0;
-    
-    // Agregar una entrada al historial para interceptar
-    window.history.pushState(null, '', window.location.href);
+    isNavigating.current = false;
 
     const handlePopState = (e) => {
+      // Si ya estamos navegando, no hacer nada
+      if (isNavigating.current) {
+        return;
+      }
+
       // Prevenir la navegación por defecto
+      e.preventDefault();
       window.history.pushState(null, '', window.location.href);
 
       backPressCount.current++;
@@ -57,8 +62,9 @@ export const usePreventBackNavigation = () => {
         }, 3000);
 
       } else if (backPressCount.current === 2) {
-        // Segunda vez: navegar hacia atrás usando React Router
+        // Segunda vez: navegar hacia atrás
         backPressCount.current = 0;
+        isNavigating.current = true;
         
         if (resetTimeout.current) {
           clearTimeout(resetTimeout.current);
@@ -68,15 +74,23 @@ export const usePreventBackNavigation = () => {
         const toast = document.getElementById('back-toast');
         if (toast) toast.remove();
 
-        // Navegar hacia atrás dentro de la aplicación usando React Router
-        navigate(-1);
+        // Navegar hacia atrás dentro de la aplicación
+        setTimeout(() => {
+          navigate(-1);
+        }, 100);
       }
     };
+
+    // Agregar entrada al historial después de un momento
+    const timeoutId = setTimeout(() => {
+      window.history.pushState(null, '', window.location.href);
+    }, 100);
 
     window.addEventListener('popstate', handlePopState);
 
     // Cleanup
     return () => {
+      clearTimeout(timeoutId);
       window.removeEventListener('popstate', handlePopState);
       if (resetTimeout.current) {
         clearTimeout(resetTimeout.current);
