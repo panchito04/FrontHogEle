@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import Sidebar from '../components/Sidebar'
 import { useNavigate } from 'react-router-dom'
@@ -29,7 +29,9 @@ function Productos({ user }) {
   const [isUploading, setIsUploading] = useState(false)
   const [activeTab, setActiveTab] = useState('productos')
   const [showCamera, setShowCamera] = useState(false)
-  const navigate = useNavigate()
+const navigate = useNavigate()
+const backPressCountRef = useRef(0)
+const resetTimeoutRef = useRef(null)
   
   const [newProducto, setNewProducto] = useState({
     nombre: '',
@@ -63,89 +65,7 @@ function Productos({ user }) {
   }, [])
 
 
-  // Manejo del botón "atrás" con doble confirmación
-useEffect(() => {
-  const backPressCountRef = { current: 0 }
-  let resetTimeout = null
-
-  const handlePopState = () => {
-    // Si hay modal abierto, cerrarlo directamente sin confirmación
-    if (showCamera || showModal || showBoxModal || showBoxDetailModal || showCategoryModal || showDeleteConfirm) {
-      if (showCamera) setShowCamera(false)
-      else if (showModal) {
-        setShowModal(false)
-        setEditingProduct(null)
-        setFilePreview(null)
-      }
-      else if (showBoxModal) {
-        setShowBoxModal(false)
-        setEditingBox(null)
-      }
-      else if (showBoxDetailModal) {
-        setShowBoxDetailModal(false)
-        setSelectedBox(null)
-      }
-      else if (showCategoryModal) setShowCategoryModal(false)
-      else if (showDeleteConfirm) {
-        setShowDeleteConfirm(false)
-        setDeletingProductId(null)
-      }
-      window.history.pushState(null, '', window.location.href)
-      return
-    }
-
-    // Si no hay modal, aplicar confirmación de doble back
-    backPressCountRef.current++
-
-    if (backPressCountRef.current === 1) {
-      // Primera vez: mostrar mensaje y agregar entrada al historial
-      window.history.pushState(null, '', window.location.href)
-      
-      const existingToast = document.getElementById('back-toast')
-      if (existingToast) existingToast.remove()
-
-      const toast = document.createElement('div')
-      toast.id = 'back-toast'
-      toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-[9999] flex items-center space-x-2 animate-slide-up'
-      toast.innerHTML = `
-        <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-        <span class="font-medium">Presiona atrás nuevamente para volver</span>
-      `
-      document.body.appendChild(toast)
-
-      setTimeout(() => {
-        const t = document.getElementById('back-toast')
-        if (t) t.remove()
-      }, 3000)
-
-      if (resetTimeout) clearTimeout(resetTimeout)
-      resetTimeout = setTimeout(() => {
-        backPressCountRef.current = 0
-      }, 3000)
-    } else if (backPressCountRef.current >= 2) {
-      // Segunda vez: navegar usando React Router
-      backPressCountRef.current = 0
-      if (resetTimeout) clearTimeout(resetTimeout)
-      const toast = document.getElementById('back-toast')
-      if (toast) toast.remove()
-      
-      navigate(-1)
-    }
-  }
-
-  // Agregar entrada al historial cuando se monta el componente
-  window.history.pushState(null, '', window.location.href)
-  window.addEventListener('popstate', handlePopState)
-
-  return () => {
-    window.removeEventListener('popstate', handlePopState)
-    if (resetTimeout) clearTimeout(resetTimeout)
-    const toast = document.getElementById('back-toast')
-    if (toast) toast.remove()
-  }
-}, [navigate, showCamera, showModal, showBoxModal, showBoxDetailModal, showCategoryModal, showDeleteConfirm])
+// Manejo del botón " atrás" con doble confirmación
 
   const fetchProductos = async () => {
     try {
