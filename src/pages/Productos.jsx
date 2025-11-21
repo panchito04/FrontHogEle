@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import Sidebar from '../components/Sidebar'
 import { useNavigate } from 'react-router-dom'
@@ -29,9 +29,6 @@ function Productos({ user }) {
   const [isUploading, setIsUploading] = useState(false)
   const [activeTab, setActiveTab] = useState('productos')
   const [showCamera, setShowCamera] = useState(false)
-const navigate = useNavigate()
-const backPressCountRef = useRef(0)
-const resetTimeoutRef = useRef(null)
   
   const [newProducto, setNewProducto] = useState({
     nombre: '',

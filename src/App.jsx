@@ -16,14 +16,11 @@ function AppContent({ isAuthenticated, setIsAuthenticated, user, setUser }) {
 
   // Manejo GLOBAL del botón atrás
   useEffect(() => {
-    const handlePopState = (e) => {
-      // Prevenir el comportamiento por defecto
-      e.preventDefault()
-      
+    const handlePopState = () => {
       backPressCountRef.current++
 
       if (backPressCountRef.current === 1) {
-        // Primera vez: mostrar mensaje
+        // Primera vez: mostrar mensaje y bloquear
         window.history.pushState(null, '', window.location.href)
         
         const existingToast = document.getElementById('back-toast')
@@ -32,12 +29,24 @@ function AppContent({ isAuthenticated, setIsAuthenticated, user, setUser }) {
         const toast = document.createElement('div')
         toast.id = 'back-toast'
         toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-[9999] flex items-center space-x-2 animate-slide-up'
-        toast.innerHTML = `
-          <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <span class="font-medium">Presiona atrás nuevamente para volver</span>
-        `
+        
+        // Mensaje diferente si está en home
+        if (location.pathname === '/home') {
+          toast.innerHTML = `
+            <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span class="font-medium">Presiona atrás nuevamente para salir</span>
+          `
+        } else {
+          toast.innerHTML = `
+            <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span class="font-medium">Presiona atrás nuevamente para volver</span>
+          `
+        }
+        
         document.body.appendChild(toast)
 
         setTimeout(() => {
@@ -49,28 +58,33 @@ function AppContent({ isAuthenticated, setIsAuthenticated, user, setUser }) {
         resetTimeoutRef.current = setTimeout(() => {
           backPressCountRef.current = 0
         }, 3000)
+        
       } else if (backPressCountRef.current >= 2) {
-        // Segunda vez: navegar
+        // Segunda vez
         backPressCountRef.current = 0
         if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current)
         const toast = document.getElementById('back-toast')
         if (toast) toast.remove()
         
-        navigate(-1)
+        // Si está en home, no hacer nada (se queda en la app y se cierra naturalmente)
+        if (location.pathname === '/home') {
+          // Permitir que el navegador maneje el cierre de la app
+          window.history.back()
+        } else {
+          // En cualquier otra página, navegar a la anterior
+          navigate(-1)
+        }
       }
     }
 
-    // Agregar entrada al historial
+    // Agregar entrada al historial cuando cambia la ruta
     window.history.pushState(null, '', window.location.href)
     window.addEventListener('popstate', handlePopState)
 
     return () => {
       window.removeEventListener('popstate', handlePopState)
-      if (resetTimeoutRef.current) clearTimeout(resetTimeoutRef.current)
-      const toast = document.getElementById('back-toast')
-      if (toast) toast.remove()
     }
-  }, [navigate, location])
+  }, [navigate, location.pathname])
 
   // Resetear contador cuando cambia la ruta
   useEffect(() => {
