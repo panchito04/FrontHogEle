@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import Sidebar from '../components/Sidebar'
+import { useNavigate } from 'react-router-dom'
 import CameraCapture from '../components/CameraCapture'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000'
@@ -28,6 +29,7 @@ function Productos({ user }) {
   const [isUploading, setIsUploading] = useState(false)
   const [activeTab, setActiveTab] = useState('productos')
   const [showCamera, setShowCamera] = useState(false)
+  const navigate = useNavigate()
   
   const [newProducto, setNewProducto] = useState({
     nombre: '',
@@ -122,14 +124,16 @@ useEffect(() => {
         backPressCount = 0
       }, 3000)
     } else if (backPressCount === 2) {
-      // Segunda vez: permitir navegación
-      backPressCount = 0
-      if (resetTimeout) clearTimeout(resetTimeout)
-      const toast = document.getElementById('back-toast')
-      if (toast) toast.remove()
-      // No hacer nada, dejar que el navegador maneje la navegación naturalmente
-      window.history.back()
-    }
+  // Segunda vez: navegar usando React Router
+  backPressCount = 0
+  if (resetTimeout) clearTimeout(resetTimeout)
+  const toast = document.getElementById('back-toast')
+  if (toast) toast.remove()
+  
+  // Remover el listener temporalmente para evitar loop
+  window.removeEventListener('popstate', handlePopState)
+  navigate(-1)
+}
   }
 
   // Solo agregar listener si no hay modales abiertos
@@ -148,6 +152,8 @@ useEffect(() => {
     if (toast) toast.remove()
   }
 }, [showCamera, showModal, showBoxModal, showBoxDetailModal, showCategoryModal, showDeleteConfirm])
+
+
   const fetchProductos = async () => {
     try {
       setIsLoading(true)
