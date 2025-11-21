@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import Sidebar from '../components/Sidebar'
-import { useNavigate } from 'react-router-dom'
 import CameraCapture from '../components/CameraCapture'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000'
@@ -61,9 +60,6 @@ function Productos({ user }) {
     fetchCajas()
   }, [])
 
-
-// Manejo del botón " atrás" con doble confirmación
-
   const fetchProductos = async () => {
     try {
       setIsLoading(true)
@@ -97,32 +93,30 @@ function Productos({ user }) {
     }
   }
 
-  // Reemplaza la función handleFileChange existente (alrededor de la línea 90)
-const handleFileChange = (e) => {
-  const file = e.target.files[0]
-  if (!file) return
-  
-  if (file.size > 5 * 1024 * 1024) {
-    alert('⚠️ La imagen no puede pesar más de 5MB')
-    return
+  const handleFileChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    
+    if (file.size > 5 * 1024 * 1024) {
+      alert('⚠️ La imagen no puede pesar más de 5MB')
+      return
+    }
+
+    if (!file.type.startsWith('image/')) {
+      alert('⚠️ Solo se permiten archivos de imagen')
+      return
+    }
+
+    setFilePreview(URL.createObjectURL(file))
+    
+    if (editingProduct) {
+      setEditingProduct({ ...editingProduct, imagen_file: file, imagen_url: '' })
+    } else {
+      setNewProducto({ ...newProducto, imagen_file: file, imagen_url: '' })
+    }
   }
 
-  if (!file.type.startsWith('image/')) {
-    alert('⚠️ Solo se permiten archivos de imagen')
-    return
-  }
-
-  setFilePreview(URL.createObjectURL(file))
-  
-  if (editingProduct) {
-    setEditingProduct({ ...editingProduct, imagen_file: file, imagen_url: '' })
-  } else {
-    setNewProducto({ ...newProducto, imagen_file: file, imagen_url: '' })
-  }
-}
-
-// AGREGAR esta nueva función
-const handleCameraCapture = (file, previewUrl) => {
+  const handleCameraCapture = (file, previewUrl) => {
   setFilePreview(previewUrl)
   
   if (editingProduct) {
@@ -133,6 +127,7 @@ const handleCameraCapture = (file, previewUrl) => {
   
   setShowCamera(false)
 }
+
 
   const handleCreateProducto = async (e) => {
     e.preventDefault()
@@ -1499,9 +1494,8 @@ const handleCameraCapture = (file, previewUrl) => {
           </div>
         </div>
       )}
-
-{showCamera && (
-  <CameraCaptureh
+      {showCamera && (
+  <CameraCapture
     onCapture={handleCameraCapture}
     onClose={() => setShowCamera(false)}
   />
