@@ -202,7 +202,6 @@ const agregarDetalle = async () => {
     return
   }
 
-  // Verificar que el producto tenga toda su cantidad disponible
   if (!producto.disponible || producto.cantidad_disponible < producto.cantidad) {
     alert(`Este producto no está completamente disponible. Disponible: ${producto.cantidad_disponible}/${producto.cantidad}`)
     return
@@ -211,12 +210,11 @@ const agregarDetalle = async () => {
   setNewPedido({
     ...newPedido,
     detalles: [...newPedido.detalles, {
-      ...newDetalle,
       id_producto: parseInt(newDetalle.id_producto),
-      cantidad: producto.cantidad, // Usar la cantidad completa del producto
-      precio_unitario: parseFloat(newDetalle.precio_unitario),
+      cantidad: 1, // SIEMPRE 1 porque es un pack completo
+      precio_unitario: parseFloat(newDetalle.precio_unitario), // El precio total del pack
       nombre_producto: producto?.nombre,
-      cantidad_total: producto.cantidad
+      cantidad_piezas: producto.cantidad // Solo para mostrar info
     }]
   })
   
@@ -232,15 +230,10 @@ const agregarDetalle = async () => {
 const handleProductoChange = (id_producto) => {
   const producto = productos.find(p => p.id_producto === parseInt(id_producto))
   
-  if (producto) {
-    // Calcular el precio total del producto (precio unitario * cantidad)
-    const precioTotal = producto.precio * producto.cantidad
-    
-    setNewDetalle({
-      id_producto,
-      precio_unitario: precioTotal.toFixed(2) // Precio total por todo el producto
-    })
-  }
+  setNewDetalle({
+    id_producto,
+    precio_unitario: producto?.precio || '' // Usar el precio del producto tal cual
+  })
 }
   const abrirModalPago = (pedido) => {
     setPedidoSeleccionado(pedido)
@@ -748,29 +741,28 @@ const handleProductoChange = (id_producto) => {
                   <span>Agregar Producto</span>
                 </button>
 
-                // En el modal de crear pedido, actualiza la sección donde se muestran los productos agregados:
 {newPedido.detalles.length > 0 && (
   <div className="mt-4 space-y-2">
     <h5 className="font-semibold text-gray-700 text-sm">Productos agregados:</h5>
     {newPedido.detalles.map((detalle, index) => (
-      <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-        <div className="flex-1">
-          <p className="text-sm font-medium text-gray-900">{detalle.nombre_producto}</p>
-          <p className="text-xs text-gray-600">
-            {detalle.cantidad} unidades (pack completo) x Bs. {detalle.precio_unitario} = Bs. {(detalle.cantidad * detalle.precio_unitario).toFixed(2)}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => eliminarDetalle(index)}
-          className="text-red-600 hover:text-red-800 ml-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </button>
-      </div>
-    ))}
+  <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+    <div className="flex-1">
+      <p className="text-sm font-medium text-gray-900">{detalle.nombre_producto}</p>
+      <p className="text-xs text-gray-600">
+        1 pack ({detalle.cantidad_piezas} piezas) x Bs. {detalle.precio_unitario.toFixed(2)} = Bs. {detalle.precio_unitario.toFixed(2)}
+      </p>
+    </div>
+    <button
+      type="button"
+      onClick={() => eliminarDetalle(index)}
+      className="text-red-600 hover:text-red-800 ml-2"
+    >
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+    </button>
+  </div>
+))}
     <div className="bg-indigo-50 p-3 rounded-lg border-2 border-indigo-200">
       <div className="flex justify-between items-center">
         <span className="text-sm font-semibold text-gray-700">Total:</span>
