@@ -1,9 +1,12 @@
-import { Link, useLocation } from 'react-router-dom'
+// src/components/Sidebar.jsx
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
-import logo from '../assets/logoHogar.jpg';
+import { authService } from '../services/authService'
+import logo from '../assets/logoHogar.jpg'
 
 function Sidebar({ user }) {
   const location = useLocation()
+  const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const menuItems = [
@@ -54,6 +57,13 @@ function Sidebar({ user }) {
     }
   ]
 
+  const handleLogout = () => {
+    if (window.confirm('¿Estás seguro que deseas cerrar sesión?')) {
+      authService.logout()
+      navigate('/login')
+    }
+  }
+
   return (
     <>
       {/* Mobile Header */}
@@ -77,14 +87,13 @@ function Sidebar({ user }) {
 
           {/* Logo en el CENTRO */}
           <div className="flex items-center space-x-2 absolute left-1/2 transform -translate-x-1/2">
-          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
-  <img
-    src={logo}
-    alt="Logo"
-    className="w-full h-full object-cover"
-  />
-</div>
-
+            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
+              <img
+                src={logo}
+                alt="Logo"
+                className="w-full h-full object-cover"
+              />
+            </div>
             <h2 className="text-base font-bold">Hogar Elegante</h2>
           </div>
 
@@ -112,13 +121,12 @@ function Sidebar({ user }) {
           <div className="p-4 border-b border-indigo-500 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
-  <img
-    src={logo}
-    alt="Logo"
-    className="w-full h-full object-cover"
-  />
-</div>
-
+                <img
+                  src={logo}
+                  alt="Logo"
+                  className="w-full h-full object-cover"
+                />
+              </div>
               <div>
                 <h2 className="text-lg font-bold">Hogar Elegante</h2>
                 <p className="text-indigo-200 text-xs">Sistema de Gestión</p>
@@ -140,7 +148,9 @@ function Sidebar({ user }) {
               <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
                 <p className="text-xs text-indigo-100">Bienvenido/a</p>
                 <p className="font-semibold text-sm">{user.nombre}</p>
-                <p className="text-xs text-indigo-200 mt-1">Rol: {user.rol}</p>
+                <p className="text-xs text-indigo-200 mt-1">
+                  Rol: <span className="font-semibold capitalize">{user.rol}</span>
+                </p>
               </div>
             </div>
           )}
@@ -169,16 +179,15 @@ function Sidebar({ user }) {
 
           {/* Botón de cerrar sesión */}
           <div className="p-4 border-t border-indigo-500">
-            <Link
-              to="/login"
-              className="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-red-500/20 transition-colors duration-200"
-              onClick={() => window.location.reload()}
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-red-500/20 transition-colors duration-200 text-red-100 hover:text-white"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
               <span className="font-medium">Cerrar Sesión</span>
-            </Link>
+            </button>
           </div>
         </div>
       </div>
@@ -188,14 +197,13 @@ function Sidebar({ user }) {
         {/* Logo y usuario */}
         <div className="p-6 border-b border-indigo-500">
           <div className="flex items-center space-x-3 mb-4">
-<div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
-  <img
-    src={logo}
-    alt="Logo"
-    className="w-full h-full object-cover"
-  />
-</div>
-
+            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
+              <img
+                src={logo}
+                alt="Logo"
+                className="w-full h-full object-cover"
+              />
+            </div>
             <div>
               <h2 className="text-xl font-bold">Hogar Elegante</h2>
               <p className="text-indigo-200 text-sm">Sistema de Gestión</p>
@@ -206,7 +214,9 @@ function Sidebar({ user }) {
             <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
               <p className="text-sm text-indigo-100">Bienvenido/a</p>
               <p className="font-semibold">{user.nombre}</p>
-              <p className="text-xs text-indigo-200 mt-1">Rol: {user.rol}</p>
+              <p className="text-xs text-indigo-200 mt-1">
+                Rol: <span className="font-semibold capitalize">{user.rol}</span>
+              </p>
             </div>
           )}
         </div>
@@ -234,16 +244,15 @@ function Sidebar({ user }) {
 
         {/* Botón de cerrar sesión */}
         <div className="p-4 border-t border-indigo-500">
-          <Link
-            to="/login"
-            className="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-red-500/20 transition-colors duration-200"
-            onClick={() => window.location.reload()}
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-red-500/20 transition-colors duration-200 text-red-100 hover:text-white"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
             <span className="font-medium">Cerrar Sesión</span>
-          </Link>
+          </button>
         </div>
       </div>
     </>

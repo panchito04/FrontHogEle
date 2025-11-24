@@ -1,42 +1,36 @@
+// src/pages/Login.jsx
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Link } from 'react-router-dom'
-import axios from 'axios'
+import { useNavigate, Link } from 'react-router-dom'
+import { authService } from '../services/authService'
+import Toast from '../components/common/Toast'
+import { useToast } from '../hooks/useToast'
 
 function Login({ setIsAuthenticated, setUser }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [rememberMe, setRememberMe] = useState(true)
   const navigate = useNavigate()
+  const { toast, showToast, hideToast } = useToast()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      // Usamos la URL del backend desde la variable de entorno
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/usuarios`, {
-        params: { email, contrasena: password },
-      })
+      const result = await authService.login(email, password)
 
-      const usuario = response.data[0]
-
-      if (!usuario) {
-        alert('Usuario o contraseña incorrectos')
-        setIsLoading(false)
-        return
+      if (result.success) {
+        setUser(result.usuario)
+        setIsAuthenticated(true)
+        showToast('¡Bienvenido! Inicio de sesión exitoso', 'success')
+        
+        setTimeout(() => {
+          navigate('/home')
+        }, 1000)
       }
-
-      // Guardamos el usuario y marcamos como autenticado
-      setUser(usuario)
-      setIsAuthenticated(true)
-      
-      // Navegamos al home
-      navigate('/home')
-
     } catch (error) {
-      console.error(error)
-      alert('Error al conectar con el servidor')
+      showToast(error.message || 'Usuario o contraseña incorrectos', 'error')
     } finally {
       setIsLoading(false)
     }
@@ -107,15 +101,14 @@ function Login({ setIsAuthenticated, setUser }) {
                   <input
                     id="remember"
                     type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
                     className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                   />
                   <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">
-                    Recordarme
+                    Mantener sesión iniciada
                   </label>
                 </div>
-                <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
-                  ¿Olvidaste tu contraseña?
-                </a>
               </div>
 
               <button
@@ -140,12 +133,11 @@ function Login({ setIsAuthenticated, setUser }) {
             <p className="mt-8 text-center text-sm text-gray-600">
               ¿No tienes una cuenta?{' '}
               <Link 
-  to="/register" 
-  className="font-medium text-indigo-600 hover:text-indigo-500"
->
-  Regístrate aquí
-</Link>
-
+                to="/register" 
+                className="font-medium text-indigo-600 hover:text-indigo-500"
+              >
+                Regístrate aquí
+              </Link>
             </p>
           </div>
         </div>
@@ -154,6 +146,15 @@ function Login({ setIsAuthenticated, setUser }) {
           © 2024 Hogar Elegante. Todos los derechos reservados.
         </p>
       </div>
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
+          duration={toast.duration}
+        />
+      )}
     </div>
   )
 }
