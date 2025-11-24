@@ -82,8 +82,8 @@ function Pagos({ user }) {
     const metodos = {
       'Efectivo': 'bg-green-100 text-green-800',
       'Tarjeta': 'bg-blue-100 text-blue-800',
-      'Transferencia': 'bg-purple-100 text-purple-800',
-      'QR': 'bg-indigo-100 text-indigo-800',
+      'Transferencia': 'bg-purple-100 text-ocean1-800',
+      'QR': 'bg-indigo-100 text-cyan1-800',
       'Otro': 'bg-gray-100 text-gray-800'
     }
     return metodos[metodo] || 'bg-gray-100 text-gray-800'
@@ -147,14 +147,14 @@ function Pagos({ user }) {
           <div className="px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan1-600 to-ocean1-600 bg-clip-text text-transparent">
                   Gestión de Pagos
                 </h1>
                 <p className="text-gray-600 mt-1 text-sm sm:text-base">Administra todos los pagos recibidos</p>
               </div>
               <button
                 onClick={() => setShowModal(true)}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition duration-200 flex items-center justify-center space-x-2 shadow-lg transform hover:scale-105 text-sm sm:text-base"
+                className="bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold hover:from-cyan1-700 hover:to-ocean1-700 transition duration-200 flex items-center justify-center space-x-2 shadow-lg transform hover:scale-105 text-sm sm:text-base"
               >
                 <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -180,7 +180,7 @@ function Pagos({ user }) {
                 placeholder="Buscar por ID, pedido, método o monto..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 text-sm sm:text-base"
+                className="block w-full pl-10 pr-3 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition duration-200 text-sm sm:text-base"
               />
             </div>
           </div>
@@ -189,7 +189,7 @@ function Pagos({ user }) {
           <div className="hidden md:block bg-white rounded-xl shadow-lg overflow-hidden">
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
-                <svg className="animate-spin h-12 w-12 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin h-12 w-12 text-cyan1-600" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -222,7 +222,7 @@ function Pagos({ user }) {
                           <span className="text-sm font-medium text-gray-900">#{pago.id_pago}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-medium text-indigo-600">{getPedidoInfo(pago.id_pedido)}</span>
+                          <span className="text-sm font-medium text-cyan1-600">{getPedidoInfo(pago.id_pedido)}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="text-lg font-bold text-green-600">Bs. {parseFloat(pago.monto).toFixed(2)}</span>
@@ -248,7 +248,7 @@ function Pagos({ user }) {
                               href={pago.comprobante_url} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="text-indigo-600 hover:text-indigo-900 flex items-center space-x-1"
+                              className="text-cyan1-600 hover:text-cyan1-900 flex items-center space-x-1"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -260,7 +260,7 @@ function Pagos({ user }) {
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <button className="text-indigo-600 hover:text-indigo-900 mr-3 transition-colors">
+                          <button className="text-cyan1-600 hover:text-cyan1-900 mr-3 transition-colors">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -284,7 +284,7 @@ function Pagos({ user }) {
           <div className="md:hidden space-y-4">
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
-                <svg className="animate-spin h-12 w-12 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin h-12 w-12 text-cyan1-600" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -332,7 +332,7 @@ function Pagos({ user }) {
                         href={pago.comprobante_url} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="flex items-center text-sm text-indigo-600 hover:text-indigo-800"
+                        className="flex items-center text-sm text-cyan1-600 hover:text-cyan1-800"
                       >
                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -343,7 +343,7 @@ function Pagos({ user }) {
                   </div>
 
                   <div className="flex space-x-2 mt-4 pt-3 border-t border-gray-100">
-                    <button className="flex-1 p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex items-center justify-center">
+                    <button className="flex-1 p-2 text-cyan1-600 hover:bg-indigo-50 rounded-lg transition-colors flex items-center justify-center">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -365,7 +365,7 @@ function Pagos({ user }) {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="flex items-center space-x-3 sm:space-x-4">
                 <div className="bg-white rounded-lg p-2 sm:p-3 shadow-sm">
-                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-cyan1-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
@@ -389,13 +389,13 @@ function Pagos({ user }) {
 
               <div className="flex items-center space-x-3 sm:space-x-4">
                 <div className="bg-white rounded-lg p-2 sm:p-3 shadow-sm">
-                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-ocean1-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
                   </svg>
                 </div>
                 <div>
                   <p className="text-xs sm:text-sm text-gray-600 font-medium">Filtrados</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-indigo-600">{filteredPagos.length}</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-cyan1-600">{filteredPagos.length}</p>
                 </div>
               </div>
             </div>
@@ -407,7 +407,7 @@ function Pagos({ user }) {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-6 text-white">
+            <div className="bg-gradient-to-r from-cyan1-600 to-ocean1-600 p-4 sm:p-6 text-white">
               <h3 className="text-xl sm:text-2xl font-bold">Registrar Pago</h3>
               <p className="text-indigo-100 mt-1 text-sm sm:text-base">Completa los datos del pago</p>
             </div>
@@ -421,7 +421,7 @@ function Pagos({ user }) {
                   required
                   value={newPago.id_pedido}
                   onChange={(e) => setNewPago({...newPago, id_pedido: e.target.value})}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent text-sm sm:text-base"
                 >
                   <option value="">Selecciona un pedido</option>
                   {pedidos.map(pedido => (
@@ -442,7 +442,7 @@ function Pagos({ user }) {
                   required
                   value={newPago.monto}
                   onChange={(e) => setNewPago({...newPago, monto: e.target.value})}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent text-sm sm:text-base"
                   placeholder="0.00"
                 />
               </div>
@@ -455,7 +455,7 @@ function Pagos({ user }) {
                   required
                   value={newPago.metodo}
                   onChange={(e) => setNewPago({...newPago, metodo: e.target.value})}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent text-sm sm:text-base"
                 >
                   <option value="">Selecciona un método</option>
                   <option value="Efectivo">Efectivo</option>
@@ -474,7 +474,7 @@ function Pagos({ user }) {
                   type="url"
                   value={newPago.comprobante_url}
                   onChange={(e) => setNewPago({...newPago, comprobante_url: e.target.value})}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent text-sm sm:text-base"
                   placeholder="https://example.com/comprobante.pdf"
                 />
                 <p className="text-xs text-gray-500 mt-1">Opcional: Link al comprobante digital</p>
@@ -493,7 +493,7 @@ function Pagos({ user }) {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition duration-200 text-sm sm:text-base"
+                  className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white rounded-lg font-semibold hover:from-cyan1-700 hover:to-ocean1-700 transition duration-200 text-sm sm:text-base"
                 >
                   Guardar
                 </button>

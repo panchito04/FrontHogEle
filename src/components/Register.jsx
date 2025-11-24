@@ -82,12 +82,12 @@ function Register({ setIsAuthenticated, setUser }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan1-600 via-ocean1-600 to-pink-500 p-4">
       <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-8 text-center">
+          <div className="bg-gradient-to-r from-cyan1-600 to-ocean1-600 p-8 text-center">
             <div className="w-20 h-20 bg-white rounded-full mx-auto mb-4 flex items-center justify-center">
-              <svg className="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-10 h-10 text-cyan1-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
               </svg>
             </div>
@@ -113,7 +113,7 @@ function Register({ setIsAuthenticated, setUser }) {
                     value={nombre}
                     onChange={(e) => setNombre(e.target.value)}
                     disabled={isLoading}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     placeholder="Juan Pérez"
                   />
                 </div>
@@ -135,7 +135,7 @@ function Register({ setIsAuthenticated, setUser }) {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={isLoading}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     placeholder="tu@email.com"
                   />
                 </div>
@@ -156,7 +156,7 @@ function Register({ setIsAuthenticated, setUser }) {
                     value={rol}
                     onChange={(e) => setRol(e.target.value)}
                     disabled={isLoading}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 bg-white appearance-none cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition duration-200 bg-white appearance-none cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
                     {roles.map((role) => (
                       <option key={role.value} value={role.value}>
@@ -183,7 +183,7 @@ function Register({ setIsAuthenticated, setUser }) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={isLoading}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     placeholder="••••••••"
                   />
                 </div>
@@ -205,7 +205,7 @@ function Register({ setIsAuthenticated, setUser }) {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     disabled={isLoading}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     placeholder="••••••••"
                   />
                 </div>
@@ -214,7 +214,7 @@ function Register({ setIsAuthenticated, setUser }) {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-cyan1-700 hover:to-ocean1-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan1-500 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center">
@@ -232,7 +232,7 @@ function Register({ setIsAuthenticated, setUser }) {
 
             <p className="mt-6 text-center text-sm text-gray-600">
               ¿Ya tienes una cuenta?{' '}
-              <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+              <Link to="/login" className="font-medium text-cyan1-600 hover:text-cyan1-500">
                 Inicia sesión aquí
               </Link>
             </p>

@@ -26,7 +26,7 @@ const ProductFilters = ({
           placeholder="Buscar por nombre o descripción..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="block w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 text-sm sm:text-base"
+          className="block w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition duration-200 text-sm sm:text-base"
         />
       </div>
 
@@ -34,7 +34,7 @@ const ProductFilters = ({
         <select
           value={filterEstado}
           onChange={(e) => setFilterEstado(e.target.value)}
-          className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 text-sm"
+          className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition duration-200 text-sm"
         >
           <option value="todos">📦 Todos los estados</option>
           <option value="disponibles">✅ Disponibles</option>
@@ -44,7 +44,7 @@ const ProductFilters = ({
         <select
           value={filterCategoria}
           onChange={(e) => setFilterCategoria(e.target.value)}
-          className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 text-sm"
+          className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition duration-200 text-sm"
         >
           <option value="todas">🏷️ Todas las categorías</option>
           {categorias.map((cat) => (
@@ -57,7 +57,7 @@ const ProductFilters = ({
         <select
           value={filterCaja}
           onChange={(e) => setFilterCaja(e.target.value)}
-          className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 text-sm"
+          className="px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition duration-200 text-sm"
         >
           <option value="todas">📦 Todas las cajas</option>
           {cajas.map((caja) => (

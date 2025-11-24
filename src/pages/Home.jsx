@@ -93,11 +93,11 @@ const fetchStats = async () => {
           <div className="px-4 sm:px-6 lg:px-8 py-5 lg:py-7">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-cyan1-600 via-ocean1-600 to-pink-600 bg-clip-text text-transparent">
                   Dashboard
                 </h1>
                 <p className="text-gray-600 mt-2 text-sm sm:text-base flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 mr-2 text-cyan1-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                   Bienvenido, <span className="font-semibold ml-1">{user?.nombre}</span>
@@ -106,7 +106,7 @@ const fetchStats = async () => {
               <button
                 onClick={fetchStats}
                 disabled={isLoading}
-                className="mt-4 sm:mt-0 inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="mt-4 sm:mt-0 inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white rounded-lg hover:from-cyan1-700 hover:to-ocean1-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg className={`w-5 h-5 mr-2 ${isLoading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -121,9 +121,9 @@ const fetchStats = async () => {
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="relative">
-                <div className="w-20 h-20 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                <div className="w-20 h-20 border-4 border-indigo-200 border-t-cyan1-600 rounded-full animate-spin"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <svg className="w-10 h-10 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-10 h-10 text-cyan1-600" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
                     <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
                   </svg>
@@ -155,7 +155,7 @@ const fetchStats = async () => {
             <>
               {/* Cards de estadísticas principales con animación */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8 animate-fade-in">
-                <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-6 text-white shadow-xl transform hover:scale-105 transition-all duration-300 hover:shadow-2xl">
+                <div className="bg-gradient-to-br from-cyan1-500 to-cyan1-600 rounded-2xl p-6 text-white shadow-xl transform hover:scale-105 transition-all duration-300 hover:shadow-2xl">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center mb-2">
@@ -173,7 +173,7 @@ const fetchStats = async () => {
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white shadow-xl transform hover:scale-105 transition-all duration-300 hover:shadow-2xl">
+                <div className="bg-gradient-to-br from-ocean1-500 to-ocean1-600 rounded-2xl p-6 text-white shadow-xl transform hover:scale-105 transition-all duration-300 hover:shadow-2xl">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center mb-2">
@@ -234,7 +234,7 @@ const fetchStats = async () => {
                 <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-bold text-gray-800 flex items-center">
-                      <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center mr-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-cyan1-500 to-ocean1-500 rounded-lg flex items-center justify-center mr-3">
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
@@ -249,18 +249,18 @@ const fetchStats = async () => {
                         <div key={venta.mes} className="transform hover:scale-102 transition-transform">
                           <div className="flex justify-between items-center mb-2">
                             <div className="flex items-center">
-                              <span className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center text-white text-xs font-bold mr-3">
+                              <span className="w-8 h-8 bg-gradient-to-br from-cyan1-500 to-ocean1-500 rounded-lg flex items-center justify-center text-white text-xs font-bold mr-3">
                                 {index + 1}
                               </span>
                               <span className="text-sm font-semibold text-gray-700">{formatMes(venta.mes)}</span>
                             </div>
-                            <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg">
+                            <span className="text-sm font-bold text-cyan1-600 bg-indigo-50 px-3 py-1 rounded-lg">
                               {formatCurrency(venta.total)}
                             </span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                             <div
-                              className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-3 rounded-full transition-all duration-700 ease-out shadow-sm"
+                              className="bg-gradient-to-r from-cyan1-500 via-ocean1-500 to-pink-500 h-3 rounded-full transition-all duration-700 ease-out shadow-sm"
                               style={{ width: `${(venta.total / getMaxVenta()) * 100}%` }}
                             ></div>
                           </div>
@@ -284,7 +284,7 @@ const fetchStats = async () => {
                 <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-bold text-gray-800 flex items-center">
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center mr-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-ocean1-500 to-pink-500 rounded-lg flex items-center justify-center mr-3">
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
@@ -425,7 +425,7 @@ const fetchStats = async () => {
                 <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-bold text-gray-800 flex items-center">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center mr-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan1-500 rounded-lg flex items-center justify-center mr-3">
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                         </svg>
@@ -440,7 +440,7 @@ const fetchStats = async () => {
                         <div key={pedido.id_pedido} className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:shadow-lg transition-all transform hover:-translate-y-1 border border-gray-200">
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center flex-1">
-                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center text-white font-bold mr-3 shadow-md">
+                              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan1-500 rounded-lg flex items-center justify-center text-white font-bold mr-3 shadow-md">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
@@ -463,7 +463,7 @@ const fetchStats = async () => {
                               </svg>
                               {getTimeAgo(pedido.fecha)}
                             </div>
-                            <span className="text-base font-bold text-indigo-600">{formatCurrency(pedido.total)}</span>
+                            <span className="text-base font-bold text-cyan1-600">{formatCurrency(pedido.total)}</span>
                           </div>
                         </div>
                       ))}
@@ -488,20 +488,20 @@ const fetchStats = async () => {
                 <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-bold text-gray-800 flex items-center">
-                      <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center mr-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-cyan1-500 to-ocean1-500 rounded-lg flex items-center justify-center mr-3">
                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
                       Nuevos Clientes
                     </h3>
-                    <span className="text-sm text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full font-medium">Recientes</span>
+                    <span className="text-sm text-cyan1-600 bg-indigo-50 px-3 py-1 rounded-full font-medium">Recientes</span>
                   </div>
                   {stats.actividadReciente && stats.actividadReciente.length > 0 ? (
                     <div className="space-y-3">
                       {stats.actividadReciente.slice(0, 5).map((cliente, index) => (
                         <div key={index} className="flex items-center space-x-4 p-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl hover:shadow-md transition-all border border-indigo-100">
-                          <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-md">
+                          <div className="w-12 h-12 bg-gradient-to-br from-cyan1-500 to-ocean1-500 rounded-xl flex items-center justify-center text-white font-bold text-lg flex-shrink-0 shadow-md">
                             {cliente.nombre?.charAt(0).toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">

@@ -72,14 +72,14 @@ const handleCreateCliente = async (e) => {
           <div className="px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan1-600 to-ocean1-600 bg-clip-text text-transparent">
                   Gestión de Clientes
                 </h1>
                 <p className="text-gray-600 mt-1 text-sm sm:text-base">Administra tu base de clientes</p>
               </div>
               <button
                 onClick={() => setShowModal(true)}
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition duration-200 flex items-center justify-center space-x-2 shadow-lg transform hover:scale-105 text-sm sm:text-base"
+                className="bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold hover:from-cyan1-700 hover:to-ocean1-700 transition duration-200 flex items-center justify-center space-x-2 shadow-lg transform hover:scale-105 text-sm sm:text-base"
               >
                 <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -105,7 +105,7 @@ const handleCreateCliente = async (e) => {
                 placeholder="Buscar por nombre, TikTok o teléfono..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 text-sm sm:text-base"
+                className="block w-full pl-10 pr-3 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition duration-200 text-sm sm:text-base"
               />
             </div>
           </div>
@@ -114,7 +114,7 @@ const handleCreateCliente = async (e) => {
           <div className="hidden md:block bg-white rounded-xl shadow-lg overflow-hidden">
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
-                <svg className="animate-spin h-12 w-12 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin h-12 w-12 text-cyan1-600" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -147,7 +147,7 @@ const handleCreateCliente = async (e) => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-cyan1-500 to-ocean1-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
                               {cliente.nombre?.charAt(0).toUpperCase()}
                             </div>
                             <span className="text-sm font-medium text-gray-900">{cliente.nombre}</span>
@@ -168,7 +168,7 @@ const handleCreateCliente = async (e) => {
                           <span className="text-sm text-gray-600">{cliente.direccion || 'N/A'}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <button className="text-indigo-600 hover:text-indigo-900 mr-3 transition-colors">
+                          <button className="text-cyan1-600 hover:text-cyan1-900 mr-3 transition-colors">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                             </svg>
@@ -191,7 +191,7 @@ const handleCreateCliente = async (e) => {
           <div className="md:hidden space-y-4">
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
-                <svg className="animate-spin h-12 w-12 text-indigo-600" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin h-12 w-12 text-cyan1-600" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -208,7 +208,7 @@ const handleCreateCliente = async (e) => {
                 <div key={cliente.id_cliente} className="bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition-shadow duration-200">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                      <div className="w-12 h-12 bg-gradient-to-br from-cyan1-500 to-ocean1-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
                         {cliente.nombre?.charAt(0).toUpperCase()}
                       </div>
                       <div>
@@ -217,7 +217,7 @@ const handleCreateCliente = async (e) => {
                       </div>
                     </div>
                     <div className="flex space-x-2">
-                      <button className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                      <button className="p-2 text-cyan1-600 hover:bg-indigo-50 rounded-lg transition-colors">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
@@ -261,7 +261,7 @@ const handleCreateCliente = async (e) => {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center space-x-3 sm:space-x-4">
                 <div className="bg-white rounded-lg p-2 sm:p-3 shadow-sm">
-                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-cyan1-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
@@ -272,7 +272,7 @@ const handleCreateCliente = async (e) => {
               </div>
               <div className="text-center sm:text-right">
                 <p className="text-xs sm:text-sm text-gray-600">Resultados mostrados</p>
-                <p className="text-xl sm:text-2xl font-bold text-indigo-600">{filteredClientes.length}</p>
+                <p className="text-xl sm:text-2xl font-bold text-cyan1-600">{filteredClientes.length}</p>
               </div>
             </div>
           </div>
@@ -283,7 +283,7 @@ const handleCreateCliente = async (e) => {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-6 text-white">
+            <div className="bg-gradient-to-r from-cyan1-600 to-ocean1-600 p-4 sm:p-6 text-white">
               <h3 className="text-xl sm:text-2xl font-bold">Nuevo Cliente</h3>
               <p className="text-indigo-100 mt-1 text-sm sm:text-base">Completa los datos del cliente</p>
             </div>
@@ -298,7 +298,7 @@ const handleCreateCliente = async (e) => {
                   required
                   value={newCliente.nombre}
                   onChange={(e) => setNewCliente({...newCliente, nombre: e.target.value})}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent text-sm sm:text-base"
                   placeholder="Ej: Juan Pérez"
                 />
               </div>
@@ -311,7 +311,7 @@ const handleCreateCliente = async (e) => {
                   type="text"
                   value={newCliente.tiktok_usuario}
                   onChange={(e) => setNewCliente({...newCliente, tiktok_usuario: e.target.value})}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent text-sm sm:text-base"
                   placeholder="Ej: @usuario123"
                 />
               </div>
@@ -324,7 +324,7 @@ const handleCreateCliente = async (e) => {
                   type="tel"
                   value={newCliente.telefono}
                   onChange={(e) => setNewCliente({...newCliente, telefono: e.target.value})}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent text-sm sm:text-base"
                   placeholder="Ej: +591 12345678"
                 />
               </div>
@@ -337,7 +337,7 @@ const handleCreateCliente = async (e) => {
                   rows="3"
                   value={newCliente.direccion}
                   onChange={(e) => setNewCliente({...newCliente, direccion: e.target.value})}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent text-sm sm:text-base"
                   placeholder="Ej: Av. Principal #123, La Paz"
                 ></textarea>
               </div>
@@ -352,7 +352,7 @@ const handleCreateCliente = async (e) => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition duration-200 text-sm sm:text-base"
+                  className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white rounded-lg font-semibold hover:from-cyan1-700 hover:to-ocean1-700 transition duration-200 text-sm sm:text-base"
                 >
                   Guardar
                 </button>

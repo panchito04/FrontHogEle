@@ -67,7 +67,7 @@ function Sidebar({ user }) {
   return (
     <>
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 bg-gradient-to-r from-indigo-600 to-purple-600 text-white z-50 shadow-lg">
+      <div className="lg:hidden fixed top-0 left-0 right-0 bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white z-50 shadow-lg">
         <div className="flex items-center justify-between p-4">
           {/* Botón de menú a la IZQUIERDA */}
           <button
@@ -112,13 +112,13 @@ function Sidebar({ user }) {
 
       {/* Mobile Sidebar */}
       <div
-        className={`lg:hidden fixed top-0 left-0 h-screen w-72 bg-gradient-to-b from-indigo-600 to-purple-700 text-white z-50 transform transition-transform duration-300 ease-in-out shadow-2xl ${
+        className={`lg:hidden fixed top-0 left-0 h-screen w-72 bg-gradient-to-b from-cyan1-600 to-ocean1-700 text-white z-50 transform transition-transform duration-300 ease-in-out shadow-2xl ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Header del Sidebar con botón de cerrar */}
-          <div className="p-4 border-b border-indigo-500 flex items-center justify-between">
+          <div className="p-4 border-b border-cyan1-500 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
                 <img
@@ -144,7 +144,7 @@ function Sidebar({ user }) {
 
           {/* Info del usuario */}
           {user && (
-            <div className="p-4 border-b border-indigo-500">
+            <div className="p-4 border-b border-cyan1-500">
               <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
                 <p className="text-xs text-indigo-100">Bienvenido/a</p>
                 <p className="font-semibold text-sm">{user.nombre}</p>
@@ -166,7 +166,7 @@ function Sidebar({ user }) {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                     isActive
-                      ? 'bg-white text-indigo-600 shadow-lg transform scale-105'
+                      ? 'bg-white text-cyan1-600 shadow-lg transform scale-105'
                       : 'hover:bg-white/10 hover:translate-x-1'
                   }`}
                 >
@@ -178,7 +178,7 @@ function Sidebar({ user }) {
           </nav>
 
           {/* Botón de cerrar sesión */}
-          <div className="p-4 border-t border-indigo-500">
+          <div className="p-4 border-t border-cyan1-500">
             <button
               onClick={handleLogout}
               className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-red-500/20 transition-colors duration-200 text-red-100 hover:text-white"
@@ -193,9 +193,9 @@ function Sidebar({ user }) {
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="hidden lg:flex h-screen w-64 bg-gradient-to-b from-indigo-600 to-purple-700 text-white flex-col shadow-2xl">
+      <div className="hidden lg:flex h-screen w-64 bg-gradient-to-b from-cyan1-600 to-ocean1-700 text-white flex-col shadow-2xl">
         {/* Logo y usuario */}
-        <div className="p-6 border-b border-indigo-500">
+        <div className="p-6 border-b border-cyan1-500">
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
               <img
@@ -231,7 +231,7 @@ function Sidebar({ user }) {
                 to={item.path}
                 className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                   isActive
-                    ? 'bg-white text-indigo-600 shadow-lg transform scale-105'
+                    ? 'bg-white text-cyan1-600 shadow-lg transform scale-105'
                     : 'hover:bg-white/10 hover:translate-x-1'
                 }`}
               >
@@ -243,7 +243,7 @@ function Sidebar({ user }) {
         </nav>
 
         {/* Botón de cerrar sesión */}
-        <div className="p-4 border-t border-indigo-500">
+        <div className="p-4 border-t border-cyan1-500">
           <button
             onClick={handleLogout}
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-red-500/20 transition-colors duration-200 text-red-100 hover:text-white"

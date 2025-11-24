@@ -279,7 +279,7 @@ function Productos({ user }) {
           <div className="px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan1-600 via-ocean1-600 to-pink-600 bg-clip-text text-transparent">
                   Gestión de Inventario
                 </h1>
                 <p className="text-gray-600 mt-1 text-sm sm:text-base flex items-center">
@@ -298,14 +298,14 @@ function Productos({ user }) {
                   <span className="hidden sm:inline">Nueva Caja</span>
                   <span className="sm:hidden">Caja</span>
                 </button>
-                <button onClick={() => setShowCategoryModal(true)} className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-2 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition-all duration-200 flex items-center justify-center space-x-1.5 text-xs sm:text-sm shadow-lg hover:shadow-xl">
+                <button onClick={() => setShowCategoryModal(true)} className="bg-gradient-to-r from-ocean1-600 to-pink-600 text-white px-3 py-2 rounded-xl font-semibold hover:from-ocean1-700 hover:to-pink-700 transition-all duration-200 flex items-center justify-center space-x-1.5 text-xs sm:text-sm shadow-lg hover:shadow-xl">
                   <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                   </svg>
                   <span className="hidden sm:inline">Nueva Categoría</span>
                   <span className="sm:hidden">Categoría</span>
                 </button>
-                <button onClick={openCreateProductModal} className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-3 py-2 rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center space-x-1.5 shadow-lg hover:shadow-xl text-xs sm:text-sm">
+                <button onClick={openCreateProductModal} className="bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white px-3 py-2 rounded-xl font-semibold hover:from-cyan1-700 hover:to-ocean1-700 transition-all duration-200 flex items-center justify-center space-x-1.5 shadow-lg hover:shadow-xl text-xs sm:text-sm">
                   <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
@@ -316,10 +316,10 @@ function Productos({ user }) {
             </div>
             
             <div className="flex gap-2 mt-4 border-b">
-              <button onClick={() => setActiveTab('productos')} className={`px-4 py-2 font-semibold transition-all ${activeTab === 'productos' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}>
+              <button onClick={() => setActiveTab('productos')} className={`px-4 py-2 font-semibold transition-all ${activeTab === 'productos' ? 'border-b-2 border-cyan1-600 text-cyan1-600' : 'text-gray-500 hover:text-gray-700'}`}>
                 📦 Productos
               </button>
-              <button onClick={() => setActiveTab('cajas')} className={`px-4 py-2 font-semibold transition-all ${activeTab === 'cajas' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}>
+              <button onClick={() => setActiveTab('cajas')} className={`px-4 py-2 font-semibold transition-all ${activeTab === 'cajas' ? 'border-b-2 border-cyan1-600 text-cyan1-600' : 'text-gray-500 hover:text-gray-700'}`}>
                 📦 Cajas ({cajas.length})
               </button>
             </div>
@@ -351,7 +351,7 @@ function Productos({ user }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                 {isLoading ? (
                   <div className="col-span-full flex items-center justify-center py-20">
-                    <div className="w-20 h-20 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                    <div className="w-20 h-20 border-4 border-indigo-200 border-t-cyan1-600 rounded-full animate-spin"></div>
                   </div>
                 ) : filteredProductos.length === 0 ? (
                   <div className="col-span-full text-center py-20 bg-white rounded-2xl">

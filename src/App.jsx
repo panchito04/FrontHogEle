@@ -194,7 +194,7 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan1-600 via-ocean1-600 to-pink-500">
         <div className="text-center">
           <div className="w-20 h-20 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-white text-lg font-semibold">Verificando sesión...</p>

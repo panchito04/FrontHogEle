@@ -99,7 +99,7 @@ const ProductModal = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm overflow-y-auto">
       <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full my-8">
-        <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-6 text-white">
+        <div className="bg-gradient-to-r from-cyan1-600 via-ocean1-600 to-pink-600 p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-2xl font-bold">
@@ -132,7 +132,7 @@ const ProductModal = ({
               disabled={isUploading}
               value={formData.nombre}
               onChange={(e) => setFormData({...formData, nombre: e.target.value})}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all disabled:opacity-50"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition-all disabled:opacity-50"
               placeholder="Ej: Collar de Plata Artesanal"
             />
           </div>
@@ -146,7 +146,7 @@ const ProductModal = ({
               disabled={isUploading}
               value={formData.descripcion}
               onChange={(e) => setFormData({...formData, descripcion: e.target.value})}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all resize-none disabled:opacity-50"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition-all resize-none disabled:opacity-50"
               placeholder="Describe las características únicas..."
             ></textarea>
           </div>
@@ -163,7 +163,7 @@ const ProductModal = ({
                 disabled={isUploading}
                 value={formData.precio}
                 onChange={(e) => setFormData({...formData, precio: e.target.value})}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all disabled:opacity-50"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition-all disabled:opacity-50"
                 placeholder="0.00"
               />
             </div>
@@ -179,7 +179,7 @@ const ProductModal = ({
                 disabled={isUploading}
                 value={formData.cantidad}
                 onChange={(e) => setFormData({...formData, cantidad: e.target.value})}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all disabled:opacity-50"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition-all disabled:opacity-50"
                 placeholder="1"
               />
             </div>
@@ -193,7 +193,7 @@ const ProductModal = ({
                 disabled={isUploading}
                 value={formData.id_categoria}
                 onChange={(e) => setFormData({...formData, id_categoria: e.target.value})}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all disabled:opacity-50"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition-all disabled:opacity-50"
               >
                 <option value="">Selecciona...</option>
                 {categorias.map((cat) => (
@@ -213,7 +213,7 @@ const ProductModal = ({
               disabled={isUploading}
               value={formData.id_caja || ''}
               onChange={(e) => setFormData({...formData, id_caja: e.target.value})}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all disabled:opacity-50"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition-all disabled:opacity-50"
             >
               <option value="">Sin caja</option>
               {cajas.map((caja) => (
@@ -251,7 +251,7 @@ const ProductModal = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-semibold text-indigo-700 mb-2">
+                <label className="block text-sm font-semibold text-cyan1-700 mb-2">
                   📷 Tomar foto
                 </label>
                 <button
@@ -269,7 +269,7 @@ const ProductModal = ({
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-indigo-700 mb-2">
+                <label className="block text-sm font-semibold text-cyan1-700 mb-2">
                   📁 Subir archivo
                 </label>
                 <input
@@ -277,7 +277,7 @@ const ProductModal = ({
                   accept="image/*"
                   onChange={handleFileChange}
                   disabled={isUploading}
-                  className="w-full px-4 py-3 border-2 border-indigo-300 rounded-xl transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700 cursor-pointer disabled:opacity-50"
+                  className="w-full px-4 py-3 border-2 border-indigo-300 rounded-xl transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-cyan1-600 file:text-white hover:file:bg-cyan1-700 cursor-pointer disabled:opacity-50"
                 />
               </div>
             </div>
@@ -292,7 +292,7 @@ const ProductModal = ({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-indigo-700 mb-2">
+              <label className="block text-sm font-semibold text-cyan1-700 mb-2">
                 🔗 URL de imagen
               </label>
               <input
@@ -300,7 +300,7 @@ const ProductModal = ({
                 disabled={isUploading}
                 value={formData.imagen_url || ''}
                 onChange={(e) => handleImageUrlChange(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-indigo-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all disabled:opacity-50"
+                className="w-full px-4 py-3 border-2 border-indigo-300 rounded-xl focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition-all disabled:opacity-50"
                 placeholder="https://ejemplo.com/imagen.jpg"
               />
             </div>
@@ -328,7 +328,7 @@ const ProductModal = ({
             <button
               type="submit"
               disabled={isUploading}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg disabled:opacity-50"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white rounded-xl font-bold hover:from-cyan1-700 hover:to-ocean1-700 transition-all shadow-lg disabled:opacity-50"
             >
               {isUploading ? 'Procesando...' : (editingProduct ? '💾 Actualizar' : '✨ Crear')}
             </button>

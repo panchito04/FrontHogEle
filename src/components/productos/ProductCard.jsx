@@ -8,7 +8,7 @@ const ProductCard = ({ producto, onEdit, onDelete }) => {
         producto.vendido ? 'border-red-200' : 'border-green-200'
       }`}
     >
-      <div className="relative h-52 bg-gradient-to-br from-indigo-500 to-purple-500 overflow-hidden">
+      <div className="relative h-52 bg-gradient-to-br from-cyan1-500 to-ocean1-500 overflow-hidden">
         {producto.imagen_url ? (
           <img 
             src={producto.imagen_url} 
@@ -55,7 +55,7 @@ const ProductCard = ({ producto, onEdit, onDelete }) => {
           <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-2 min-h-[3.5rem]">
             {producto.nombre}
           </h3>
-          <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+          <span className="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-purple-100 text-ocean1-800">
             {producto.categoria?.nombre || 'Sin categoría'}
           </span>
         </div>
@@ -75,7 +75,7 @@ const ProductCard = ({ producto, onEdit, onDelete }) => {
           </div>
           <div className="text-right">
             <p className="text-xs text-gray-500">Stock</p>
-            <p className="text-lg font-bold text-indigo-600">
+            <p className="text-lg font-bold text-cyan1-600">
               {producto.cantidad_disponible || 0}/{producto.cantidad || 0}
             </p>
           </div>
@@ -88,7 +88,7 @@ const ProductCard = ({ producto, onEdit, onDelete }) => {
             className={`flex-1 px-4 py-2.5 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center space-x-2 ${
               producto.vendido 
                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-                : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-md hover:shadow-lg transform hover:-translate-y-0.5'
+                : 'bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white hover:from-cyan1-700 hover:to-ocean1-700 shadow-md hover:shadow-lg transform hover:-translate-y-0.5'
             }`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

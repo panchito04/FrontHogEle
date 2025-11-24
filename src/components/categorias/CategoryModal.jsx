@@ -36,7 +36,7 @@ const CategoryModal = ({ isOpen, onClose, onSubmit }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
       <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full">
-        <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white">
+        <div className="bg-gradient-to-r from-ocean1-600 to-pink-600 p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-2xl font-bold">🏷️ Nueva Categoría</h3>
@@ -65,7 +65,7 @@ const CategoryModal = ({ isOpen, onClose, onSubmit }) => {
               value={formData.nombre}
               onChange={(e) => setFormData({...formData, nombre: e.target.value})}
               disabled={isSubmitting}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-ocean1-600 focus:border-transparent transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="Ej: Joyería"
             />
           </div>
@@ -79,7 +79,7 @@ const CategoryModal = ({ isOpen, onClose, onSubmit }) => {
               value={formData.descripcion}
               onChange={(e) => setFormData({...formData, descripcion: e.target.value})}
               disabled={isSubmitting}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-600 focus:border-transparent transition-all resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-ocean1-600 focus:border-transparent transition-all resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
               placeholder="Describe esta categoría..."
             ></textarea>
           </div>
@@ -96,7 +96,7 @@ const CategoryModal = ({ isOpen, onClose, onSubmit }) => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-ocean1-600 to-pink-600 text-white rounded-xl font-bold hover:from-ocean1-700 hover:to-pink-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>

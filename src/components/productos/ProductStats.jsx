@@ -7,7 +7,7 @@ const ProductStats = ({ filteredProductos, filterCaja, filterCategoria }) => {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-      <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-5 text-white shadow-xl transform hover:scale-105 transition-all duration-200">
+      <div className="bg-gradient-to-br from-cyan1-500 to-cyan1-600 rounded-2xl p-5 text-white shadow-xl transform hover:scale-105 transition-all duration-200">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-indigo-100 text-xs font-medium uppercase tracking-wide mb-1">Total Productos</p>
