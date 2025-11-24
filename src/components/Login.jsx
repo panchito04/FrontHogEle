@@ -24,7 +24,7 @@ function Login({ setIsAuthenticated, setUser }) {
         setUser(result.usuario)
         setIsAuthenticated(true)
         showToast('¡Bienvenido! Inicio de sesión exitoso', 'success')
-        
+
         setTimeout(() => {
           navigate('/home')
         }, 1000)
@@ -135,8 +135,8 @@ function Login({ setIsAuthenticated, setUser }) {
 
             <p className="mt-8 text-center text-sm text-gray-600">
               ¿No tienes una cuenta?{' '}
-              <Link 
-                to="/register" 
+              <Link
+                to="/register"
                 className="font-medium text-cyan1-600 hover:text-cyan1-500"
               >
                 Regístrate aquí

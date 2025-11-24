@@ -21,6 +21,12 @@ export default {
           700: "#2ea69a", // más oscuro
           800: "#268880", // aún más oscuro
         },
+        green1:{
+          500: "##22751B",
+          600: "#1B5716",
+          700: "#143F11",
+          800: "#10300D"
+        }
       },
       animation: {
         'slide-up': 'slideUp 0.3s ease-out',
