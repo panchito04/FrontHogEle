@@ -1,8 +1,8 @@
-// src/pages/Login.jsx
+// src/components/Login.jsx (o src/pages/Login.jsx)
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { authService } from '../services/authService'
-import Toast from '../components/common/Toast'
+import Toast from './common/Toast'
 import { useToast } from '../hooks/useToast'
 
 function Login({ setIsAuthenticated, setUser }) {
@@ -30,6 +30,7 @@ function Login({ setIsAuthenticated, setUser }) {
         }, 1000)
       }
     } catch (error) {
+      console.error('Error de login:', error)
       showToast(error.message || 'Usuario o contraseña incorrectos', 'error')
     } finally {
       setIsLoading(false)
@@ -68,7 +69,8 @@ function Login({ setIsAuthenticated, setUser }) {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200"
+                    disabled={isLoading}
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     placeholder="tu@email.com"
                   />
                 </div>
@@ -90,7 +92,8 @@ function Login({ setIsAuthenticated, setUser }) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200"
+                    disabled={isLoading}
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     placeholder="••••••••"
                   />
                 </div>

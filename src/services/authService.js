@@ -1,9 +1,8 @@
 // src/services/authService.js
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://backhogele.onrender.com';
 
-// Configurar axios para incluir el token en todas las peticiones
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -30,19 +29,47 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token inválido o expirado
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Solo limpiar si NO es la ruta de login
+      if (!error.config.url.includes('/login')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
 );
 
 export const authService = {
+  // Login - ⚠️ CORREGIDO: Ahora usa POST correctamente
+  async login(email, contrasena) {
+    try {
+      console.log('🔐 Intentando login:', { email, url: `${API_URL}/api/usuarios/login` });
+      
+      const response = await api.post('/api/usuarios/login', {
+        email,
+        contrasena
+      });
+      
+      console.log('✅ Respuesta del servidor:', response.data);
+      
+      if (response.data.success) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.usuario));
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error en login:', error.response?.data || error.message);
+      throw error.response?.data || { success: false, message: 'Error al iniciar sesión' };
+    }
+  },
+
   // Registro
   async registro(nombre, email, contrasena, rol) {
     try {
+      console.log('📝 Intentando registro:', { nombre, email, rol });
+      
       const response = await api.post('/api/usuarios/registro', {
         nombre,
         email,
@@ -50,35 +77,17 @@ export const authService = {
         rol
       });
       
+      console.log('✅ Respuesta del servidor:', response.data);
+      
       if (response.data.success) {
-        // Guardar token y usuario
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.usuario));
       }
       
       return response.data;
     } catch (error) {
+      console.error('❌ Error en registro:', error.response?.data || error.message);
       throw error.response?.data || { success: false, message: 'Error al registrar usuario' };
-    }
-  },
-
-  // Login
-  async login(email, contrasena) {
-    try {
-      const response = await api.post('/api/usuarios/login', {
-        email,
-        contrasena
-      });
-      
-      if (response.data.success) {
-        // Guardar token y usuario
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.usuario));
-      }
-      
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || { success: false, message: 'Error al iniciar sesión' };
     }
   },
 
