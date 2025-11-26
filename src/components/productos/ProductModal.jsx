@@ -9,7 +9,8 @@ const ProductModal = ({
   categorias, 
   cajas,
   isUploading,
-  onOpenCamera
+  onOpenCamera,
+  onOpenCameraWithFile // NUEVA PROP
 }) => {
   const [formData, setFormData] = useState({
     nombre: '',
@@ -28,9 +29,8 @@ const ProductModal = ({
     if (editingProduct) {
       setFormData({
         ...editingProduct,
-        imagen_file: editingProduct.imagen_file || null // CAMBIAR ESTA LÍNEA
+        imagen_file: editingProduct.imagen_file || null
       })
-      // CAMBIAR ESTA LÍNEA para priorizar preview_url
       setFilePreview(editingProduct.preview_url || editingProduct.imagen_url || null)
     } else {
       setFormData({
@@ -49,6 +49,7 @@ const ProductModal = ({
 
   if (!isOpen) return null
 
+  // MODIFICAR ESTA FUNCIÓN
   const handleFileChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -63,8 +64,8 @@ const ProductModal = ({
       return
     }
 
-    setFilePreview(URL.createObjectURL(file))
-    setFormData({ ...formData, imagen_file: file, imagen_url: '' })
+    // EN VEZ DE MOSTRAR DIRECTAMENTE, ABRIR LA CÁMARA CON EL ARCHIVO
+    onOpenCameraWithFile(file)
   }
 
   const handleSubmit = (e) => {
@@ -273,13 +274,19 @@ const ProductModal = ({
                 <label className="block text-sm font-semibold text-cyan1-700 mb-2">
                   📁 Subir archivo
                 </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  disabled={isUploading}
-                  className="w-full px-4 py-3 border-2 border-indigo-300 rounded-xl transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-cyan1-600 file:text-white hover:file:bg-cyan1-700 cursor-pointer disabled:opacity-50"
-                />
+                <label className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all cursor-pointer flex items-center justify-center space-x-2 disabled:opacity-50">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  <span>Seleccionar</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    disabled={isUploading}
+                    className="hidden"
+                  />
+                </label>
               </div>
             </div>
 

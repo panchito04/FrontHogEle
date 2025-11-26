@@ -1,44 +1,37 @@
-// src/pages/Productos.jsx - VERSIÓN COMPLETA CON TOAST
+// src/pages/Productos.jsx - VERSION CON RECORTE PARA SUBIR ARCHIVO
 import { useState, useEffect } from 'react'
 import Sidebar from '../components/Sidebar'
 import CameraCapture from '../components/CameraCapture'
 import Toast from '../components/common/Toast'
 
-// Hooks personalizados
 import { useProductos } from '../hooks/useProductos'
 import { useCajas } from '../hooks/useCajas'
 import { useCategorias } from '../hooks/useCategorias'
 import { useToast } from '../hooks/useToast'
 
-// Componentes de Productos
 import ProductStats from '../components/productos/ProductStats'
 import ProductFilters from '../components/productos/ProductFilters'
 import ProductCard from '../components/productos/ProductCard'
 import ProductModal from '../components/productos/ProductModal'
 import DeleteConfirmModal from '../components/productos/DeleteConfirmModal'
 
-// Componentes de Cajas
 import BoxCard from '../components/cajas/BoxCard'
 import BoxModal from '../components/cajas/BoxModal'
 import BoxDetailModal from '../components/cajas/BoxDetailModal'
 
-// Componentes de Categorías
 import CategoryModal from '../components/categorias/CategoryModal'
 
 function Productos({ user }) {
-  // Custom hooks
   const { productos, isLoading, fetchProductos, updateProducto, createProducto, deleteProducto } = useProductos()
   const { cajas, fetchCajas, createCaja, updateCaja, deleteCaja, getCajaDetail } = useCajas()
   const { categorias, fetchCategorias, createCategoria } = useCategorias()
   const { toast, showToast, hideToast } = useToast()
 
-  // Estados de filtros
   const [searchTerm, setSearchTerm] = useState('')
   const [filterEstado, setFilterEstado] = useState('todos')
   const [filterCategoria, setFilterCategoria] = useState('todas')
   const [filterCaja, setFilterCaja] = useState('todas')
   
-  // Estados de modales
   const [showProductModal, setShowProductModal] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [showBoxModal, setShowBoxModal] = useState(false)
@@ -46,18 +39,18 @@ function Productos({ user }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showCamera, setShowCamera] = useState(false)
   
-  // Estados de edición
   const [editingProduct, setEditingProduct] = useState(null)
   const [editingBox, setEditingBox] = useState(null)
   const [selectedBox, setSelectedBox] = useState(null)
   const [deletingProductId, setDeletingProductId] = useState(null)
   
-  // Estados de archivo
   const [filePreview, setFilePreview] = useState(null)
   const [isUploading, setIsUploading] = useState(false)
   const [activeTab, setActiveTab] = useState('productos')
+  
+  // NUEVO ESTADO PARA ARCHIVO INICIAL
+  const [cameraInitialFile, setCameraInitialFile] = useState(null)
 
-  // Cargar datos iniciales
   useEffect(() => {
     const loadInitialData = async () => {
       const [productosResult, categoriasResult, cajasResult] = await Promise.all([
@@ -66,7 +59,6 @@ function Productos({ user }) {
         fetchCajas()
       ])
 
-      // Mostrar error solo si falla la carga inicial de productos
       if (productosResult && !productosResult.success) {
         showToast(productosResult.message, 'error')
       }
@@ -75,10 +67,9 @@ function Productos({ user }) {
     loadInitialData()
   }, [])
 
-  // Manejo de historial del navegador para modales
   useEffect(() => {
     const handleModalBack = () => {
-      if (showCamera) { setShowCamera(false); return true }
+      if (showCamera) { setShowCamera(false); setCameraInitialFile(null); return true }
       if (showProductModal) { setShowProductModal(false); setEditingProduct(null); setFilePreview(null); return true }
       if (showBoxModal) { setShowBoxModal(false); setEditingBox(null); return true }
       if (showBoxDetailModal) { setShowBoxDetailModal(false); setSelectedBox(null); return true }
@@ -102,38 +93,43 @@ function Productos({ user }) {
     }
   }, [showCamera, showProductModal, showBoxModal, showBoxDetailModal, showCategoryModal, showDeleteConfirm])
 
-  // Funciones de manejo de cámara
-const handleCameraCapture = (file, previewUrl) => {
-  setFilePreview(previewUrl)
-  
-  // Actualizar el producto que se está editando o crear uno temporal
-  if (editingProduct) {
-    setEditingProduct({ 
-      ...editingProduct, 
-      imagen_file: file, 
-      imagen_url: '',
-      preview_url: previewUrl // AGREGAR ESTA LÍNEA
-    })
-  } else {
-    // Si no hay producto editándose, crear estructura temporal
-    setEditingProduct({
-      nombre: '',
-      descripcion: '',
-      precio: '',
-      id_categoria: '',
-      id_caja: '',
-      imagen_file: file,
-      imagen_url: '',
-      preview_url: previewUrl, // AGREGAR ESTA LÍNEA
-      cantidad: 1
-    })
+  // Función para captura de cámara
+  const handleCameraCapture = (file, previewUrl) => {
+    setFilePreview(previewUrl)
+    
+    if (editingProduct) {
+      setEditingProduct({ 
+        ...editingProduct, 
+        imagen_file: file, 
+        imagen_url: '',
+        preview_url: previewUrl
+      })
+    } else {
+      setEditingProduct({
+        nombre: '',
+        descripcion: '',
+        precio: '',
+        id_categoria: '',
+        id_caja: '',
+        imagen_file: file,
+        imagen_url: '',
+        preview_url: previewUrl,
+        cantidad: 1
+      })
+    }
+    
+    setShowCamera(false)
+    setCameraInitialFile(null) // Limpiar archivo inicial
+    setShowProductModal(true)
   }
-  
-  setShowCamera(false)
-  setShowProductModal(true)
-}
 
-  // Funciones de productos
+  // NUEVA FUNCIÓN para abrir cámara con archivo
+  const handleOpenCameraWithFile = (file) => {
+    setCameraInitialFile(file)
+    setShowProductModal(false)
+    setShowCamera(true)
+  }
+
   const handleCreateOrUpdateProduct = async (e, formData) => {
     e.preventDefault()
     setIsUploading(true)
@@ -205,7 +201,6 @@ const handleCameraCapture = (file, previewUrl) => {
     }
   }
 
-  // Funciones de cajas
   const handleCreateOrUpdateBox = async (e, formData) => {
     e.preventDefault()
     
@@ -258,7 +253,6 @@ const handleCameraCapture = (file, previewUrl) => {
     }
   }
 
-  // Función para crear categoría
   const handleCreateCategory = async (categoriaData) => {
     const result = await createCategoria(categoriaData)
     
@@ -270,7 +264,6 @@ const handleCameraCapture = (file, previewUrl) => {
     }
   }
 
-  // Filtrado de productos
   const filteredProductos = productos.filter(producto => {
     const matchesSearch = producto.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       producto.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -293,13 +286,12 @@ const handleCameraCapture = (file, previewUrl) => {
       <Sidebar user={user} />
       
       <div className="flex-1 overflow-auto pt-16 lg:pt-0">
-        {/* HEADER */}
         <div className="bg-white shadow-md border-b border-gray-200 sticky top-0 z-20">
           <div className="px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan1-600 via-ocean1-600 to-pink-600 bg-clip-text text-transparent">
-                 Acciones Registro
+                  Acciones Registro
                 </h1>
               </div>
               
@@ -421,6 +413,7 @@ const handleCameraCapture = (file, previewUrl) => {
           setShowProductModal(false)
           setShowCamera(true)
         }}
+        onOpenCameraWithFile={handleOpenCameraWithFile}
       />
 
       <BoxModal
@@ -460,11 +453,14 @@ const handleCameraCapture = (file, previewUrl) => {
       {showCamera && (
         <CameraCapture
           onCapture={handleCameraCapture}
-          onClose={() => setShowCamera(false)}
+          onClose={() => {
+            setShowCamera(false)
+            setCameraInitialFile(null)
+          }}
+          initialFile={cameraInitialFile}
         />
       )}
 
-      {/* TOAST NOTIFICATION */}
       {toast && (
         <Toast
           message={toast.message}

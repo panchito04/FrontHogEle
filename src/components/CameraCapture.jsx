@@ -1,24 +1,26 @@
 import { useRef, useState, useEffect } from 'react'
 
-function CameraCapture({ onCapture, onClose }) {
+function CameraCapture({ onCapture, onClose, initialFile = null }) { // NUEVA PROP
   const fileInputRef = useRef(null)
   const canvasRef = useRef(null)
   const imageContainerRef = useRef(null)
   const [capturedImage, setCapturedImage] = useState(null)
   const [isProcessing, setIsProcessing] = useState(false)
   
-  // Posición del recuadro (porcentajes de la imagen)
   const [cropPosition, setCropPosition] = useState({ x: 50, y: 50 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   
-  // Tamaño del recuadro más pequeño
-  const CAPTURE_SIZE = 250 // Reducido de 400 a 250
+  const CAPTURE_SIZE = 250
 
-  const handleNativeCapture = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
+  // CARGAR ARCHIVO INICIAL SI EXISTE
+  useEffect(() => {
+    if (initialFile) {
+      loadImageFromFile(initialFile)
+    }
+  }, [initialFile])
 
+  const loadImageFromFile = (file) => {
     setIsProcessing(true)
     const reader = new FileReader()
     
@@ -26,13 +28,19 @@ function CameraCapture({ onCapture, onClose }) {
       const img = new Image()
       img.onload = () => {
         setCapturedImage({ img, file })
-        setCropPosition({ x: 50, y: 50 }) // Reset posición al centro
+        setCropPosition({ x: 50, y: 50 })
         setIsProcessing(false)
       }
       img.src = event.target.result
     }
     
     reader.readAsDataURL(file)
+  }
+
+  const handleNativeCapture = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    loadImageFromFile(file)
   }
 
   const handleTouchStart = (e) => {
@@ -56,19 +64,15 @@ function CameraCapture({ onCapture, onClose }) {
     const touch = e.touches[0]
     const container = imageContainerRef.current.getBoundingClientRect()
     
-    // Calcular movimiento en píxeles
     const deltaX = touch.clientX - dragStart.x
     const deltaY = touch.clientY - dragStart.y
     
-    // Convertir a porcentaje de la imagen
     const percentX = (deltaX / container.width) * 100
     const percentY = (deltaY / container.height) * 100
     
-    // Nueva posición con límites
     let newX = dragStart.cropX + percentX
     let newY = dragStart.cropY + percentY
     
-    // Límites para que el recuadro no salga de la imagen
     const margin = (CAPTURE_SIZE / Math.min(container.width, container.height)) * 50
     newX = Math.max(margin, Math.min(100 - margin, newX))
     newY = Math.max(margin, Math.min(100 - margin, newY))
@@ -158,12 +162,11 @@ function CameraCapture({ onCapture, onClose }) {
       cropSizeInImage, cropSizeInImage
     )
 
-    // ESTA PARTE ES CRÍTICA - DEBE LLAMAR A onCapture
     canvas.toBlob((blob) => {
       if (blob) {
         const file = new File([blob], 'producto.jpg', { type: 'image/jpeg' })
-        const previewUrl = URL.createObjectURL(blob) // ASEGURAR QUE ESTA LÍNEA EXISTE
-        onCapture(file, previewUrl) // DEBE PASAR AMBOS PARÁMETROS
+        const previewUrl = URL.createObjectURL(blob)
+        onCapture(file, previewUrl)
       }
     }, 'image/jpeg', 0.95)
   }
@@ -182,9 +185,10 @@ function CameraCapture({ onCapture, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col">
-      {/* Header */}
       <div className="bg-gradient-to-r from-cyan1-600 to-ocean1-600 p-4 flex items-center justify-between">
-        <h3 className="text-white font-bold text-lg">📸 Capturar Producto</h3>
+        <h3 className="text-white font-bold text-lg">
+          {initialFile ? '✂️ Recortar Imagen' : '📸 Capturar Producto'}
+        </h3>
         <button
           onClick={onClose}
           className="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-all"
@@ -206,7 +210,6 @@ function CameraCapture({ onCapture, onClose }) {
 
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Vista principal */}
       <div className="flex-1 relative flex items-center justify-center overflow-hidden bg-gray-900">
         {isProcessing ? (
           <div className="text-center">
@@ -214,7 +217,6 @@ function CameraCapture({ onCapture, onClose }) {
             <p className="text-white font-semibold">Procesando imagen...</p>
           </div>
         ) : capturedImage ? (
-          /* Preview con recuadro movible */
           <div 
             ref={imageContainerRef}
             className="relative w-full h-full flex items-center justify-center"
@@ -224,7 +226,6 @@ function CameraCapture({ onCapture, onClose }) {
             onMouseDown={handleMouseDown}
             style={{ touchAction: 'none' }}
           >
-            {/* Imagen completa */}
             <img
               src={capturedImage.img.src}
               alt="Preview"
@@ -232,10 +233,8 @@ function CameraCapture({ onCapture, onClose }) {
               draggable="false"
             />
             
-            {/* Overlay oscuro */}
             <div className="absolute inset-0 bg-black bg-opacity-40 pointer-events-none" />
 
-            {/* Recuadro movible */}
             <div
               className="absolute border-4 border-green-400 rounded-xl shadow-2xl cursor-move"
               style={{
@@ -248,13 +247,11 @@ function CameraCapture({ onCapture, onClose }) {
                 boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)'
               }}
             >
-              {/* Esquinas decorativas */}
               <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-white -mt-1 -ml-1"></div>
               <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-white -mt-1 -mr-1"></div>
               <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-white -mb-1 -ml-1"></div>
               <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-white -mb-1 -mr-1"></div>
 
-              {/* Cruz central */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="w-8 h-8 border-2 border-white rounded-full bg-green-400 bg-opacity-50 flex items-center justify-center">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -264,7 +261,6 @@ function CameraCapture({ onCapture, onClose }) {
               </div>
             </div>
 
-            {/* Instrucciones */}
             <div className="absolute top-4 left-0 right-0 text-center px-4 pointer-events-none">
               <div className="bg-black bg-opacity-70 rounded-lg py-2 px-4 inline-flex items-center space-x-2">
                 <svg className="w-5 h-5 text-green-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -277,7 +273,6 @@ function CameraCapture({ onCapture, onClose }) {
             </div>
           </div>
         ) : (
-          /* Pantalla inicial */
           <div className="text-center px-6">
             <div className="bg-white bg-opacity-10 backdrop-blur-sm rounded-3xl p-8 mb-6">
               <svg className="w-24 h-24 text-white mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -301,7 +296,6 @@ function CameraCapture({ onCapture, onClose }) {
         )}
       </div>
 
-      {/* Botones */}
       <div className="bg-gradient-to-t from-black to-transparent p-6">
         {capturedImage ? (
           <div className="flex gap-3 justify-center">
