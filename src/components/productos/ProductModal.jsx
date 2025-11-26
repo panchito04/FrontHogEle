@@ -24,6 +24,9 @@ const ProductModal = ({
   })
   
   const [filePreview, setFilePreview] = useState(null)
+  
+  // Determinar si es edición real (tiene id_producto)
+  const isRealEdit = editingProduct && editingProduct.id_producto
 
   useEffect(() => {
     if (editingProduct) {
@@ -105,10 +108,10 @@ const ProductModal = ({
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-2xl font-bold">
-                {editingProduct ? '✏️ Editar Producto' : '✨ Nuevo Producto'}
+                {isRealEdit ? '✏️ Editar Producto' : '✨ Nuevo Producto'}
               </h3>
               <p className="text-indigo-100 mt-1">
-                {editingProduct ? 'Modifica los datos del producto' : 'Cada producto es una pieza exclusiva'}
+                {isRealEdit ? 'Modifica los datos del producto' : 'Cada producto es una pieza exclusiva'}
               </p>
             </div>
             <button
@@ -338,7 +341,7 @@ const ProductModal = ({
               disabled={isUploading}
               className="flex-1 px-6 py-3 bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white rounded-xl font-bold hover:from-cyan1-700 hover:to-ocean1-700 transition-all shadow-lg disabled:opacity-50"
             >
-              {isUploading ? 'Procesando...' : (editingProduct ? '💾 Actualizar' : '✨ Crear')}
+              {isUploading ? 'Procesando...' : (isRealEdit ? '💾 Actualizar' : '✨ Crear')}
             </button>
           </div>
         </form>

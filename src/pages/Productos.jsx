@@ -97,7 +97,8 @@ function Productos({ user }) {
   const handleCameraCapture = (file, previewUrl) => {
     setFilePreview(previewUrl)
     
-    if (editingProduct) {
+    // Si editingProduct tiene id_producto, significa que es una edición real
+    if (editingProduct && editingProduct.id_producto) {
       setEditingProduct({ 
         ...editingProduct, 
         imagen_file: file, 
@@ -105,21 +106,23 @@ function Productos({ user }) {
         preview_url: previewUrl
       })
     } else {
+      // Si no tiene id_producto, es creación (aunque tenga otros datos)
       setEditingProduct({
-        nombre: '',
-        descripcion: '',
-        precio: '',
-        id_categoria: '',
-        id_caja: '',
+        nombre: editingProduct?.nombre || '',
+        descripcion: editingProduct?.descripcion || '',
+        precio: editingProduct?.precio || '',
+        id_categoria: editingProduct?.id_categoria || '',
+        id_caja: editingProduct?.id_caja || '',
         imagen_file: file,
         imagen_url: '',
         preview_url: previewUrl,
-        cantidad: 1
+        cantidad: editingProduct?.cantidad || 1,
+        // NO incluir id_producto aquí
       })
     }
     
     setShowCamera(false)
-    setCameraInitialFile(null) // Limpiar archivo inicial
+    setCameraInitialFile(null)
     setShowProductModal(true)
   }
 
@@ -150,7 +153,10 @@ function Productos({ user }) {
       form.append('imagen_url', formData.imagen_url)
     }
 
-    const result = editingProduct 
+    // VERIFICAR SI REALMENTE ES EDICIÓN (debe tener id_producto)
+    const isRealEdit = editingProduct && editingProduct.id_producto
+    
+    const result = isRealEdit
       ? await updateProducto(editingProduct.id_producto, form)
       : await createProducto(form)
     
