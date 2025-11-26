@@ -138,36 +138,32 @@ function CameraCapture({ onCapture, onClose }) {
     const { img } = capturedImage
     const container = imageContainerRef.current.getBoundingClientRect()
 
-    // Calcular el tamaño del recuadro en píxeles de la imagen original
     const displayWidth = container.width
     const displayHeight = container.height
     const scale = img.width / displayWidth
 
-    // Tamaño del recuadro en píxeles de la imagen original
     const cropSizeInImage = CAPTURE_SIZE * scale
 
-    // Posición del recuadro en píxeles de la imagen original
     const cropX = (cropPosition.x / 100) * img.width - (cropSizeInImage / 2)
     const cropY = (cropPosition.y / 100) * img.height - (cropSizeInImage / 2)
 
-    // Establecer tamaño del canvas al tamaño real del recorte
     canvas.width = cropSizeInImage
     canvas.height = cropSizeInImage
 
-    // Dibujar el recorte SIN ESCALAR
     ctx.drawImage(
       img,
-      cropX, cropY,                      // Posición en imagen original
-      cropSizeInImage, cropSizeInImage,  // Tamaño a capturar
-      0, 0,                              // Posición en canvas
-      cropSizeInImage, cropSizeInImage   // Mismo tamaño en canvas
+      cropX, cropY,
+      cropSizeInImage, cropSizeInImage,
+      0, 0,
+      cropSizeInImage, cropSizeInImage
     )
 
-    // Convertir a blob
+    // ESTA PARTE ES CRÍTICA - DEBE LLAMAR A onCapture
     canvas.toBlob((blob) => {
       if (blob) {
         const file = new File([blob], 'producto.jpg', { type: 'image/jpeg' })
-        onCapture(file, URL.createObjectURL(blob))
+        const previewUrl = URL.createObjectURL(blob) // ASEGURAR QUE ESTA LÍNEA EXISTE
+        onCapture(file, previewUrl) // DEBE PASAR AMBOS PARÁMETROS
       }
     }, 'image/jpeg', 0.95)
   }

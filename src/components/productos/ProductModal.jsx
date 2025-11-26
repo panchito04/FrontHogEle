@@ -28,9 +28,10 @@ const ProductModal = ({
     if (editingProduct) {
       setFormData({
         ...editingProduct,
-        imagen_file: null
+        imagen_file: editingProduct.imagen_file || null // CAMBIAR ESTA LÍNEA
       })
-      setFilePreview(editingProduct.imagen_url || null)
+      // CAMBIAR ESTA LÍNEA para priorizar preview_url
+      setFilePreview(editingProduct.preview_url || editingProduct.imagen_url || null)
     } else {
       setFormData({
         nombre: '',

@@ -103,16 +103,35 @@ function Productos({ user }) {
   }, [showCamera, showProductModal, showBoxModal, showBoxDetailModal, showCategoryModal, showDeleteConfirm])
 
   // Funciones de manejo de cámara
-  const handleCameraCapture = (file, previewUrl) => {
-    setFilePreview(previewUrl)
-    
-    if (editingProduct) {
-      setEditingProduct({ ...editingProduct, imagen_file: file, imagen_url: '' })
-    }
-    
-    setShowCamera(false)
-    setShowProductModal(true)
+const handleCameraCapture = (file, previewUrl) => {
+  setFilePreview(previewUrl)
+  
+  // Actualizar el producto que se está editando o crear uno temporal
+  if (editingProduct) {
+    setEditingProduct({ 
+      ...editingProduct, 
+      imagen_file: file, 
+      imagen_url: '',
+      preview_url: previewUrl // AGREGAR ESTA LÍNEA
+    })
+  } else {
+    // Si no hay producto editándose, crear estructura temporal
+    setEditingProduct({
+      nombre: '',
+      descripcion: '',
+      precio: '',
+      id_categoria: '',
+      id_caja: '',
+      imagen_file: file,
+      imagen_url: '',
+      preview_url: previewUrl, // AGREGAR ESTA LÍNEA
+      cantidad: 1
+    })
   }
+  
+  setShowCamera(false)
+  setShowProductModal(true)
+}
 
   // Funciones de productos
   const handleCreateOrUpdateProduct = async (e, formData) => {
@@ -280,14 +299,8 @@ function Productos({ user }) {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan1-600 via-ocean1-600 to-pink-600 bg-clip-text text-transparent">
-                  Gestión de Inventario
+                 Acciones Registro
                 </h1>
-                <p className="text-gray-600 mt-1 text-sm sm:text-base flex items-center">
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                  Productos únicos organizados por cajas
-                </p>
               </div>
               
               <div className="flex flex-wrap gap-2">
