@@ -1,4 +1,4 @@
-// src/pages/Productos.jsx - VERSIÓN OPTIMIZADA
+// src/pages/Productos.jsx - VERSIÓN CORREGIDA
 import { useState, useEffect, useMemo } from 'react'
 import Sidebar from '../components/Sidebar'
 import CameraCapture from '../components/CameraCapture'
@@ -87,23 +87,13 @@ function Productos({ user }) {
     })
   }, [productos, searchTerm, filterEstado, filterCategoria, filterCaja])
 
-  // Hook de carga progresiva
+  // Hook de carga progresiva - SIN loadMoreRef
   const {
     displayedItems,
     hasMore,
     isLoadingMore,
-    loadMoreRef
-  } = useProgressiveLoad(filteredProductos, 12) // 12 productos iniciales
-
-  // En Productos.jsx, después de useProgressiveLoad:
-  useEffect(() => {
-    console.log('📊 Estado de carga:', {
-      totalProductos: filteredProductos.length,
-      mostrados: displayedItems.length,
-      hasMore,
-      isLoadingMore
-    })
-  }, [filteredProductos.length, displayedItems.length, hasMore, isLoadingMore])
+    loadMore
+  } = useProgressiveLoad(filteredProductos, 12)
 
   useEffect(() => {
     const handleModalBack = () => {
@@ -379,7 +369,6 @@ function Productos({ user }) {
         <div className="p-4 sm:p-6 lg:p-8">
           {activeTab === 'productos' ? (
             <>
-              {/* Stats siempre visibles */}
               <ProductStats
                 filteredProductos={filteredProductos}
                 filterCaja={filterCaja}
@@ -398,10 +387,10 @@ function Productos({ user }) {
                 categorias={categorias}
                 cajas={cajas}
               />
+              
               <div className="space-y-6">
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
                   {isLoading ? (
-                    // Mostrar 8 skeletons mientras carga
                     Array.from({ length: 8 }).map((_, i) => (
                       <ProductCardSkeleton key={i} />
                     ))
@@ -426,7 +415,6 @@ function Productos({ user }) {
                         />
                       ))}
 
-                      {/* Skeletons para carga progresiva */}
                       {isLoadingMore && (
                         Array.from({ length: 4 }).map((_, i) => (
                           <ProductCardSkeleton key={`skeleton-loading-${i}`} />
@@ -436,62 +424,63 @@ function Productos({ user }) {
                   )}
                 </div>
 
-                {/* ELEMENTO OBSERVER - SIEMPRE VISIBLE CUANDO HAY PRODUCTOS */}
+                {/* BOTÓN DE CARGAR MÁS - FUERA DEL GRID */}
                 {!isLoading && filteredProductos.length > 0 && (
-                  <div className="w-full py-8">
+                  <div className="w-full">
                     {hasMore ? (
-                      <div
-                        ref={loadMoreRef}
-                        className="flex items-center justify-center min-h-[100px]"
-                      >
-                        <div className="flex flex-col items-center gap-3">
-                          <div className="w-10 h-10 border-4 border-cyan1-200 border-t-cyan1-600 rounded-full animate-spin"></div>
-                          <p className="text-sm text-gray-500 font-medium">Cargando más productos...</p>
+                      <div className="flex flex-col items-center gap-4 py-8">
+                        <div className="text-center">
+                          <p className="text-sm text-gray-600 mb-1">
+                            Mostrando <span className="font-bold text-cyan1-600">{displayedItems.length}</span> de <span className="font-bold">{filteredProductos.length}</span> productos
+                          </p>
                           <p className="text-xs text-gray-400">
-                            Mostrando {displayedItems.length} de {filteredProductos.length}
+                            Quedan {filteredProductos.length - displayedItems.length} por cargar
                           </p>
                         </div>
+                        
+                        <button
+                          onClick={() => {
+                            console.log('🔘 Botón presionado')
+                            loadMore()
+                          }}
+                          disabled={isLoadingMore}
+                          className="px-8 py-3 bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white rounded-xl font-semibold hover:from-cyan1-700 hover:to-ocean1-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3"
+                        >
+                          {isLoadingMore ? (
+                            <>
+                              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              <span>Cargando más productos...</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                              </svg>
+                              <span>Cargar más productos</span>
+                              <span className="bg-white/20 px-2 py-1 rounded-full text-sm">
+                                +{Math.min(12, filteredProductos.length - displayedItems.length)}
+                              </span>
+                            </>
+                          )}
+                        </button>
                       </div>
                     ) : displayedItems.length > 12 ? (
-                      <div className="text-center py-6">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-full">
-                          <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="text-center py-8">
+                        <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl">
+                          <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
-                          <span className="text-sm text-green-700 font-medium">
-                            ✨ Mostrando todos los productos ({displayedItems.length})
-                          </span>
+                          <div className="text-left">
+                            <p className="text-sm text-green-700 font-bold">
+                              ¡Todos los productos cargados!
+                            </p>
+                            <p className="text-xs text-green-600">
+                              {displayedItems.length} productos en total
+                            </p>
+                          </div>
                         </div>
                       </div>
                     ) : null}
-                  </div>
-                )}
-
-                {/* BOTÓN MANUAL DE CARGAR MÁS (FALLBACK) - SIEMPRE VISIBLE */}
-                {!isLoading && hasMore && displayedItems.length > 0 && (
-                  <div className="text-center pt-4">
-                    <button
-                      onClick={() => {
-                        console.log('🔘 Botón manual presionado')
-                        loadMore()
-                      }}
-                      disabled={isLoadingMore}
-                      className="px-6 py-3 bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white rounded-xl font-semibold hover:from-cyan1-700 hover:to-ocean1-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
-                    >
-                      {isLoadingMore ? (
-                        <>
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          <span>Cargando...</span>
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                          </svg>
-                          <span>Cargar más productos ({displayedItems.length}/{filteredProductos.length})</span>
-                        </>
-                      )}
-                    </button>
                   </div>
                 )}
               </div>

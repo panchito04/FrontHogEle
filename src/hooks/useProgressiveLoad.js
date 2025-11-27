@@ -1,131 +1,78 @@
-// src/hooks/useProgressiveLoad.js
+// src/hooks/useProgressiveLoad.js - VERSIÓN SIMPLIFICADA
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 export const useProgressiveLoad = (items, itemsPerPage = 12) => {
-  const [displayedItems, setDisplayedItems] = useState([])
-  const [hasMore, setHasMore] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const observerRef = useRef(null)
-  const loadMoreRef = useRef(null)
-  const currentPageRef = useRef(1)
 
   // Resetear cuando cambian los items (filtros, búsqueda, etc)
   useEffect(() => {
     console.log('🔄 Reset: items cambiaron', items.length)
-    currentPageRef.current = 1
-    const initialItems = items.slice(0, itemsPerPage)
-    setDisplayedItems(initialItems)
-    setHasMore(items.length > itemsPerPage)
+    setCurrentPage(1)
     setIsLoadingMore(false)
-  }, [items, itemsPerPage])
+  }, [items])
 
-  // Cargar más items - VERSIÓN CORREGIDA
+  // Calcular items a mostrar
+  const displayedItems = items.slice(0, currentPage * itemsPerPage)
+  const hasMore = displayedItems.length < items.length
+
+  // Cargar más items
   const loadMore = useCallback(() => {
     if (isLoadingMore || !hasMore) {
       console.log('🚫 loadMore bloqueado:', { isLoadingMore, hasMore })
       return
     }
 
-    console.log('📦 Cargando más items...', {
-      currentPage: currentPageRef.current,
+    console.log('📦 Iniciando carga...', {
+      paginaActual: currentPage,
       itemsPerPage,
       totalItems: items.length,
-      currentDisplayed: displayedItems.length
+      mostrados: displayedItems.length
     })
 
     setIsLoadingMore(true)
     
-    // Simular delay mínimo para suavizar la carga
+    // Simular delay para suavizar la experiencia
     setTimeout(() => {
-      const nextPage = currentPageRef.current + 1
-      currentPageRef.current = nextPage
-      const endIndex = nextPage * itemsPerPage
-      const nextItems = items.slice(0, endIndex)
-      
-      console.log('✅ Items cargados:', {
-        nuevaPágina: nextPage,
-        itemsMostrados: nextItems.length,
-        totalItems: items.length,
-        quedanMás: endIndex < items.length
+      setCurrentPage(prev => {
+        const nextPage = prev + 1
+        console.log('✅ Página cargada:', nextPage)
+        return nextPage
       })
-      
-      setDisplayedItems(nextItems)
-      setHasMore(endIndex < items.length)
       setIsLoadingMore(false)
     }, 150)
-  }, [items, itemsPerPage, isLoadingMore, hasMore, displayedItems.length])
-
-  // Intersection Observer para detectar cuando llegar al final
-  useEffect(() => {
-    // Limpiar observer anterior
-    if (observerRef.current) {
-      observerRef.current.disconnect()
-    }
-
-    if (!loadMoreRef.current || !hasMore) {
-      console.log('⚠️ Observer no iniciado:', { hasRef: !!loadMoreRef.current, hasMore })
-      return
-    }
-
-    const options = {
-      root: null,
-      rootMargin: '400px', // Cargar mucho antes de llegar al final
-      threshold: 0
-    }
-
-    const callback = (entries) => {
-      const [entry] = entries
-      if (entry.isIntersecting && hasMore && !isLoadingMore) {
-        console.log('👀 Observer detectó elemento visible, cargando más...')
-        loadMore()
-      }
-    }
-
-    observerRef.current = new IntersectionObserver(callback, options)
-    
-    // Pequeño delay para asegurar que el DOM esté listo
-    const timeoutId = setTimeout(() => {
-      if (loadMoreRef.current) {
-        observerRef.current.observe(loadMoreRef.current)
-        console.log('👀 Observer activado correctamente')
-      }
-    }, 100)
-
-    return () => {
-      clearTimeout(timeoutId)
-      if (observerRef.current) {
-        observerRef.current.disconnect()
-      }
-    }
-  }, [hasMore, isLoadingMore, loadMore])
+  }, [isLoadingMore, hasMore, currentPage, itemsPerPage, items.length, displayedItems.length])
 
   // Auto-cargar si hay pocos items y la pantalla es grande
   useEffect(() => {
     if (displayedItems.length > 0 && displayedItems.length < 20 && hasMore && !isLoadingMore) {
-      // Verificar si el usuario tiene una pantalla grande que puede mostrar más items
       const shouldAutoLoad = () => {
         const viewportHeight = window.innerHeight
         const documentHeight = document.documentElement.scrollHeight
-        // Si la página es muy corta, cargar más automáticamente
         return documentHeight < viewportHeight * 1.5
       }
 
       if (shouldAutoLoad()) {
-        console.log('📱 Pantalla grande detectada, cargando más productos automáticamente...')
-        const timer = setTimeout(() => {
-          loadMore()
-        }, 200)
+        console.log('📱 Pantalla grande detectada, cargando más automáticamente...')
+        const timer = setTimeout(loadMore, 200)
         return () => clearTimeout(timer)
       }
     }
   }, [displayedItems.length, hasMore, isLoadingMore, loadMore])
 
+  console.log('📊 Hook state:', {
+    currentPage,
+    displayedItems: displayedItems.length,
+    total: items.length,
+    hasMore,
+    isLoadingMore
+  })
+
   return {
     displayedItems,
     hasMore,
     isLoadingMore,
-    loadMoreRef,
-    loadMore // Exportar para cargar manualmente si es necesario
+    loadMore
   }
 }
