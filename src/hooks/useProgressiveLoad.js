@@ -12,6 +12,7 @@ export const useProgressiveLoad = (items, itemsPerPage = 12) => {
 
   // Resetear cuando cambian los items (filtros, búsqueda, etc)
   useEffect(() => {
+    console.log('🔄 Reset: items cambiaron', items.length)
     currentPageRef.current = 1
     const initialItems = items.slice(0, itemsPerPage)
     setDisplayedItems(initialItems)
@@ -19,24 +20,41 @@ export const useProgressiveLoad = (items, itemsPerPage = 12) => {
     setIsLoadingMore(false)
   }, [items, itemsPerPage])
 
-  // Cargar más items
+  // Cargar más items - VERSIÓN CORREGIDA
   const loadMore = useCallback(() => {
-    if (isLoadingMore || !hasMore) return
+    if (isLoadingMore || !hasMore) {
+      console.log('🚫 loadMore bloqueado:', { isLoadingMore, hasMore })
+      return
+    }
+
+    console.log('📦 Cargando más items...', {
+      currentPage: currentPageRef.current,
+      itemsPerPage,
+      totalItems: items.length,
+      currentDisplayed: displayedItems.length
+    })
 
     setIsLoadingMore(true)
     
     // Simular delay mínimo para suavizar la carga
     setTimeout(() => {
-      currentPageRef.current += 1
-      const startIndex = 0
-      const endIndex = currentPageRef.current * itemsPerPage
-      const nextItems = items.slice(startIndex, endIndex)
+      const nextPage = currentPageRef.current + 1
+      currentPageRef.current = nextPage
+      const endIndex = nextPage * itemsPerPage
+      const nextItems = items.slice(0, endIndex)
+      
+      console.log('✅ Items cargados:', {
+        nuevaPágina: nextPage,
+        itemsMostrados: nextItems.length,
+        totalItems: items.length,
+        quedanMás: endIndex < items.length
+      })
       
       setDisplayedItems(nextItems)
       setHasMore(endIndex < items.length)
       setIsLoadingMore(false)
     }, 150)
-  }, [items, itemsPerPage, hasMore, isLoadingMore])
+  }, [items, itemsPerPage, isLoadingMore, hasMore, displayedItems.length])
 
   // Intersection Observer para detectar cuando llegar al final
   useEffect(() => {
@@ -45,7 +63,10 @@ export const useProgressiveLoad = (items, itemsPerPage = 12) => {
       observerRef.current.disconnect()
     }
 
-    if (!loadMoreRef.current || !hasMore) return
+    if (!loadMoreRef.current || !hasMore) {
+      console.log('⚠️ Observer no iniciado:', { hasRef: !!loadMoreRef.current, hasMore })
+      return
+    }
 
     const options = {
       root: null,
@@ -56,7 +77,7 @@ export const useProgressiveLoad = (items, itemsPerPage = 12) => {
     const callback = (entries) => {
       const [entry] = entries
       if (entry.isIntersecting && hasMore && !isLoadingMore) {
-        console.log('🔍 Observer detectó elemento visible, cargando más...')
+        console.log('👀 Observer detectó elemento visible, cargando más...')
         loadMore()
       }
     }
@@ -67,7 +88,7 @@ export const useProgressiveLoad = (items, itemsPerPage = 12) => {
     const timeoutId = setTimeout(() => {
       if (loadMoreRef.current) {
         observerRef.current.observe(loadMoreRef.current)
-        console.log('👀 Observer activado')
+        console.log('👀 Observer activado correctamente')
       }
     }, 100)
 
@@ -77,7 +98,7 @@ export const useProgressiveLoad = (items, itemsPerPage = 12) => {
         observerRef.current.disconnect()
       }
     }
-  }, [hasMore, isLoadingMore, loadMore, displayedItems.length])
+  }, [hasMore, isLoadingMore, loadMore])
 
   // Auto-cargar si hay pocos items y la pantalla es grande
   useEffect(() => {
