@@ -33,19 +33,19 @@ function Productos({ user }) {
   const [filterEstado, setFilterEstado] = useState('todos')
   const [filterCategoria, setFilterCategoria] = useState('todas')
   const [filterCaja, setFilterCaja] = useState('todas')
-  
+
   const [showProductModal, setShowProductModal] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [showBoxModal, setShowBoxModal] = useState(false)
   const [showBoxDetailModal, setShowBoxDetailModal] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showCamera, setShowCamera] = useState(false)
-  
+
   const [editingProduct, setEditingProduct] = useState(null)
   const [editingBox, setEditingBox] = useState(null)
   const [selectedBox, setSelectedBox] = useState(null)
   const [deletingProductId, setDeletingProductId] = useState(null)
-  
+
   const [filePreview, setFilePreview] = useState(null)
   const [isUploading, setIsUploading] = useState(false)
   const [activeTab, setActiveTab] = useState('productos')
@@ -72,15 +72,15 @@ function Productos({ user }) {
     return productos.filter(producto => {
       const matchesSearch = producto.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         producto.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
-      
-      const matchesEstado = filterEstado === 'todos' || 
+
+      const matchesEstado = filterEstado === 'todos' ||
         (filterEstado === 'disponibles' && producto.disponible) ||
         (filterEstado === 'vendidos' && producto.vendido)
-      
-      const matchesCategoria = filterCategoria === 'todas' || 
+
+      const matchesCategoria = filterCategoria === 'todas' ||
         producto.id_categoria?.toString() === filterCategoria
 
-      const matchesCaja = filterCaja === 'todas' || 
+      const matchesCaja = filterCaja === 'todas' ||
         producto.id_caja?.toString() === filterCaja
 
       return matchesSearch && matchesEstado && matchesCategoria && matchesCaja
@@ -88,12 +88,22 @@ function Productos({ user }) {
   }, [productos, searchTerm, filterEstado, filterCategoria, filterCaja])
 
   // Hook de carga progresiva
-  const { 
-    displayedItems, 
-    hasMore, 
-    isLoadingMore, 
-    loadMoreRef 
+  const {
+    displayedItems,
+    hasMore,
+    isLoadingMore,
+    loadMoreRef
   } = useProgressiveLoad(filteredProductos, 12) // 12 productos iniciales
+
+  // En Productos.jsx, después de useProgressiveLoad:
+  useEffect(() => {
+    console.log('📊 Estado de carga:', {
+      totalProductos: filteredProductos.length,
+      mostrados: displayedItems.length,
+      hasMore,
+      isLoadingMore
+    })
+  }, [filteredProductos.length, displayedItems.length, hasMore, isLoadingMore])
 
   useEffect(() => {
     const handleModalBack = () => {
@@ -108,14 +118,14 @@ function Productos({ user }) {
 
     if (showCamera || showProductModal || showBoxModal || showBoxDetailModal || showCategoryModal || showDeleteConfirm) {
       window.history.pushState({ modal: true }, '')
-      
+
       const handlePopState = (e) => {
         if (e.state?.modal) {
           handleModalBack()
           e.stopImmediatePropagation()
         }
       }
-      
+
       window.addEventListener('popstate', handlePopState, true)
       return () => window.removeEventListener('popstate', handlePopState, true)
     }
@@ -123,11 +133,11 @@ function Productos({ user }) {
 
   const handleCameraCapture = (file, previewUrl) => {
     setFilePreview(previewUrl)
-    
+
     if (editingProduct && editingProduct.id_producto) {
-      const updatedProduct = { 
-        ...editingProduct, 
-        imagen_file: file, 
+      const updatedProduct = {
+        ...editingProduct,
+        imagen_file: file,
         imagen_url: '',
         preview_url: previewUrl
       }
@@ -147,7 +157,7 @@ function Productos({ user }) {
       setEditingProduct(updatedProduct)
       localStorage.setItem('tempProductFormData', JSON.stringify(updatedProduct))
     }
-    
+
     setShowCamera(false)
     setCameraInitialFile(null)
     setShowProductModal(true)
@@ -164,17 +174,17 @@ function Productos({ user }) {
   const handleCreateOrUpdateProduct = async (e, formData) => {
     e.preventDefault()
     setIsUploading(true)
-    
+
     const form = new FormData()
-    
+
     form.append('nombre', formData.nombre)
     form.append('descripcion', formData.descripcion || '')
     form.append('precio', parseFloat(formData.precio))
     form.append('cantidad', parseInt(formData.cantidad) || 1)
-    
+
     if (formData.id_categoria) form.append('id_categoria', parseInt(formData.id_categoria))
     if (formData.id_caja) form.append('id_caja', parseInt(formData.id_caja))
-    
+
     if (formData.imagen_file) {
       form.append('imagen', formData.imagen_file)
     } else if (formData.imagen_url) {
@@ -182,11 +192,11 @@ function Productos({ user }) {
     }
 
     const isRealEdit = editingProduct && editingProduct.id_producto
-    
+
     const result = isRealEdit
       ? await updateProducto(editingProduct.id_producto, form)
       : await createProducto(form)
-    
+
     if (result.success) {
       showToast(result.message, 'success')
       setShowProductModal(false)
@@ -197,7 +207,7 @@ function Productos({ user }) {
     } else {
       showToast(result.message, 'error')
     }
-    
+
     setIsUploading(false)
   }
 
@@ -206,7 +216,7 @@ function Productos({ user }) {
       showToast('No puedes editar un producto que ya ha sido vendido', 'warning')
       return
     }
-    setEditingProduct({...producto, imagen_file: null})
+    setEditingProduct({ ...producto, imagen_file: null })
     setFilePreview(producto.imagen_url || null)
     setShowProductModal(true)
   }
@@ -214,7 +224,7 @@ function Productos({ user }) {
   const openCreateProductModal = () => {
     setEditingProduct(null)
     setFilePreview(null)
-    
+
     const savedFormData = localStorage.getItem('tempProductFormData')
     if (savedFormData) {
       try {
@@ -231,7 +241,7 @@ function Productos({ user }) {
         console.error('Error al cargar datos guardados:', error)
       }
     }
-    
+
     setShowProductModal(true)
   }
 
@@ -242,7 +252,7 @@ function Productos({ user }) {
 
   const handleDeleteProduct = async () => {
     const result = await deleteProducto(deletingProductId)
-    
+
     if (result.success) {
       showToast(result.message, 'success')
       setShowDeleteConfirm(false)
@@ -255,11 +265,11 @@ function Productos({ user }) {
 
   const handleCreateOrUpdateBox = async (e, formData) => {
     e.preventDefault()
-    
+
     const result = editingBox
       ? await updateCaja(editingBox.id_caja, formData)
       : await createCaja(formData)
-    
+
     if (result.success) {
       showToast(result.message, 'success')
       setShowBoxModal(false)
@@ -271,7 +281,7 @@ function Productos({ user }) {
 
   const openBoxDetailModal = async (caja) => {
     const result = await getCajaDetail(caja.id_caja)
-    
+
     if (result.success) {
       setSelectedBox(result.data)
       setShowBoxDetailModal(true)
@@ -296,7 +306,7 @@ function Productos({ user }) {
     }
 
     const result = await deleteCaja(id)
-    
+
     if (result.success) {
       showToast(result.message, 'success')
       fetchProductos()
@@ -307,7 +317,7 @@ function Productos({ user }) {
 
   const handleCreateCategory = async (categoriaData) => {
     const result = await createCategoria(categoriaData)
-    
+
     if (result.success) {
       showToast(result.message, 'success')
       setShowCategoryModal(false)
@@ -319,7 +329,7 @@ function Productos({ user }) {
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Sidebar user={user} />
-      
+
       <div className="flex-1 overflow-auto pt-16 lg:pt-0">
         <div className="bg-white shadow-md border-b border-gray-200 sticky top-0 z-20">
           <div className="px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
@@ -329,7 +339,7 @@ function Productos({ user }) {
                   Acciones Registro
                 </h1>
               </div>
-              
+
               <div className="flex flex-wrap gap-2">
                 <button onClick={openCreateBoxModal} className="bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-3 py-2 rounded-xl font-semibold hover:from-cyan-700 hover:to-blue-700 transition-all duration-200 flex items-center justify-center space-x-1.5 text-xs sm:text-sm shadow-lg hover:shadow-xl">
                   <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -354,7 +364,7 @@ function Productos({ user }) {
                 </button>
               </div>
             </div>
-            
+
             <div className="flex gap-2 mt-4 border-b">
               <button onClick={() => setActiveTab('productos')} className={`px-4 py-2 font-semibold transition-all ${activeTab === 'productos' ? 'border-b-2 border-cyan1-600 text-cyan1-600' : 'text-gray-500 hover:text-gray-700'}`}>
                 📦 Productos
@@ -370,7 +380,7 @@ function Productos({ user }) {
           {activeTab === 'productos' ? (
             <>
               {/* Stats siempre visibles */}
-              <ProductStats 
+              <ProductStats
                 filteredProductos={filteredProductos}
                 filterCaja={filterCaja}
                 filterCategoria={filterCategoria}
@@ -389,45 +399,103 @@ function Productos({ user }) {
                 cajas={cajas}
               />
 
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
-                {isLoading ? (
-                  // Mostrar 8 skeletons mientras carga
-                  Array.from({ length: 8 }).map((_, i) => (
-                    <ProductCardSkeleton key={i} />
-                  ))
-                ) : filteredProductos.length === 0 ? (
-                  <div className="col-span-full text-center py-20 bg-white rounded-2xl">
-                    <div className="bg-gray-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                      </svg>
+              // En Productos.jsx, reemplaza toda la sección del grid:
+
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
+                  {isLoading ? (
+                    // Mostrar 8 skeletons mientras carga
+                    Array.from({ length: 8 }).map((_, i) => (
+                      <ProductCardSkeleton key={i} />
+                    ))
+                  ) : filteredProductos.length === 0 ? (
+                    <div className="col-span-full text-center py-20 bg-white rounded-2xl">
+                      <div className="bg-gray-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        </svg>
+                      </div>
+                      <p className="text-gray-500 text-lg font-semibold">No se encontraron productos</p>
+                      <p className="text-gray-400 text-sm mt-2">Intenta cambiar los filtros de búsqueda</p>
                     </div>
-                    <p className="text-gray-500 text-lg font-semibold">No se encontraron productos</p>
-                    <p className="text-gray-400 text-sm mt-2">Intenta cambiar los filtros de búsqueda</p>
+                  ) : (
+                    <>
+                      {displayedItems.map((producto) => (
+                        <ProductCard
+                          key={producto.id_producto}
+                          producto={producto}
+                          onEdit={openEditProductModal}
+                          onDelete={confirmDeleteProduct}
+                        />
+                      ))}
+
+                      {/* Skeletons para carga progresiva */}
+                      {isLoadingMore && (
+                        Array.from({ length: 4 }).map((_, i) => (
+                          <ProductCardSkeleton key={`skeleton-loading-${i}`} />
+                        ))
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {/* Elemento observador - SIEMPRE FUERA DEL GRID */}
+                {!isLoading && filteredProductos.length > 0 && (
+                  <div className="w-full">
+                    {hasMore ? (
+                      <div
+                        ref={loadMoreRef}
+                        className="flex items-center justify-center py-8 min-h-[100px]"
+                      >
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="w-10 h-10 border-4 border-cyan1-200 border-t-cyan1-600 rounded-full animate-spin"></div>
+                          <p className="text-sm text-gray-500 font-medium">Cargando más productos...</p>
+                          <p className="text-xs text-gray-400">
+                            Mostrando {displayedItems.length} de {filteredProductos.length}
+                          </p>
+                        </div>
+                      </div>
+                    ) : displayedItems.length > 12 ? (
+                      <div className="text-center py-6">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-full">
+                          <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="text-sm text-green-700 font-medium">
+                            ✨ Mostrando todos los productos ({displayedItems.length})
+                          </span>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
-                ) : (
-                  <>
-                    {displayedItems.map((producto) => (
-                      <ProductCard
-                        key={producto.id_producto}
-                        producto={producto}
-                        onEdit={openEditProductModal}
-                        onDelete={confirmDeleteProduct}
-                      />
-                    ))}
-                    
-                    {/* Skeletons para carga progresiva */}
-                    {isLoadingMore && (
-                      Array.from({ length: 4 }).map((_, i) => (
-                        <ProductCardSkeleton key={`skeleton-${i}`} />
-                      ))
-                    )}
-                    
-                    {/* Elemento observador para infinite scroll */}
-                    {hasMore && (
-                      <div ref={loadMoreRef} className="col-span-full h-10" />
-                    )}
-                  </>
+                )}
+
+                {/* Botón manual de cargar más (fallback) */}
+                {!isLoading && hasMore && displayedItems.length > 0 && (
+                  <div className="text-center pt-4">
+                    <button
+                      onClick={() => {
+                        console.log('🔘 Botón manual presionado')
+                        loadMore()
+                      }}
+                      disabled={isLoadingMore}
+                      className="px-6 py-3 bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white rounded-xl font-semibold hover:from-cyan1-700 hover:to-ocean1-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+                    >
+                      {isLoadingMore ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          <span>Cargando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                          <span>Cargar más productos</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 )}
               </div>
             </>

@@ -1,3 +1,5 @@
+// src/components/productos/ProductCardSkeleton.jsx
+
 import React from 'react'
 
 const ProductCardSkeleton = () => {

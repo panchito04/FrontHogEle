@@ -1,3 +1,5 @@
+// src/hooks/useProgressiveLoad.js
+
 import { useState, useEffect, useRef, useCallback } from 'react'
 
 export const useProgressiveLoad = (items, itemsPerPage = 12) => {
@@ -6,11 +8,15 @@ export const useProgressiveLoad = (items, itemsPerPage = 12) => {
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const observerRef = useRef(null)
   const loadMoreRef = useRef(null)
+  const currentPageRef = useRef(1)
 
   // Resetear cuando cambian los items (filtros, búsqueda, etc)
   useEffect(() => {
-    setDisplayedItems(items.slice(0, itemsPerPage))
+    currentPageRef.current = 1
+    const initialItems = items.slice(0, itemsPerPage)
+    setDisplayedItems(initialItems)
     setHasMore(items.length > itemsPerPage)
+    setIsLoadingMore(false)
   }, [items, itemsPerPage])
 
   // Cargar más items
@@ -21,44 +27,84 @@ export const useProgressiveLoad = (items, itemsPerPage = 12) => {
     
     // Simular delay mínimo para suavizar la carga
     setTimeout(() => {
-      const currentLength = displayedItems.length
-      const nextItems = items.slice(0, currentLength + itemsPerPage)
+      currentPageRef.current += 1
+      const startIndex = 0
+      const endIndex = currentPageRef.current * itemsPerPage
+      const nextItems = items.slice(startIndex, endIndex)
       
       setDisplayedItems(nextItems)
-      setHasMore(nextItems.length < items.length)
+      setHasMore(endIndex < items.length)
       setIsLoadingMore(false)
-    }, 100)
-  }, [items, displayedItems, itemsPerPage, hasMore, isLoadingMore])
+    }, 150)
+  }, [items, itemsPerPage, hasMore, isLoadingMore])
 
   // Intersection Observer para detectar cuando llegar al final
   useEffect(() => {
-    if (!loadMoreRef.current) return
+    // Limpiar observer anterior
+    if (observerRef.current) {
+      observerRef.current.disconnect()
+    }
+
+    if (!loadMoreRef.current || !hasMore) return
 
     const options = {
       root: null,
-      rootMargin: '200px', // Cargar antes de llegar al final
-      threshold: 0.1
+      rootMargin: '400px', // Cargar mucho antes de llegar al final
+      threshold: 0
     }
 
-    observerRef.current = new IntersectionObserver(([entry]) => {
+    const callback = (entries) => {
+      const [entry] = entries
       if (entry.isIntersecting && hasMore && !isLoadingMore) {
+        console.log('🔍 Observer detectó elemento visible, cargando más...')
         loadMore()
       }
-    }, options)
+    }
 
-    observerRef.current.observe(loadMoreRef.current)
+    observerRef.current = new IntersectionObserver(callback, options)
+    
+    // Pequeño delay para asegurar que el DOM esté listo
+    const timeoutId = setTimeout(() => {
+      if (loadMoreRef.current) {
+        observerRef.current.observe(loadMoreRef.current)
+        console.log('👀 Observer activado')
+      }
+    }, 100)
 
     return () => {
+      clearTimeout(timeoutId)
       if (observerRef.current) {
         observerRef.current.disconnect()
       }
     }
-  }, [hasMore, isLoadingMore, loadMore])
+  }, [hasMore, isLoadingMore, loadMore, displayedItems.length])
+
+  // Auto-cargar si hay pocos items y la pantalla es grande
+  useEffect(() => {
+    if (displayedItems.length > 0 && displayedItems.length < 20 && hasMore && !isLoadingMore) {
+      // Verificar si el usuario tiene una pantalla grande que puede mostrar más items
+      const shouldAutoLoad = () => {
+        const viewportHeight = window.innerHeight
+        const documentHeight = document.documentElement.scrollHeight
+        // Si la página es muy corta, cargar más automáticamente
+        return documentHeight < viewportHeight * 1.5
+      }
+
+      if (shouldAutoLoad()) {
+        console.log('📱 Pantalla grande detectada, cargando más productos automáticamente...')
+        const timer = setTimeout(() => {
+          loadMore()
+        }, 200)
+        return () => clearTimeout(timer)
+      }
+    }
+  }, [displayedItems.length, hasMore, isLoadingMore, loadMore])
 
   return {
     displayedItems,
     hasMore,
     isLoadingMore,
-    loadMoreRef
+    loadMoreRef,
+    loadMore // Exportar para cargar manualmente si es necesario
   }
 }
