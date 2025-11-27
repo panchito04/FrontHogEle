@@ -87,11 +87,12 @@ function Productos({ user }) {
     })
   }, [productos, searchTerm, filterEstado, filterCategoria, filterCaja])
 
-  // Hook de carga progresiva - SIN loadMoreRef
+  // Hook de carga progresiva - CON sentinelRef automático
   const {
     displayedItems,
     hasMore,
     isLoadingMore,
+    sentinelRef,
     loadMore
   } = useProgressiveLoad(filteredProductos, 12)
 
@@ -424,23 +425,31 @@ function Productos({ user }) {
                   )}
                 </div>
 
-                {/* BOTÓN DE CARGAR MÁS - FUERA DEL GRID */}
+                {/* ELEMENTO SENTINEL - Para carga automática con scroll */}
                 {!isLoading && filteredProductos.length > 0 && (
                   <div className="w-full">
                     {hasMore ? (
                       <div className="flex flex-col items-center gap-4 py-8">
-                        <div className="text-center">
-                          <p className="text-sm text-gray-600 mb-1">
-                            Mostrando <span className="font-bold text-cyan1-600">{displayedItems.length}</span> de <span className="font-bold">{filteredProductos.length}</span> productos
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            Quedan {filteredProductos.length - displayedItems.length} por cargar
-                          </p>
+                        {/* Elemento sentinel que el observer vigila */}
+                        <div 
+                          ref={sentinelRef}
+                          className="w-full flex flex-col items-center gap-3"
+                        >
+                          <div className="w-10 h-10 border-4 border-cyan1-200 border-t-cyan1-600 rounded-full animate-spin"></div>
+                          <div className="text-center">
+                            <p className="text-sm text-gray-600 mb-1">
+                              Mostrando <span className="font-bold text-cyan1-600">{displayedItems.length}</span> de <span className="font-bold">{filteredProductos.length}</span> productos
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              {isLoadingMore ? 'Cargando...' : 'Desplázate para cargar más'}
+                            </p>
+                          </div>
                         </div>
                         
+                        {/* Botón manual como respaldo */}
                         <button
                           onClick={() => {
-                            console.log('🔘 Botón presionado')
+                            console.log('🔘 Botón manual presionado')
                             loadMore()
                           }}
                           disabled={isLoadingMore}
@@ -449,14 +458,14 @@ function Productos({ user }) {
                           {isLoadingMore ? (
                             <>
                               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                              <span>Cargando más productos...</span>
+                              <span>Cargando...</span>
                             </>
                           ) : (
                             <>
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                               </svg>
-                              <span>Cargar más productos</span>
+                              <span>Cargar más ahora</span>
                               <span className="bg-white/20 px-2 py-1 rounded-full text-sm">
                                 +{Math.min(12, filteredProductos.length - displayedItems.length)}
                               </span>
