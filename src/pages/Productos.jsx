@@ -99,35 +99,42 @@ function Productos({ user }) {
     
     // Si editingProduct tiene id_producto, significa que es una edición real
     if (editingProduct && editingProduct.id_producto) {
-      setEditingProduct({ 
+      const updatedProduct = { 
         ...editingProduct, 
         imagen_file: file, 
         imagen_url: '',
         preview_url: previewUrl
-      })
+      }
+      setEditingProduct(updatedProduct)
     } else {
-      // Si no tiene id_producto, es creación (aunque tenga otros datos)
-      setEditingProduct({
-        nombre: editingProduct?.nombre || '',
-        descripcion: editingProduct?.descripcion || '',
-        precio: editingProduct?.precio || '',
-        id_categoria: editingProduct?.id_categoria || '',
-        id_caja: editingProduct?.id_caja || '',
+      // Preservar datos existentes del formulario temporal
+      const updatedProduct = {
+        nombre: tempFormData?.nombre || editingProduct?.nombre || '',
+        descripcion: tempFormData?.descripcion || editingProduct?.descripcion || '',
+        precio: tempFormData?.precio || editingProduct?.precio || '',
+        id_categoria: tempFormData?.id_categoria || editingProduct?.id_categoria || '',
+        id_caja: tempFormData?.id_caja || editingProduct?.id_caja || '',
         imagen_file: file,
         imagen_url: '',
         preview_url: previewUrl,
-        cantidad: editingProduct?.cantidad || 1,
-        // NO incluir id_producto aquí
-      })
+        cantidad: tempFormData?.cantidad || editingProduct?.cantidad || 1,
+      }
+      setEditingProduct(updatedProduct)
+      
+      // Guardar en localStorage
+      localStorage.setItem('tempProductFormData', JSON.stringify(updatedProduct))
     }
     
     setShowCamera(false)
     setCameraInitialFile(null)
     setShowProductModal(true)
+    setTempFormData(null) // Limpiar datos temporales
   }
 
-  // NUEVA FUNCIÓN para abrir cámara con archivo
-  const handleOpenCameraWithFile = (file) => {
+  // NUEVA FUNCIÓN para abrir cámara con archivo y guardar datos del formulario
+  const handleOpenCameraWithFile = (file, currentFormData) => {
+    // Guardar datos actuales del formulario antes de abrir la cámara
+    setTempFormData(currentFormData)
     setCameraInitialFile(file)
     setShowProductModal(false)
     setShowCamera(true)
@@ -165,6 +172,8 @@ function Productos({ user }) {
       setShowProductModal(false)
       setFilePreview(null)
       setEditingProduct(null)
+      // LIMPIAR LOCALSTORAGE AL GUARDAR EXITOSAMENTE
+      localStorage.removeItem('tempProductFormData')
       fetchCajas()
     } else {
       showToast(result.message, 'error')
@@ -186,6 +195,26 @@ function Productos({ user }) {
   const openCreateProductModal = () => {
     setEditingProduct(null)
     setFilePreview(null)
+    
+    // Verificar si hay datos guardados en localStorage
+    const savedFormData = localStorage.getItem('tempProductFormData')
+    if (savedFormData) {
+      try {
+        const parsed = JSON.parse(savedFormData)
+        // Preguntar al usuario si quiere recuperar los datos
+        if (window.confirm('¿Deseas recuperar los datos del producto que estabas creando?')) {
+          setEditingProduct(parsed)
+          if (parsed.preview_url) {
+            setFilePreview(parsed.preview_url)
+          }
+        } else {
+          localStorage.removeItem('tempProductFormData')
+        }
+      } catch (error) {
+        console.error('Error al cargar datos guardados:', error)
+      }
+    }
+    
     setShowProductModal(true)
   }
 
@@ -409,17 +438,26 @@ function Productos({ user }) {
           setShowProductModal(false)
           setEditingProduct(null)
           setFilePreview(null)
+          // NO limpiar localStorage aquí para que persistan los datos
         }}
         onSubmit={handleCreateOrUpdateProduct}
         editingProduct={editingProduct}
         categorias={categorias}
         cajas={cajas}
         isUploading={isUploading}
-        onOpenCamera={() => {
+        onOpenCamera={(currentFormData) => {
+          // Guardar datos actuales antes de abrir cámara
+          setTempFormData(currentFormData)
           setShowProductModal(false)
           setShowCamera(true)
         }}
         onOpenCameraWithFile={handleOpenCameraWithFile}
+        onFormChange={(formData) => {
+          // Guardar cambios en localStorage mientras el usuario escribe
+          if (!formData.id_producto) {
+            localStorage.setItem('tempProductFormData', JSON.stringify(formData))
+          }
+        }}
       />
 
       <BoxModal

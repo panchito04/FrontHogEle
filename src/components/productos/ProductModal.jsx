@@ -49,6 +49,18 @@ const ProductModal = ({
       setFilePreview(null)
     }
   }, [editingProduct, isOpen])
+  
+  // NUEVO EFECTO: Guardar cambios automáticamente en localStorage
+  useEffect(() => {
+    if (isOpen && !isRealEdit && onFormChange) {
+      // Solo guardar si está abierto y no es edición
+      const timeoutId = setTimeout(() => {
+        onFormChange(formData)
+      }, 500) // Debounce de 500ms
+      
+      return () => clearTimeout(timeoutId)
+    }
+  }, [formData, isOpen, isRealEdit, onFormChange])
 
   if (!isOpen) return null
 
@@ -67,8 +79,8 @@ const ProductModal = ({
       return
     }
 
-    // EN VEZ DE MOSTRAR DIRECTAMENTE, ABRIR LA CÁMARA CON EL ARCHIVO
-    onOpenCameraWithFile(file)
+    // Pasar los datos actuales del formulario junto con el archivo
+    onOpenCameraWithFile(file, formData)
   }
 
   const handleSubmit = (e) => {
@@ -261,7 +273,7 @@ const ProductModal = ({
                 </label>
                 <button
                   type="button"
-                  onClick={onOpenCamera}
+                  onClick={() => onOpenCamera(formData)}
                   disabled={isUploading}
                   className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 transition-all disabled:opacity-50 flex items-center justify-center space-x-2"
                 >
