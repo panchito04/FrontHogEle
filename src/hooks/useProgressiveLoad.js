@@ -1,4 +1,4 @@
-// src/hooks/useProgressiveLoad.js - CON SCROLL AUTOMÁTICO
+// src/hooks/useProgressiveLoad.js - VERSIÓN ROBUSTA
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 
@@ -7,7 +7,8 @@ export const useProgressiveLoad = (items, itemsPerPage = 12) => {
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const observerRef = useRef(null)
   const sentinelRef = useRef(null)
-  const loadingRef = useRef(false) // Prevenir múltiples cargas simultáneas
+  const loadingRef = useRef(false)
+  const mountedRef = useRef(false) // Track si el sentinel está montado
 
   // Resetear cuando cambian los items
   useEffect(() => {
@@ -49,7 +50,7 @@ export const useProgressiveLoad = (items, itemsPerPage = 12) => {
     }, 300)
   }, [hasMore, currentPage, itemsPerPage, items.length, displayedItems.length])
 
-  // Intersection Observer - MEJORADO
+  // Intersection Observer - CON CALLBACK REF
   useEffect(() => {
     // Limpiar observer previo
     if (observerRef.current) {
@@ -57,71 +58,71 @@ export const useProgressiveLoad = (items, itemsPerPage = 12) => {
       observerRef.current = null
     }
 
-    // No crear observer si no hay más items
-    if (!hasMore) {
-      console.log('⏹️ No hay más items, observer no necesario')
+    // No crear observer si no hay más items o no hay items mostrados
+    if (!hasMore || displayedItems.length === 0) {
+      console.log('⏹️ Observer no necesario:', { hasMore, itemsLength: displayedItems.length })
       return
     }
 
-    // Crear nuevo observer
+    console.log('🔧 Configurando observer...')
+
     const options = {
       root: null,
-      rootMargin: '200px', // Trigger 200px antes del final
+      rootMargin: '300px', // Trigger 300px antes
       threshold: 0.1
     }
 
     const handleIntersect = (entries) => {
-      const [entry] = entries
-      
-      console.log('👁️ Observer callback:', {
-        isIntersecting: entry.isIntersecting,
-        hasMore,
-        isLoading: loadingRef.current
-      })
+      entries.forEach(entry => {
+        console.log('👁️ Observer callback:', {
+          isIntersecting: entry.isIntersecting,
+          hasMore,
+          isLoading: loadingRef.current,
+          intersectionRatio: entry.intersectionRatio
+        })
 
-      if (entry.isIntersecting && hasMore && !loadingRef.current) {
-        console.log('🎯 ¡Trigger! Cargando más...')
-        loadMore()
-      }
+        if (entry.isIntersecting && hasMore && !loadingRef.current) {
+          console.log('🎯 ¡Trigger! Cargando más...')
+          loadMore()
+        }
+      })
     }
 
     observerRef.current = new IntersectionObserver(handleIntersect, options)
 
-    // Conectar al elemento sentinel cuando esté listo
-    const connectObserver = () => {
-      if (sentinelRef.current && observerRef.current) {
+    // Intentar conectar múltiples veces si es necesario
+    let attempts = 0
+    const maxAttempts = 10
+    
+    const tryConnect = () => {
+      attempts++
+      
+      if (sentinelRef.current) {
         observerRef.current.observe(sentinelRef.current)
-        console.log('✅ Observer conectado al sentinel')
+        console.log(`✅ Observer conectado al sentinel (intento ${attempts})`)
+        mountedRef.current = true
         return true
       }
+      
+      if (attempts < maxAttempts) {
+        console.log(`⏳ Intento ${attempts}/${maxAttempts} - Esperando sentinel...`)
+        setTimeout(tryConnect, 50)
+        return false
+      }
+      
+      console.warn('⚠️ No se pudo conectar el observer después de', maxAttempts, 'intentos')
       return false
     }
 
-    // Intentar conectar inmediatamente
-    if (!connectObserver()) {
-      // Si no está listo, intentar en el siguiente tick
-      const timeoutId = setTimeout(() => {
-        if (connectObserver()) {
-          console.log('✅ Observer conectado (delayed)')
-        } else {
-          console.warn('⚠️ No se pudo conectar el observer')
-        }
-      }, 100)
-
-      return () => {
-        clearTimeout(timeoutId)
-        if (observerRef.current) {
-          observerRef.current.disconnect()
-        }
-      }
-    }
+    tryConnect()
 
     return () => {
       if (observerRef.current) {
         observerRef.current.disconnect()
       }
+      mountedRef.current = false
     }
-  }, [hasMore, loadMore])
+  }, [hasMore, displayedItems.length, loadMore])
 
   // Auto-cargar para pantallas grandes
   useEffect(() => {
@@ -138,17 +139,28 @@ export const useProgressiveLoad = (items, itemsPerPage = 12) => {
           if (!loadingRef.current) {
             loadMore()
           }
-        }, 200)
+        }, 400) // Más tiempo para que el DOM esté listo
         return () => clearTimeout(timer)
       }
     }
   }, [displayedItems.length, hasMore, loadMore])
 
+  // Callback ref function - se llama cuando el elemento se monta/desmonta
+  const setSentinelRef = useCallback((node) => {
+    sentinelRef.current = node
+    
+    if (node && observerRef.current && !mountedRef.current) {
+      console.log('🎯 Sentinel montado, conectando observer...')
+      observerRef.current.observe(node)
+      mountedRef.current = true
+    }
+  }, [])
+
   return {
     displayedItems,
     hasMore,
     isLoadingMore,
-    sentinelRef, // Este ref debe conectarse al elemento visible
-    loadMore // Para uso manual si es necesario
+    sentinelRef: setSentinelRef, // Callback ref en lugar de objeto ref
+    loadMore
   }
 }
