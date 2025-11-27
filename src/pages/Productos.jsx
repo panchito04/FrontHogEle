@@ -1,5 +1,5 @@
-// src/pages/Productos.jsx - VERSION CON RECORTE PARA SUBIR ARCHIVO
-import { useState, useEffect } from 'react'
+// src/pages/Productos.jsx - VERSIÓN OPTIMIZADA
+import { useState, useEffect, useMemo } from 'react'
 import Sidebar from '../components/Sidebar'
 import CameraCapture from '../components/CameraCapture'
 import Toast from '../components/common/Toast'
@@ -8,17 +8,18 @@ import { useProductos } from '../hooks/useProductos'
 import { useCajas } from '../hooks/useCajas'
 import { useCategorias } from '../hooks/useCategorias'
 import { useToast } from '../hooks/useToast'
+import { useProgressiveLoad } from '../hooks/useProgressiveLoad'
 
 import ProductStats from '../components/productos/ProductStats'
 import ProductFilters from '../components/productos/ProductFilters'
 import ProductCard from '../components/productos/ProductCard'
+import ProductCardSkeleton from '../components/productos/ProductCardSkeleton'
 import ProductModal from '../components/productos/ProductModal'
 import DeleteConfirmModal from '../components/productos/DeleteConfirmModal'
 
 import BoxCard from '../components/cajas/BoxCard'
 import BoxModal from '../components/cajas/BoxModal'
 import BoxDetailModal from '../components/cajas/BoxDetailModal'
-
 import CategoryModal from '../components/categorias/CategoryModal'
 
 function Productos({ user }) {
@@ -26,6 +27,7 @@ function Productos({ user }) {
   const { cajas, fetchCajas, createCaja, updateCaja, deleteCaja, getCajaDetail } = useCajas()
   const { categorias, fetchCategorias, createCategoria } = useCategorias()
   const { toast, showToast, hideToast } = useToast()
+  const [tempFormData, setTempFormData] = useState(null)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filterEstado, setFilterEstado] = useState('todos')
@@ -47,8 +49,6 @@ function Productos({ user }) {
   const [filePreview, setFilePreview] = useState(null)
   const [isUploading, setIsUploading] = useState(false)
   const [activeTab, setActiveTab] = useState('productos')
-  
-  // NUEVO ESTADO PARA ARCHIVO INICIAL
   const [cameraInitialFile, setCameraInitialFile] = useState(null)
 
   useEffect(() => {
@@ -66,6 +66,34 @@ function Productos({ user }) {
 
     loadInitialData()
   }, [])
+
+  // Memoizar productos filtrados
+  const filteredProductos = useMemo(() => {
+    return productos.filter(producto => {
+      const matchesSearch = producto.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        producto.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
+      
+      const matchesEstado = filterEstado === 'todos' || 
+        (filterEstado === 'disponibles' && producto.disponible) ||
+        (filterEstado === 'vendidos' && producto.vendido)
+      
+      const matchesCategoria = filterCategoria === 'todas' || 
+        producto.id_categoria?.toString() === filterCategoria
+
+      const matchesCaja = filterCaja === 'todas' || 
+        producto.id_caja?.toString() === filterCaja
+
+      return matchesSearch && matchesEstado && matchesCategoria && matchesCaja
+    })
+  }, [productos, searchTerm, filterEstado, filterCategoria, filterCaja])
+
+  // Hook de carga progresiva
+  const { 
+    displayedItems, 
+    hasMore, 
+    isLoadingMore, 
+    loadMoreRef 
+  } = useProgressiveLoad(filteredProductos, 12) // 12 productos iniciales
 
   useEffect(() => {
     const handleModalBack = () => {
@@ -93,11 +121,9 @@ function Productos({ user }) {
     }
   }, [showCamera, showProductModal, showBoxModal, showBoxDetailModal, showCategoryModal, showDeleteConfirm])
 
-  // Función para captura de cámara
   const handleCameraCapture = (file, previewUrl) => {
     setFilePreview(previewUrl)
     
-    // Si editingProduct tiene id_producto, significa que es una edición real
     if (editingProduct && editingProduct.id_producto) {
       const updatedProduct = { 
         ...editingProduct, 
@@ -107,7 +133,6 @@ function Productos({ user }) {
       }
       setEditingProduct(updatedProduct)
     } else {
-      // Preservar datos existentes del formulario temporal
       const updatedProduct = {
         nombre: tempFormData?.nombre || editingProduct?.nombre || '',
         descripcion: tempFormData?.descripcion || editingProduct?.descripcion || '',
@@ -120,20 +145,16 @@ function Productos({ user }) {
         cantidad: tempFormData?.cantidad || editingProduct?.cantidad || 1,
       }
       setEditingProduct(updatedProduct)
-      
-      // Guardar en localStorage
       localStorage.setItem('tempProductFormData', JSON.stringify(updatedProduct))
     }
     
     setShowCamera(false)
     setCameraInitialFile(null)
     setShowProductModal(true)
-    setTempFormData(null) // Limpiar datos temporales
+    setTempFormData(null)
   }
 
-  // NUEVA FUNCIÓN para abrir cámara con archivo y guardar datos del formulario
   const handleOpenCameraWithFile = (file, currentFormData) => {
-    // Guardar datos actuales del formulario antes de abrir la cámara
     setTempFormData(currentFormData)
     setCameraInitialFile(file)
     setShowProductModal(false)
@@ -160,7 +181,6 @@ function Productos({ user }) {
       form.append('imagen_url', formData.imagen_url)
     }
 
-    // VERIFICAR SI REALMENTE ES EDICIÓN (debe tener id_producto)
     const isRealEdit = editingProduct && editingProduct.id_producto
     
     const result = isRealEdit
@@ -172,7 +192,6 @@ function Productos({ user }) {
       setShowProductModal(false)
       setFilePreview(null)
       setEditingProduct(null)
-      // LIMPIAR LOCALSTORAGE AL GUARDAR EXITOSAMENTE
       localStorage.removeItem('tempProductFormData')
       fetchCajas()
     } else {
@@ -196,12 +215,10 @@ function Productos({ user }) {
     setEditingProduct(null)
     setFilePreview(null)
     
-    // Verificar si hay datos guardados en localStorage
     const savedFormData = localStorage.getItem('tempProductFormData')
     if (savedFormData) {
       try {
         const parsed = JSON.parse(savedFormData)
-        // Preguntar al usuario si quiere recuperar los datos
         if (window.confirm('¿Deseas recuperar los datos del producto que estabas creando?')) {
           setEditingProduct(parsed)
           if (parsed.preview_url) {
@@ -299,23 +316,6 @@ function Productos({ user }) {
     }
   }
 
-  const filteredProductos = productos.filter(producto => {
-    const matchesSearch = producto.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      producto.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    const matchesEstado = filterEstado === 'todos' || 
-      (filterEstado === 'disponibles' && producto.disponible) ||
-      (filterEstado === 'vendidos' && producto.vendido)
-    
-    const matchesCategoria = filterCategoria === 'todas' || 
-      producto.id_categoria?.toString() === filterCategoria
-
-    const matchesCaja = filterCaja === 'todas' || 
-      producto.id_caja?.toString() === filterCaja
-
-    return matchesSearch && matchesEstado && matchesCategoria && matchesCaja
-  })
-
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Sidebar user={user} />
@@ -369,6 +369,7 @@ function Productos({ user }) {
         <div className="p-4 sm:p-6 lg:p-8">
           {activeTab === 'productos' ? (
             <>
+              {/* Stats siempre visibles */}
               <ProductStats 
                 filteredProductos={filteredProductos}
                 filterCaja={filterCaja}
@@ -388,11 +389,12 @@ function Productos({ user }) {
                 cajas={cajas}
               />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
                 {isLoading ? (
-                  <div className="col-span-full flex items-center justify-center py-20">
-                    <div className="w-20 h-20 border-4 border-indigo-200 border-t-cyan1-600 rounded-full animate-spin"></div>
-                  </div>
+                  // Mostrar 8 skeletons mientras carga
+                  Array.from({ length: 8 }).map((_, i) => (
+                    <ProductCardSkeleton key={i} />
+                  ))
                 ) : filteredProductos.length === 0 ? (
                   <div className="col-span-full text-center py-20 bg-white rounded-2xl">
                     <div className="bg-gray-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -404,14 +406,28 @@ function Productos({ user }) {
                     <p className="text-gray-400 text-sm mt-2">Intenta cambiar los filtros de búsqueda</p>
                   </div>
                 ) : (
-                  filteredProductos.map((producto) => (
-                    <ProductCard
-                      key={producto.id_producto}
-                      producto={producto}
-                      onEdit={openEditProductModal}
-                      onDelete={confirmDeleteProduct}
-                    />
-                  ))
+                  <>
+                    {displayedItems.map((producto) => (
+                      <ProductCard
+                        key={producto.id_producto}
+                        producto={producto}
+                        onEdit={openEditProductModal}
+                        onDelete={confirmDeleteProduct}
+                      />
+                    ))}
+                    
+                    {/* Skeletons para carga progresiva */}
+                    {isLoadingMore && (
+                      Array.from({ length: 4 }).map((_, i) => (
+                        <ProductCardSkeleton key={`skeleton-${i}`} />
+                      ))
+                    )}
+                    
+                    {/* Elemento observador para infinite scroll */}
+                    {hasMore && (
+                      <div ref={loadMoreRef} className="col-span-full h-10" />
+                    )}
+                  </>
                 )}
               </div>
             </>
@@ -438,7 +454,6 @@ function Productos({ user }) {
           setShowProductModal(false)
           setEditingProduct(null)
           setFilePreview(null)
-          // NO limpiar localStorage aquí para que persistan los datos
         }}
         onSubmit={handleCreateOrUpdateProduct}
         editingProduct={editingProduct}
@@ -446,14 +461,12 @@ function Productos({ user }) {
         cajas={cajas}
         isUploading={isUploading}
         onOpenCamera={(currentFormData) => {
-          // Guardar datos actuales antes de abrir cámara
           setTempFormData(currentFormData)
           setShowProductModal(false)
           setShowCamera(true)
         }}
         onOpenCameraWithFile={handleOpenCameraWithFile}
         onFormChange={(formData) => {
-          // Guardar cambios en localStorage mientras el usuario escribe
           if (!formData.id_producto) {
             localStorage.setItem('tempProductFormData', JSON.stringify(formData))
           }

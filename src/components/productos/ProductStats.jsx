@@ -1,9 +1,15 @@
 // src/components/productos/ProductStats.jsx
-import React from 'react'
+
+import React, { useMemo } from 'react'
 
 const ProductStats = ({ filteredProductos, filterCaja, filterCategoria }) => {
-  const disponibles = filteredProductos.filter(p => p.disponible && !p.vendido).length
-  const vendidos = filteredProductos.filter(p => p.vendido).length
+  const stats = useMemo(() => {
+    const disponibles = filteredProductos.filter(p => p.disponible && !p.vendido).length
+    const vendidos = filteredProductos.filter(p => p.vendido).length
+    const total = filteredProductos.length
+
+    return { disponibles, vendidos, total }
+  }, [filteredProductos])
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -11,7 +17,7 @@ const ProductStats = ({ filteredProductos, filterCaja, filterCategoria }) => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-indigo-100 text-xs font-medium uppercase tracking-wide mb-1">Total Productos</p>
-            <h3 className="text-3xl font-bold">{filteredProductos.length}</h3>
+            <h3 className="text-3xl font-bold">{stats.total}</h3>
             <p className="text-indigo-200 text-xs mt-1">
               {filterCaja !== 'todas' || filterCategoria !== 'todas' ? 'Filtrados' : 'Piezas únicas'}
             </p>
@@ -28,7 +34,7 @@ const ProductStats = ({ filteredProductos, filterCaja, filterCategoria }) => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-green-100 text-xs font-medium uppercase tracking-wide mb-1">Disponibles</p>
-            <h3 className="text-3xl font-bold">{disponibles}</h3>
+            <h3 className="text-3xl font-bold">{stats.disponibles}</h3>
             <p className="text-green-200 text-xs mt-1">Para venta</p>
           </div>
           <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl">
@@ -43,7 +49,7 @@ const ProductStats = ({ filteredProductos, filterCaja, filterCategoria }) => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-orange-100 text-xs font-medium uppercase tracking-wide mb-1">Vendidos</p>
-            <h3 className="text-3xl font-bold">{vendidos}</h3>
+            <h3 className="text-3xl font-bold">{stats.vendidos}</h3>
             <p className="text-orange-200 text-xs mt-1">Completados</p>
           </div>
           <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl">
@@ -57,4 +63,4 @@ const ProductStats = ({ filteredProductos, filterCaja, filterCategoria }) => {
   )
 }
 
-export default ProductStats
+export default React.memo(ProductStats)
