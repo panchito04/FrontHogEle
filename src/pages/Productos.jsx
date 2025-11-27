@@ -436,13 +436,13 @@ function Productos({ user }) {
                   )}
                 </div>
 
-                {/* Elemento observador - SIEMPRE FUERA DEL GRID */}
+                {/* ELEMENTO OBSERVER - SIEMPRE VISIBLE CUANDO HAY PRODUCTOS */}
                 {!isLoading && filteredProductos.length > 0 && (
-                  <div className="w-full">
+                  <div className="w-full py-8">
                     {hasMore ? (
                       <div
                         ref={loadMoreRef}
-                        className="flex items-center justify-center py-8 min-h-[100px]"
+                        className="flex items-center justify-center min-h-[100px]"
                       >
                         <div className="flex flex-col items-center gap-3">
                           <div className="w-10 h-10 border-4 border-cyan1-200 border-t-cyan1-600 rounded-full animate-spin"></div>
@@ -467,7 +467,7 @@ function Productos({ user }) {
                   </div>
                 )}
 
-                {/* Botón manual de cargar más (fallback) */}
+                {/* BOTÓN MANUAL DE CARGAR MÁS (FALLBACK) - SIEMPRE VISIBLE */}
                 {!isLoading && hasMore && displayedItems.length > 0 && (
                   <div className="text-center pt-4">
                     <button
@@ -488,7 +488,7 @@ function Productos({ user }) {
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                           </svg>
-                          <span>Cargar más productos</span>
+                          <span>Cargar más productos ({displayedItems.length}/{filteredProductos.length})</span>
                         </>
                       )}
                     </button>
