@@ -16,7 +16,7 @@ const ProductModal = ({
   const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
-    precio: '',
+    precio: '1', // CAMBIO: Precio por defecto en 1 (string o number funciona, string es mejor para inputs)
     id_categoria: '',
     id_caja: '',
     imagen_url: '',
@@ -36,10 +36,11 @@ const ProductModal = ({
       })
       setFilePreview(editingProduct.preview_url || editingProduct.imagen_url || null)
     } else {
+      // RESET para nuevo producto
       setFormData({
         nombre: '',
         descripcion: '',
-        precio: '',
+        precio: '1', // CAMBIO: Siempre inicia con 1
         id_categoria: '',
         id_caja: '',
         imagen_url: '',
@@ -79,8 +80,35 @@ const ProductModal = ({
     onOpenCameraWithFile(file, formData)
   }
 
+  // CAMBIO: Lógica de validación antes de enviar
   const handleSubmit = (e) => {
     e.preventDefault()
+
+    // 1. Validar Nombre
+    if (!formData.nombre || formData.nombre.trim() === '') {
+      alert('⚠️ El campo "Nombre" es obligatorio.')
+      return
+    }
+
+    // 2. Validar Precio
+    if (!formData.precio || parseFloat(formData.precio) <= 0) {
+      alert('⚠️ El campo "Precio" es obligatorio y debe ser mayor a 0.')
+      return
+    }
+
+    // 3. Validar Cantidad
+    if (!formData.cantidad || parseInt(formData.cantidad) <= 0) {
+      alert('⚠️ El campo "Cantidad" es obligatorio.')
+      return
+    }
+
+    // 4. Validar Categoría
+    if (!formData.id_categoria) {
+      alert('⚠️ Debes seleccionar una "Categoría".')
+      return
+    }
+
+    // Si todo está bien, enviamos
     onSubmit(e, formData)
   }
 
@@ -88,7 +116,7 @@ const ProductModal = ({
     setFormData({
       nombre: '',
       descripcion: '',
-      precio: '',
+      precio: '1', // Reset también a 1
       id_categoria: '',
       id_caja: '',
       imagen_url: '',
@@ -140,11 +168,11 @@ const ProductModal = ({
           {/* Nombre */}
           <div>
             <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5">
-              📝 Nombre *
+              📝 Nombre <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
-              required
+              // required se quitó del HTML nativo para controlar la validación con JS y dar alertas personalizadas
               disabled={isUploading}
               value={formData.nombre}
               onChange={(e) => setFormData({...formData, nombre: e.target.value})}
@@ -153,10 +181,10 @@ const ProductModal = ({
             />
           </div>
 
-          {/* Descripción */}
+          {/* Descripción (Opcional) */}
           <div>
             <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5">
-              📄 Descripción
+              📄 Descripción <span className="text-gray-400 font-normal">(Opcional)</span>
             </label>
             <textarea
               rows="2"
@@ -172,12 +200,11 @@ const ProductModal = ({
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
             <div className="col-span-2 sm:col-span-1">
               <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5">
-                💰 Precio (Bs.) *
+                💰 Precio (Bs.) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
                 step="0.01"
-                required
                 disabled={isUploading}
                 value={formData.precio}
                 onChange={(e) => setFormData({...formData, precio: e.target.value})}
@@ -188,12 +215,11 @@ const ProductModal = ({
             
             <div className="col-span-1">
               <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5">
-                📦 Cantidad *
+                📦 Cantidad <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
                 min="1"
-                required
                 disabled={isUploading}
                 value={formData.cantidad}
                 onChange={(e) => setFormData({...formData, cantidad: e.target.value})}
@@ -204,10 +230,9 @@ const ProductModal = ({
 
             <div className="col-span-2 sm:col-span-1">
               <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-1.5">
-                🏷️ Categoría *
+                🏷️ Categoría <span className="text-red-500">*</span>
               </label>
               <select
-                required
                 disabled={isUploading}
                 value={formData.id_categoria}
                 onChange={(e) => setFormData({...formData, id_categoria: e.target.value})}
@@ -223,13 +248,13 @@ const ProductModal = ({
             </div>
           </div>
 
-          {/* Caja - MÁS DESTACADO */}
+          {/* Caja (Opcional) */}
           <div className="bg-gradient-to-r from-cyan-50 to-blue-50 border-2 border-cyan-300 rounded-xl p-3 sm:p-4">
             <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-cyan-900 mb-2">
               <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
-              📦 Ubicación (Caja)
+              📦 Ubicación (Caja) <span className="text-cyan-600 font-normal text-xs ml-1">(Opcional)</span>
             </label>
             <select
               disabled={isUploading}
@@ -252,10 +277,10 @@ const ProductModal = ({
             </p>
           </div>
 
-          {/* Imagen */}
+          {/* Imagen (Opcional) */}
           <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-3 sm:p-4 rounded-xl border-2 border-indigo-200">
             <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2">
-              📸 Imagen del Producto
+              📸 Imagen del Producto <span className="text-gray-400 font-normal">(Opcional)</span>
             </label>
             
             {filePreview && (
@@ -350,7 +375,7 @@ const ProductModal = ({
             </button>
             <button
               type="submit"
-              onClick={handleSubmit}
+              onClick={handleSubmit} // Se ejecuta la validación aquí
               disabled={isUploading}
               className="flex-1 px-3 py-2 sm:px-4 sm:py-2.5 text-sm bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white rounded-xl font-bold hover:from-cyan1-700 hover:to-ocean1-700 transition-all shadow-lg disabled:opacity-50"
             >

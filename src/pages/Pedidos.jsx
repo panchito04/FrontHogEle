@@ -1,1076 +1,343 @@
 import { useState, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
+import Toast from '../components/common/Toast'
+
+import { usePedidos } from '../hooks/usePedidos'
+import { useClientes } from '../hooks/useClientes'
+import { useProductos } from '../hooks/useProductos'
+import { useToast } from '../hooks/useToast'
+
+import PedidoStats from '../components/pedidos/PedidoStats'
+import PedidoFilters from '../components/pedidos/PedidoFilters'
+import PedidoCard from '../components/pedidos/PedidoCard'
+import PedidoModal from '../components/pedidos/PedidoModal'
+import VentaModal from '../components/pedidos/VentaModal'
+import PedidoDetailModal from '../components/pedidos/PedidoDetailModal'
+import DeleteConfirmModal from '../components/pedidos/DeleteConfirmModal'
 
 function Pedidos({ user }) {
-  const location = useLocation()
-  const [pedidos, setPedidos] = useState([])
-  const [clientes, setClientes] = useState([])
-  const [productos, setProductos] = useState([])
-  const [detallesPedidos, setDetallesPedidos] = useState({})
-  const [isLoading, setIsLoading] = useState(true)
+  const { pedidos, isLoading, fetchPedidos, createPedido, updatePedido, deletePedido } = usePedidos()
+  const { clientes, fetchClientes } = useClientes()
+  const { productos, fetchProductos } = useProductos()
+  const { toast, showToast, hideToast } = useToast()
+
+  const [activeTab, setActiveTab] = useState('reservados') // 'reservados' | 'vendidos'
   const [searchTerm, setSearchTerm] = useState('')
-  const [showModal, setShowModal] = useState(false)
-  const [showDetalleModal, setShowDetalleModal] = useState(false)
-  const [showEditModal, setShowEditModal] = useState(false)
+  const [filterEstado, setFilterEstado] = useState('todos')
+  const [filterCliente, setFilterCliente] = useState('todos')
+
+  const [showPedidoModal, setShowPedidoModal] = useState(false)
+  const [showVentaModal, setShowVentaModal] = useState(false)
+  const [showDetailModal, setShowDetailModal] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [showPagoModal, setShowPagoModal] = useState(false)
-  const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null)
+
+  const [selectedPedido, setSelectedPedido] = useState(null)
   const [deletingPedidoId, setDeletingPedidoId] = useState(null)
-  const [newPedido, setNewPedido] = useState({
-    id_cliente: '',
-    observaciones: '',
-    detalles: []
-  })
-  const [newDetalle, setNewDetalle] = useState({
-    id_producto: '',
-    precio_unitario: ''
-  })
-  const [editEstado, setEditEstado] = useState('')
-  const [pagoData, setPagoData] = useState({
-    monto: '',
-    metodo: '',
-    comprobante_url: ''
-  })
 
-  // Abrir modal automáticamente si viene del Dashboard
   useEffect(() => {
-    if (location.state?.openModal) {
-      setShowModal(true)
-      window.history.replaceState({}, document.title)
+    const loadData = async () => {
+      await Promise.all([
+        fetchPedidos(),
+        fetchClientes(),
+        fetchProductos()
+      ])
     }
-  }, [location])
-
-  useEffect(() => {
-    fetchData()
+    loadData()
   }, [])
 
-  const fetchData = async () => {
-    try {
-      setIsLoading(true)
-      const [pedidosRes, clientesRes, productosRes] = await Promise.all([
-        fetch(`${import.meta.env.VITE_API_URL}/api/pedidos`),
-        fetch(`${import.meta.env.VITE_API_URL}/api/clientes`),
-        fetch(`${import.meta.env.VITE_API_URL}/api/productos`)
-      ])
-      
-      const pedidosData = await pedidosRes.json()
-      const clientesData = await clientesRes.json()
-      const productosData = await productosRes.json()
-      
-      setPedidos(pedidosData)
-      setClientes(clientesData)
-      setProductos(productosData)
-      
-      // Obtener detalles de cada pedido
-      const detallesMap = {}
-      for (const pedido of pedidosData) {
-        try {
-          const detalleRes = await fetch(`${import.meta.env.VITE_API_URL}/api/pedidos/${pedido.id_pedido}/detalles`)
-          if (detalleRes.ok) {
-            detallesMap[pedido.id_pedido] = await detalleRes.json()
-          }
-        } catch (err) {
-          console.error(`Error al cargar detalles del pedido ${pedido.id_pedido}:`, err)
-        }
-      }
-      setDetallesPedidos(detallesMap)
-    } catch (error) {
-      console.error('Error al obtener datos:', error)
-      alert('Error al cargar los datos')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Obtener productos disponibles (no vendidos o en pedidos)
-const getProductosDisponibles = () => {
-  return productos.filter(producto => {
-    // Verificar que el producto tenga toda su cantidad disponible
-    if (producto.cantidad_disponible !== producto.cantidad) {
-      return false
-    }
-    
-    // Verificar si el producto ya está en algún pedido activo
-    const estaEnPedido = pedidos.some(pedido => {
+  // Filtrar pedidos según el tab activo
+  const pedidosFiltrados = pedidos.filter(pedido => {
+    // Filtro por tab
+    if (activeTab === 'reservados') {
+      if (pedido.estado !== 'pendiente') return false
+    } else if (activeTab === 'vendidos') {
       if (pedido.estado === 'cancelado') return false
-      const detalles = detallesPedidos[pedido.id_pedido] || []
-      return detalles.some(d => d.id_producto === producto.id_producto)
-    })
-    
-    return !estaEnPedido
-  })
-}
-
-  const handleCreatePedido = async (e) => {
-    e.preventDefault()
-    
-    if (newPedido.detalles.length === 0) {
-      alert('Debes agregar al menos un producto al pedido')
-      return
+      if (pedido.estado === 'pendiente') return false
     }
 
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pedidos`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newPedido)
-      })
-      
-      if (response.ok) {
-        alert('✅ Pedido creado exitosamente')
-        setShowModal(false)
-        setNewPedido({ id_cliente: '', observaciones: '', detalles: [] })
-        setNewDetalle({ id_producto: '', precio_unitario: '' })
-        fetchData()
-      } else {
-        const errorData = await response.json()
-        alert(`Error: ${errorData.error || 'Error al crear el pedido'}`)
-      }
-    } catch (error) {
-      console.error('Error al crear pedido:', error)
-      alert('Error al crear el pedido')
+    // Filtro por búsqueda
+    const cliente = clientes.find(c => c.id_cliente === pedido.id_cliente)
+    const clienteNombre = cliente?.nombre?.toLowerCase() || ''
+    const searchLower = searchTerm.toLowerCase()
+
+    const matchesSearch = 
+      pedido.id_pedido.toString().includes(searchLower) ||
+      clienteNombre.includes(searchLower) ||
+      pedido.observaciones?.toLowerCase().includes(searchLower)
+
+    // Filtro por estado
+    const matchesEstado = filterEstado === 'todos' || pedido.estado === filterEstado
+
+    // Filtro por cliente
+    const matchesCliente = filterCliente === 'todos' || 
+      pedido.id_cliente?.toString() === filterCliente
+
+    return matchesSearch && matchesEstado && matchesCliente
+  })
+
+  const handleCreatePedido = async (pedidoData) => {
+    const result = await createPedido(pedidoData)
+    
+    if (result.success) {
+      showToast(result.message, 'success')
+      setShowPedidoModal(false)
+      await fetchProductos() // Actualizar disponibilidad
+    } else {
+      showToast(result.message, 'error')
     }
   }
 
-  const handleUpdateEstado = async (e) => {
-    e.preventDefault()
+  const handleCreateVenta = async (ventaData) => {
+    const result = await createPedido(ventaData)
     
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pedidos/${pedidoSeleccionado.id_pedido}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estado: editEstado })
-      })
-      
-      if (response.ok) {
-        alert('✅ Estado actualizado exitosamente')
-        setShowEditModal(false)
-        setPedidoSeleccionado(null)
-        setEditEstado('')
-        fetchData()
-      } else {
-        alert('Error al actualizar el estado')
-      }
-    } catch (error) {
-      console.error('Error al actualizar estado:', error)
-      alert('Error al actualizar el estado')
+    if (result.success) {
+      showToast('✅ Venta registrada exitosamente', 'success')
+      setShowVentaModal(false)
+      await fetchProductos()
+    } else {
+      showToast(result.message, 'error')
     }
+  }
+
+  const handleUpdateEstado = async (id, nuevoEstado) => {
+    const result = await updatePedido(id, { estado: nuevoEstado })
+    
+    if (result.success) {
+      showToast(result.message, 'success')
+      setShowDetailModal(false)
+      setSelectedPedido(null)
+    } else {
+      showToast(result.message, 'error')
+    }
+  }
+
+  const handleDeletePedido = async () => {
+    const result = await deletePedido(deletingPedidoId)
+    
+    if (result.success) {
+      showToast(result.message, 'success')
+      setShowDeleteConfirm(false)
+      setDeletingPedidoId(null)
+      await fetchProductos()
+    } else {
+      showToast(result.message, 'error')
+    }
+  }
+
+  const openDetailModal = (pedido) => {
+    setSelectedPedido(pedido)
+    setShowDetailModal(true)
   }
 
   const confirmDelete = (pedido) => {
-    // Verificar si el pedido está pagado o entregado
     if (pedido.estado === 'pagado' || pedido.estado === 'entregado') {
-      alert('❌ No se puede eliminar un pedido que está pagado o entregado')
+      showToast('❌ No se puede eliminar un pedido pagado o entregado', 'error')
       return
     }
     setDeletingPedidoId(pedido.id_pedido)
     setShowDeleteConfirm(true)
   }
 
-  const handleDeletePedido = async () => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pedidos/${deletingPedidoId}`, {
-        method: 'DELETE'
-      })
-      
-      if (response.ok) {
-        alert('✅ Pedido eliminado exitosamente. Los productos están nuevamente disponibles.')
-        setShowDeleteConfirm(false)
-        setDeletingPedidoId(null)
-        fetchData()
-      } else {
-        const errorData = await response.json()
-        alert(`Error: ${errorData.error || 'Error al eliminar el pedido'}`)
-      }
-    } catch (error) {
-      console.error('Error al eliminar pedido:', error)
-      alert('Error al eliminar el pedido')
-    }
-  }
-
-const agregarDetalle = async () => {
-  if (!newDetalle.id_producto || !newDetalle.precio_unitario) {
-    alert('Completa todos los campos del producto')
-    return
-  }
-
-  const producto = productos.find(p => p.id_producto === parseInt(newDetalle.id_producto))
-  
-  if (newPedido.detalles.some(d => d.id_producto === parseInt(newDetalle.id_producto))) {
-    alert('Este producto ya está agregado al pedido')
-    return
-  }
-
-  if (!producto.disponible || producto.cantidad_disponible < producto.cantidad) {
-    alert(`Este producto no está completamente disponible. Disponible: ${producto.cantidad_disponible}/${producto.cantidad}`)
-    return
-  }
-  
-  setNewPedido({
-    ...newPedido,
-    detalles: [...newPedido.detalles, {
-      id_producto: parseInt(newDetalle.id_producto),
-      cantidad: 1, // SIEMPRE 1 porque es un pack completo
-      precio_unitario: parseFloat(newDetalle.precio_unitario), // El precio total del pack
-      nombre_producto: producto?.nombre,
-      cantidad_piezas: producto.cantidad // Solo para mostrar info
-    }]
-  })
-  
-  setNewDetalle({ id_producto: '', precio_unitario: '' })
-}
-  const eliminarDetalle = (index) => {
-    setNewPedido({
-      ...newPedido,
-      detalles: newPedido.detalles.filter((_, i) => i !== index)
-    })
-  }
-
-const handleProductoChange = (id_producto) => {
-  const producto = productos.find(p => p.id_producto === parseInt(id_producto))
-  
-  setNewDetalle({
-    id_producto,
-    precio_unitario: producto?.precio || '' // Usar el precio del producto tal cual
-  })
-}
-  const abrirModalPago = (pedido) => {
-    setPedidoSeleccionado(pedido)
-    const total = calcularTotalPedido(pedido.id_pedido)
-    setPagoData({
-      monto: total.toFixed(2),
-      metodo: '',
-      comprobante_url: ''
-    })
-    setShowPagoModal(true)
-  }
-
-  const handleRegistrarPago = async (e) => {
-    e.preventDefault()
-    
-    try {
-      // Registrar el pago
-      const pagoResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/pagos`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id_pedido: pedidoSeleccionado.id_pedido,
-          monto: parseFloat(pagoData.monto),
-          metodo: pagoData.metodo,
-          comprobante_url: pagoData.comprobante_url || null
-        })
-      })
-      
-      if (!pagoResponse.ok) {
-        const errorData = await pagoResponse.json()
-        throw new Error(errorData.error || 'Error al registrar el pago')
-      }
-
-      alert('✅ Pago registrado exitosamente y pedido marcado como pagado')
-      setShowPagoModal(false)
-      setPedidoSeleccionado(null)
-      setPagoData({ monto: '', metodo: '', comprobante_url: '' })
-      fetchData()
-    } catch (error) {
-      console.error('Error al registrar pago:', error)
-      alert(`Error: ${error.message}`)
-    }
-  }
-
-  const getClienteNombre = (id_cliente) => {
-    const cliente = clientes.find(c => c.id_cliente === id_cliente)
-    return cliente?.nombre || 'Desconocido'
-  }
-
-  const getProductoNombre = (id_producto) => {
-    const producto = productos.find(p => p.id_producto === id_producto)
-    return producto?.nombre || 'Producto desconocido'
-  }
-
-  const getEstadoBadge = (estado) => {
-    const estados = {
-      'pendiente': 'bg-yellow-100 text-yellow-800',
-      'pagado': 'bg-green-100 text-green-800',
-      'entregado': 'bg-purple-100 text-ocean1-800',
-      'cancelado': 'bg-red-100 text-red-800'
-    }
-    return estados[estado] || 'bg-gray-100 text-gray-800'
-  }
-
-  const calcularTotalPedido = (id_pedido) => {
-    const detalles = detallesPedidos[id_pedido] || []
-    return detalles.reduce((sum, det) => sum + (det.cantidad * det.precio_unitario), 0)
-  }
-
-  const verDetalle = (pedido) => {
-    setPedidoSeleccionado(pedido)
-    setShowDetalleModal(true)
-  }
-
-  const editarEstado = (pedido) => {
-    setPedidoSeleccionado(pedido)
-    setEditEstado(pedido.estado)
-    setShowEditModal(true)
-  }
-
-  const filteredPedidos = pedidos.filter(pedido => {
-    const clienteNombre = getClienteNombre(pedido.id_cliente).toLowerCase()
-    const searchLower = searchTerm.toLowerCase()
-    const detalles = detallesPedidos[pedido.id_pedido] || []
-    const productosNombres = detalles.map(d => getProductoNombre(d.id_producto).toLowerCase()).join(' ')
-    
-    return (
-      pedido.id_pedido.toString().includes(searchLower) ||
-      clienteNombre.includes(searchLower) ||
-      pedido.estado?.toLowerCase().includes(searchLower) ||
-      pedido.observaciones?.toLowerCase().includes(searchLower) ||
-      productosNombres.includes(searchLower)
-    )
-  })
-
-  const calcularTotal = () => {
-    return newPedido.detalles.reduce((sum, det) => 
-      sum + (det.cantidad * det.precio_unitario), 0
-    )
-  }
-
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Sidebar user={user} />
-      
-      <div className="flex-1 overflow-auto lg:ml-0 pt-16 lg:pt-0">
+
+      <div className="flex-1 overflow-auto pt-16 lg:pt-0">
         {/* Header */}
-        <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+        <div className="bg-white shadow-md border-b border-gray-200 sticky top-0 z-20">
           <div className="px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan1-600 to-ocean1-600 bg-clip-text text-transparent">
-                  Gestión de Pedidos
+                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan1-600 via-ocean1-600 to-pink-600 bg-clip-text text-transparent">
+                  Gestión de Pedidos y Ventas
                 </h1>
-                <p className="text-gray-600 mt-1 text-sm sm:text-base">Administra todos los pedidos con detalles</p>
-              </div>
-              <button
-                onClick={() => setShowModal(true)}
-                className="bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold hover:from-cyan1-700 hover:to-ocean1-700 transition duration-200 flex items-center justify-center space-x-2 shadow-lg transform hover:scale-105 text-sm sm:text-base"
-              >
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                <span>Nuevo Pedido</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Contenido principal */}
-        <div className="p-4 sm:p-6 lg:p-8">
-          {/* Barra de búsqueda */}
-          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <input
-                type="text"
-                placeholder="Buscar por ID, cliente, producto, estado u observaciones..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition duration-200 text-sm sm:text-base"
-              />
-            </div>
-          </div>
-
-          {/* Vista Desktop - Tabla */}
-          <div className="hidden md:block bg-white rounded-xl shadow-lg overflow-hidden">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-20">
-                <svg className="animate-spin h-12 w-12 text-cyan1-600" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              </div>
-            ) : filteredPedidos.length === 0 ? (
-              <div className="text-center py-20">
-                <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                <p className="text-gray-500 text-lg">No se encontraron pedidos</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gradient-to-r from-indigo-50 to-purple-50">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">ID</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Cliente</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Productos</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Total</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Fecha</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Estado</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredPedidos.map((pedido) => {
-                      const detalles = detallesPedidos[pedido.id_pedido] || []
-                      const total = calcularTotalPedido(pedido.id_pedido)
-                      
-                      return (
-                        <tr key={pedido.id_pedido} className="hover:bg-gray-50 transition-colors duration-150">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm font-medium text-gray-900">#{pedido.id_pedido}</span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="w-10 h-10 bg-gradient-to-br from-cyan1-500 to-ocean1-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
-                                {getClienteNombre(pedido.id_cliente).charAt(0).toUpperCase()}
-                              </div>
-                              <span className="text-sm font-medium text-gray-900">{getClienteNombre(pedido.id_cliente)}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex flex-col space-y-1">
-                              {detalles.slice(0, 2).map((detalle, idx) => (
-                                <div key={idx} className="flex items-center text-sm text-gray-600">
-                                  <svg className="w-4 h-4 mr-1 text-cyan1-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                  </svg>
-                                  <span>{detalle.cantidad}x {getProductoNombre(detalle.id_producto)}</span>
-                                </div>
-                              ))}
-                              {detalles.length > 2 && (
-                                <span className="text-xs text-cyan1-600 font-medium">+{detalles.length - 2} más</span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-lg font-bold text-green-600">Bs. {total.toFixed(2)}</span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm text-gray-600">
-                              {new Date(pedido.fecha).toLocaleDateString('es-ES', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                year: 'numeric'
-                              })}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getEstadoBadge(pedido.estado)}`}>
-                              {pedido.estado}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <button 
-                              onClick={() => verDetalle(pedido)}
-                              className="text-cyan1-600 hover:text-cyan1-900 mr-3 transition-colors"
-                              title="Ver detalles"
-                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                            </button>
-                            {pedido.estado === 'pendiente' && (
-                              <button 
-                                onClick={() => abrirModalPago(pedido)}
-                                className="text-blue-600 hover:text-blue-900 mr-3 transition-colors"
-                                title="Registrar pago"
-                              >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                              </button>
-                            )}
-                            <button 
-                              onClick={() => editarEstado(pedido)}
-                              className="text-green-600 hover:text-green-900 mr-3 transition-colors"
-                              title="Editar estado"
-                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                              </svg>
-                            </button>
-                            <button 
-                              onClick={() => confirmDelete(pedido)}
-                              className="text-red-600 hover:text-red-900 transition-colors"
-                              title="Eliminar"
-                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* Vista Mobile - Cards */}
-          <div className="md:hidden space-y-4">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-20">
-                <svg className="animate-spin h-12 w-12 text-cyan1-600" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              </div>
-            ) : filteredPedidos.length === 0 ? (
-              <div className="text-center py-20 bg-white rounded-xl">
-                <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                <p className="text-gray-500 text-lg">No se encontraron pedidos</p>
-              </div>
-            ) : (
-              filteredPedidos.map((pedido) => {
-                const detalles = detallesPedidos[pedido.id_pedido] || []
-                const total = calcularTotalPedido(pedido.id_pedido)
-                
-                return (
-                  <div key={pedido.id_pedido} className="bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition-shadow duration-200">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-cyan1-500 to-ocean1-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                          {getClienteNombre(pedido.id_cliente).charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-900">{getClienteNombre(pedido.id_cliente)}</h3>
-                          <p className="text-xs text-gray-500">Pedido #{pedido.id_pedido}</p>
-                        </div>
-                      </div>
-                      <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getEstadoBadge(pedido.estado)}`}>
-                        {pedido.estado}
-                      </span>
-                    </div>
-
-                    <div className="space-y-2 border-t border-gray-100 pt-3">
-                      <div className="bg-indigo-50 rounded-lg p-3">
-                        <p className="text-xs text-gray-600 font-medium mb-2">Productos:</p>
-                        {detalles.map((detalle, idx) => (
-                          <div key={idx} className="flex items-center justify-between text-sm mb-1">
-                            <span className="text-gray-700">{detalle.cantidad}x {getProductoNombre(detalle.id_producto)}</span>
-                            <span className="text-gray-900 font-semibold">Bs. {(detalle.cantidad * detalle.precio_unitario).toFixed(2)}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="flex items-center justify-between pt-2">
-                        <div className="flex items-center text-sm text-gray-600">
-                          <svg className="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          {new Date(pedido.fecha).toLocaleDateString('es-ES', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric'
-                          })}
-                        </div>
-                        <p className="text-xl font-bold text-green-600">Bs. {total.toFixed(2)}</p>
-                      </div>
-
-                      {pedido.observaciones && (
-                        <div className="flex items-start text-sm pt-2 border-t border-gray-100">
-                          <svg className="w-4 h-4 mr-2 text-yellow-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                          </svg>
-                          <span className="text-gray-600 flex-1">{pedido.observaciones}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex space-x-2 mt-4 pt-3 border-t border-gray-100">
-                      <button 
-                        onClick={() => verDetalle(pedido)}
-                        className="flex-1 p-2 text-cyan1-600 hover:bg-indigo-50 rounded-lg transition-colors flex items-center justify-center"
-                      >
-                        <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        <span className="text-sm">Ver</span>
-                      </button>
-                      {pedido.estado === 'pendiente' && (
-                        <button 
-                          onClick={() => abrirModalPago(pedido)}
-                          className="flex-1 p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-center"
-                        >
-                          <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
-                          <span className="text-sm">Pagar</span>
-                        </button>
-                      )}
-                      <button 
-                        onClick={() => editarEstado(pedido)}
-                        className="flex-1 p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors flex items-center justify-center"
-                      >
-                        <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
-                        <span className="text-sm">Editar</span>
-                      </button>
-                      <button 
-                        onClick={() => confirmDelete(pedido)}
-                        className="flex-1 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                )
-              })
-            )}
-          </div>
-
-          {/* Información adicional */}
-          <div className="mt-4 sm:mt-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 sm:p-6 border-2 border-indigo-100">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center space-x-3 sm:space-x-4">
-                <div className="bg-white rounded-lg p-2 sm:p-3 shadow-sm">
-                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-cyan1-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-600 font-medium">Total de Pedidos</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-gray-800">{pedidos.length}</p>
-                </div>
-              </div>
-              <div className="text-center sm:text-right">
-                <p className="text-xs sm:text-sm text-gray-600">Resultados mostrados</p>
-                <p className="text-xl sm:text-2xl font-bold text-cyan1-600">{filteredPedidos.length}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Modal para crear pedido */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-r from-cyan1-600 to-ocean1-600 p-4 sm:p-6 text-white">
-              <h3 className="text-xl sm:text-2xl font-bold">Nuevo Pedido</h3>
-              <p className="text-indigo-100 mt-1 text-sm sm:text-base">Completa los datos del pedido</p>
-            </div>
-            
-            <div className="p-4 sm:p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cliente *
-                </label>
-                <select
-                  required
-                  value={newPedido.id_cliente}
-                  onChange={(e) => setNewPedido({...newPedido, id_cliente: parseInt(e.target.value)})}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent text-sm sm:text-base"
-                >
-                  <option value="">Selecciona un cliente</option>
-                  {clientes.map(cliente => (
-                    <option key={cliente.id_cliente} value={cliente.id_cliente}>
-                      {cliente.nombre}
-                    </option>
-                  ))}
-                </select>
+                <p className="text-gray-600 mt-1 text-sm sm:text-base">
+                  Administra reservas y ventas en un solo lugar
+                </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Observaciones
-                </label>
-                <textarea
-                  rows="2"
-                  value={newPedido.observaciones}
-                  onChange={(e) => setNewPedido({...newPedido, observaciones: e.target.value})}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent text-sm sm:text-base"
-                  placeholder="Ej: Entrega rápida, por favor"
-                ></textarea>
-              </div>
-
-              <div className="border-t pt-4">
-                <h4 className="text-lg font-bold text-gray-900 mb-3">Productos del Pedido</h4>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-                  <div>
-                    <select
-                      value={newDetalle.id_producto}
-                      onChange={(e) => handleProductoChange(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 text-sm"
-                    >
-                      <option value="">Seleccionar producto</option>
-                      {getProductosDisponibles().map(producto => (
-                        <option key={producto.id_producto} value={producto.id_producto}>
-                          {producto.nombre}
-                        </option>
-                      ))}
-                    </select>
-                    {getProductosDisponibles().length === 0 && (
-                      <p className="text-xs text-red-500 mt-1">No hay productos disponibles</p>
-                    )}
-                  </div>
-                  <div>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={newDetalle.precio_unitario}
-                      onChange={(e) => setNewDetalle({...newDetalle, precio_unitario: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 text-sm"
-                      placeholder="Precio"
-                    />
-                  </div>
-                </div>
-
+              <div className="flex flex-wrap gap-2">
                 <button
-                  type="button"
-                  onClick={agregarDetalle}
-                  className="w-full bg-indigo-100 text-cyan1-700 px-4 py-2 rounded-lg font-semibold hover:bg-indigo-200 transition duration-200 flex items-center justify-center space-x-2 text-sm"
+                  onClick={() => setShowPedidoModal(true)}
+                  className="bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white px-4 py-2 rounded-xl font-semibold hover:from-cyan1-700 hover:to-ocean1-700 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl text-sm"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                  <span>Agregar Producto</span>
+                  <span>Nueva Reserva</span>
                 </button>
 
-{newPedido.detalles.length > 0 && (
-  <div className="mt-4 space-y-2">
-    <h5 className="font-semibold text-gray-700 text-sm">Productos agregados:</h5>
-    {newPedido.detalles.map((detalle, index) => (
-  <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-    <div className="flex-1">
-      <p className="text-sm font-medium text-gray-900">{detalle.nombre_producto}</p>
-      <p className="text-xs text-gray-600">
-        1 pack ({detalle.cantidad_piezas} piezas) x Bs. {detalle.precio_unitario.toFixed(2)} = Bs. {detalle.precio_unitario.toFixed(2)}
-      </p>
-    </div>
-    <button
-      type="button"
-      onClick={() => eliminarDetalle(index)}
-      className="text-red-600 hover:text-red-800 ml-2"
-    >
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-      </svg>
-    </button>
-  </div>
-))}
-    <div className="bg-indigo-50 p-3 rounded-lg border-2 border-indigo-200">
-      <div className="flex justify-between items-center">
-        <span className="text-sm font-semibold text-gray-700">Total:</span>
-        <span className="text-xl font-bold text-cyan1-600">Bs. {calcularTotal().toFixed(2)}</span>
-      </div>
-    </div>
-  </div>
-)}
-              </div>
-
-              <div className="flex space-x-3 pt-4">
                 <button
-                  type="button"
-                  onClick={() => {
-                    setShowModal(false)
-                    setNewPedido({ id_cliente: '', observaciones: '', detalles: [] })
-                    setNewDetalle({ id_producto: '', precio_unitario: '' })
-                  }}
-                  className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition duration-200 text-sm sm:text-base"
+                  onClick={() => setShowVentaModal(true)}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 rounded-xl font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl text-sm"
                 >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleCreatePedido}
-                  className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white rounded-lg font-semibold hover:from-cyan1-700 hover:to-ocean1-700 transition duration-200 text-sm sm:text-base"
-                >
-                  Crear Pedido
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Editar Estado */}
-      {showEditModal && pedidoSeleccionado && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
-            <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-4 sm:p-6 text-white">
-              <h3 className="text-xl sm:text-2xl font-bold">Editar Estado</h3>
-              <p className="text-green-100 mt-1 text-sm">Pedido #{pedidoSeleccionado.id_pedido}</p>
-            </div>
-            
-            <form onSubmit={handleUpdateEstado} className="p-4 sm:p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Estado del Pedido *
-                </label>
-                <select
-                  required
-                  value={editEstado}
-                  onChange={(e) => setEditEstado(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent"
-                >
-                  <option value="pendiente">Pendiente</option>
-                  <option value="entregado">Entregado</option>
-                </select>
-                <p className="text-xs text-gray-500 mt-2">
-                  Nota: Para marcar como "Pagado" registra el pago directamente en el pedido
-                </p>
-              </div>
-
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowEditModal(false)
-                    setPedidoSeleccionado(null)
-                    setEditEstado('')
-                  }}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition duration-200"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition duration-200"
-                >
-                  Actualizar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Registrar Pago */}
-      {showPagoModal && pedidoSeleccionado && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
-            <div className="bg-gradient-to-r from-blue-600 to-cyan1-600 p-4 sm:p-6 text-white">
-              <h3 className="text-xl sm:text-2xl font-bold">💳 Registrar Pago</h3>
-              <p className="text-blue-100 mt-1 text-sm">Pedido #{pedidoSeleccionado.id_pedido}</p>
-            </div>
-            
-            <form onSubmit={handleRegistrarPago} className="p-4 sm:p-6 space-y-4">
-              <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
-                <p className="text-sm text-gray-600 mb-1">Cliente</p>
-                <p className="text-lg font-bold text-gray-900">{getClienteNombre(pedidoSeleccionado.id_cliente)}</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Monto (Bs.) *
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={pagoData.monto}
-                  onChange={(e) => setPagoData({...pagoData, monto: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                  placeholder="0.00"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Total del pedido: Bs. {calcularTotalPedido(pedidoSeleccionado.id_pedido).toFixed(2)}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Método de Pago *
-                </label>
-                <select
-                  required
-                  value={pagoData.metodo}
-                  onChange={(e) => setPagoData({...pagoData, metodo: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                >
-                  <option value="">Seleccionar método</option>
-                  <option value="efectivo">Efectivo</option>
-                  <option value="transferencia">Transferencia Bancaria</option>
-                  <option value="qr">QR</option>
-                  <option value="tarjeta">Tarjeta</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  URL del Comprobante (Opcional)
-                </label>
-                <input
-                  type="url"
-                  value={pagoData.comprobante_url}
-                  onChange={(e) => setPagoData({...pagoData, comprobante_url: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                  placeholder="https://..."
-                />
-              </div>
-
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowPagoModal(false)
-                    setPedidoSeleccionado(null)
-                    setPagoData({ monto: '', metodo: '', comprobante_url: '' })
-                  }}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition duration-200"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan1-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-cyan1-700 transition duration-200"
-                >
-                  Registrar Pago
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Confirmación Eliminar */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
-            <div className="bg-gradient-to-r from-red-500 to-red-600 p-6 text-white">
-              <div className="flex items-center space-x-3">
-                <div className="bg-white bg-opacity-20 p-3 rounded-full">
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold">⚠️ Confirmar Eliminación</h3>
-                  <p className="text-red-100 mt-1">Esta acción no se puede deshacer</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="p-6">
-              <p className="text-gray-700 text-center mb-6 text-lg">
-                ¿Estás seguro de que deseas eliminar este pedido y todos sus detalles?
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setShowDeleteConfirm(false)
-                    setDeletingPedidoId(null)
-                  }}
-                  className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition-all duration-200"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleDeletePedido}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-bold hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  🗑️ Eliminar
+                  <span>Venta Directa</span>
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* Modal de Detalle del Pedido */}
-      {showDetalleModal && pedidoSeleccionado && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-r from-cyan1-600 to-ocean1-600 p-4 sm:p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl sm:text-2xl font-bold">Pedido #{pedidoSeleccionado.id_pedido}</h3>
-                  <p className="text-indigo-100 mt-1 text-sm sm:text-base">Detalles completos</p>
-                </div>
-                <button 
-                  onClick={() => setShowDetalleModal(false)}
-                  className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            {/* Tabs */}
+            <div className="flex gap-2 mt-4 border-b">
+              <button
+                onClick={() => setActiveTab('reservados')}
+                className={`px-6 py-3 font-semibold transition-all relative ${
+                  activeTab === 'reservados'
+                    ? 'text-cyan1-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-4 sm:p-6 space-y-4">
-              {/* Información del Cliente */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-bold text-gray-900 mb-3 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-cyan1-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  Información del Cliente
-                </h4>
-                <p className="text-gray-700"><span className="font-semibold">Nombre:</span> {getClienteNombre(pedidoSeleccionado.id_cliente)}</p>
-                <p className="text-gray-700 mt-1"><span className="font-semibold">Fecha:</span> {new Date(pedidoSeleccionado.fecha).toLocaleDateString('es-ES', {
-                  day: '2-digit',
-                  month: 'long',
-                  year: 'numeric'
-                })}</p>
-                <div className="mt-2">
-                  <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${getEstadoBadge(pedidoSeleccionado.estado)}`}>
-                    {pedidoSeleccionado.estado}
+                  <span>Reservados</span>
+                  <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs font-bold">
+                    {pedidos.filter(p => p.estado === 'pendiente').length}
                   </span>
                 </div>
-              </div>
-
-              {/* Productos */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="font-bold text-gray-900 mb-3 flex items-center">
-                  <svg className="w-5 h-5 mr-2 text-cyan1-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                  Productos
-                </h4>
-                <div className="space-y-2">
-                  {(detallesPedidos[pedidoSeleccionado.id_pedido] || []).map((detalle, idx) => (
-                    <div key={idx} className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200">
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">{getProductoNombre(detalle.id_producto)}</p>
-                        <p className="text-sm text-gray-600">Cantidad: {detalle.cantidad} | Precio unitario: Bs. {detalle.precio_unitario.toFixed(2)}</p>
-                      </div>
-                      <p className="text-lg font-bold text-cyan1-600">Bs. {(detalle.cantidad * detalle.precio_unitario).toFixed(2)}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 pt-3 border-t border-gray-300 flex justify-between items-center">
-                  <span className="text-lg font-bold text-gray-900">Total:</span>
-                  <span className="text-2xl font-bold text-green-600">Bs. {calcularTotalPedido(pedidoSeleccionado.id_pedido).toFixed(2)}</span>
-                </div>
-              </div>
-
-              {/* Observaciones */}
-              {pedidoSeleccionado.observaciones && (
-                <div className="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-                  <h4 className="font-bold text-gray-900 mb-2 flex items-center">
-                    <svg className="w-5 h-5 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                    </svg>
-                    Observaciones
-                  </h4>
-                  <p className="text-gray-700">{pedidoSeleccionado.observaciones}</p>
-                </div>
-              )}
+                {activeTab === 'reservados' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan1-600 to-ocean1-600" />
+                )}
+              </button>
 
               <button
-                onClick={() => setShowDetalleModal(false)}
-                className="w-full px-4 py-3 bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white rounded-lg font-semibold hover:from-cyan1-700 hover:to-ocean1-700 transition duration-200"
+                onClick={() => setActiveTab('vendidos')}
+                className={`px-6 py-3 font-semibold transition-all relative ${
+                  activeTab === 'vendidos'
+                    ? 'text-green-600'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
               >
-                Cerrar
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Vendidos</span>
+                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-bold">
+                    {pedidos.filter(p => p.estado === 'pagado' || p.estado === 'entregado').length}
+                  </span>
+                </div>
+                {activeTab === 'vendidos' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-green-600 to-emerald-600" />
+                )}
               </button>
             </div>
           </div>
         </div>
+
+        {/* Contenido */}
+        <div className="p-4 sm:p-6 lg:p-8">
+          <PedidoStats
+            pedidos={pedidos}
+            pedidosFiltrados={pedidosFiltrados}
+            activeTab={activeTab}
+          />
+
+          <PedidoFilters
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            filterEstado={filterEstado}
+            setFilterEstado={setFilterEstado}
+            filterCliente={filterCliente}
+            setFilterCliente={setFilterCliente}
+            clientes={clientes}
+            activeTab={activeTab}
+          />
+
+          {/* Lista de Pedidos */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {isLoading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="bg-white rounded-xl shadow-lg p-6 animate-pulse">
+                  <div className="h-6 bg-gray-200 rounded mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                </div>
+              ))
+            ) : pedidosFiltrados.length === 0 ? (
+              <div className="col-span-full text-center py-20 bg-white rounded-2xl">
+                <div className="bg-gray-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
+                <p className="text-gray-500 text-lg font-semibold">
+                  No hay {activeTab === 'reservados' ? 'reservas' : 'ventas'} que mostrar
+                </p>
+                <p className="text-gray-400 text-sm mt-2">
+                  {activeTab === 'reservados' 
+                    ? 'Crea tu primera reserva usando el botón "Nueva Reserva"'
+                    : 'Registra tu primera venta con el botón "Venta Directa"'
+                  }
+                </p>
+              </div>
+            ) : (
+              pedidosFiltrados.map((pedido) => (
+                <PedidoCard
+                  key={pedido.id_pedido}
+                  pedido={pedido}
+                  clientes={clientes}
+                  productos={productos}
+                  onViewDetail={openDetailModal}
+                  onDelete={confirmDelete}
+                  onUpdateEstado={handleUpdateEstado}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Modales */}
+      <PedidoModal
+        isOpen={showPedidoModal}
+        onClose={() => setShowPedidoModal(false)}
+        onSubmit={handleCreatePedido}
+        clientes={clientes}
+        productos={productos}
+      />
+
+      <VentaModal
+        isOpen={showVentaModal}
+        onClose={() => setShowVentaModal(false)}
+        onSubmit={handleCreateVenta}
+        clientes={clientes}
+        productos={productos}
+      />
+
+      {showDetailModal && selectedPedido && (
+        <PedidoDetailModal
+          isOpen={showDetailModal}
+          onClose={() => {
+            setShowDetailModal(false)
+            setSelectedPedido(null)
+          }}
+          pedido={selectedPedido}
+          clientes={clientes}
+          productos={productos}
+          onUpdateEstado={handleUpdateEstado}
+        />
+      )}
+
+      <DeleteConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => {
+          setShowDeleteConfirm(false)
+          setDeletingPedidoId(null)
+        }}
+        onConfirm={handleDeletePedido}
+      />
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
+          duration={toast.duration}
+        />
       )}
     </div>
   )
