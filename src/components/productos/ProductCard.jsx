@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 
-const ProductCard = ({ producto, onEdit, onDelete }) => {
+const ProductCard = ({ producto, onEdit, onDelete, onViewDetail }) => {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
   const cardRef = useRef(null)
@@ -25,10 +25,19 @@ const ProductCard = ({ producto, onEdit, onDelete }) => {
     return () => observer.disconnect()
   }, [])
 
+  const handleCardClick = (e) => {
+    // No abrir el modal si se clickeó un botón
+    if (e.target.closest('button')) {
+      return
+    }
+    onViewDetail?.(producto)
+  }
+
   return (
     <div 
       ref={cardRef}
-      className={`bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 sm:transform sm:hover:-translate-y-2 border-2 ${
+      onClick={handleCardClick}
+      className={`bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 sm:transform sm:hover:-translate-y-2 border-2 cursor-pointer ${
         producto.vendido ? 'border-red-200' : 'border-green-200'
       }`}
     >
@@ -79,6 +88,15 @@ const ProductCard = ({ producto, onEdit, onDelete }) => {
           <span className="bg-black bg-opacity-50 backdrop-blur-sm text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[9px] sm:text-xs font-semibold">
             #{producto.id_producto}
           </span>
+        </div>
+
+        {/* Indicador de click para ver más */}
+        <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 backdrop-blur-sm text-white px-2 py-1 rounded text-[9px] sm:text-xs font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          <span className="hidden sm:inline">Ver más</span>
         </div>
       </div>
 
@@ -148,7 +166,10 @@ const ProductCard = ({ producto, onEdit, onDelete }) => {
         {/* Botones de acción */}
         <div className="flex gap-1.5 sm:gap-2">
           <button 
-            onClick={() => onEdit(producto)}
+            onClick={(e) => {
+              e.stopPropagation()
+              onEdit(producto)
+            }}
             disabled={producto.vendido}
             className={`flex-1 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl font-semibold transition-all duration-200 flex items-center justify-center space-x-1 ${
               producto.vendido 
@@ -163,7 +184,10 @@ const ProductCard = ({ producto, onEdit, onDelete }) => {
           </button>
           
           <button 
-            onClick={() => onDelete(producto.id_producto)}
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete(producto.id_producto)
+            }}
             disabled={producto.vendido}
             className={`px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl font-semibold transition-all duration-200 flex items-center justify-center ${
               producto.vendido 
@@ -183,6 +207,15 @@ const ProductCard = ({ producto, onEdit, onDelete }) => {
             🔒 Producto vendido
           </p>
         )}
+
+        {/* Hint para ver detalles */}
+        <p className="text-center text-[9px] sm:text-xs text-cyan1-600 mt-2 font-medium flex items-center justify-center gap-1">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+          Toca para ver detalles
+        </p>
       </div>
     </div>
   )

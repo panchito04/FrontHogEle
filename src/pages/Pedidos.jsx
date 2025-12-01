@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Sidebar from '../components/Sidebar'
 import Toast from '../components/common/Toast'
 
 import { usePedidos } from '../hooks/usePedidos'
 import { useClientes } from '../hooks/useClientes'
 import { useProductos } from '../hooks/useProductos'
+import { useCategorias } from '../hooks/useCategorias'
+import { useCajas } from '../hooks/useCajas'
 import { useToast } from '../hooks/useToast'
 
 import PedidoStats from '../components/pedidos/PedidoStats'
@@ -20,12 +22,18 @@ function Pedidos({ user }) {
   const { pedidos, isLoading, fetchPedidos, createPedido, updatePedido, deletePedido, registrarPago } = usePedidos()
   const { clientes, fetchClientes } = useClientes()
   const { productos, fetchProductos } = useProductos()
+  const { categorias, fetchCategorias } = useCategorias()
+  const { cajas, fetchCajas } = useCajas()
   const { toast, showToast, hideToast } = useToast()
 
-  const [activeTab, setActiveTab] = useState('reservados') // 'reservados' | 'vendidos'
+  const [activeTab, setActiveTab] = useState('reservados')
   const [searchTerm, setSearchTerm] = useState('')
   const [filterEstado, setFilterEstado] = useState('todos')
   const [filterCliente, setFilterCliente] = useState('todos')
+  const [filterCategoria, setFilterCategoria] = useState('todas')
+  const [filterCaja, setFilterCaja] = useState('todas')
+  const [filterFechaInicio, setFilterFechaInicio] = useState('')
+  const [filterFechaFin, setFilterFechaFin] = useState('')
 
   const [showPedidoModal, setShowPedidoModal] = useState(false)
   const [showVentaModal, setShowVentaModal] = useState(false)
@@ -42,41 +50,68 @@ function Pedidos({ user }) {
       await Promise.all([
         fetchPedidos(),
         fetchClientes(),
-        fetchProductos()
+        fetchProductos(),
+        fetchCategorias(),
+        fetchCajas()
       ])
     }
     loadData()
   }, [])
 
-  // Filtrar pedidos según el tab activo
-  const pedidosFiltrados = pedidos.filter(pedido => {
-    // Filtro por tab
-    if (activeTab === 'reservados') {
-      if (pedido.estado !== 'pendiente') return false
-    } else if (activeTab === 'vendidos') {
-      if (pedido.estado === 'cancelado') return false
-      if (pedido.estado === 'pendiente') return false
-    }
+  // Filtrar pedidos con TODOS los filtros
+  const pedidosFiltrados = useMemo(() => {
+    return pedidos.filter(pedido => {
+      // Filtro por tab
+      if (activeTab === 'reservados') {
+        if (pedido.estado !== 'pendiente') return false
+      } else if (activeTab === 'vendidos') {
+        if (pedido.estado === 'cancelado') return false
+        if (pedido.estado === 'pendiente') return false
+      }
 
-    // Filtro por búsqueda
-    const cliente = clientes.find(c => c.id_cliente === pedido.id_cliente)
-    const clienteNombre = cliente?.nombre?.toLowerCase() || ''
-    const searchLower = searchTerm.toLowerCase()
+      // Filtro por búsqueda
+      const cliente = clientes.find(c => c.id_cliente === pedido.id_cliente)
+      const clienteNombre = cliente?.nombre?.toLowerCase() || ''
+      const searchLower = searchTerm.toLowerCase()
 
-    const matchesSearch = 
-      pedido.id_pedido.toString().includes(searchLower) ||
-      clienteNombre.includes(searchLower) ||
-      pedido.observaciones?.toLowerCase().includes(searchLower)
+      const matchesSearch = 
+        pedido.id_pedido.toString().includes(searchLower) ||
+        clienteNombre.includes(searchLower) ||
+        pedido.observaciones?.toLowerCase().includes(searchLower)
 
-    // Filtro por estado
-    const matchesEstado = filterEstado === 'todos' || pedido.estado === filterEstado
+      // Filtro por estado
+      const matchesEstado = filterEstado === 'todos' || pedido.estado === filterEstado
 
-    // Filtro por cliente
-    const matchesCliente = filterCliente === 'todos' || 
-      pedido.id_cliente?.toString() === filterCliente
+      // Filtro por cliente
+      const matchesCliente = filterCliente === 'todos' || 
+        pedido.id_cliente?.toString() === filterCliente
 
-    return matchesSearch && matchesEstado && matchesCliente
-  })
+      // Filtro por categoría (revisar productos del pedido)
+      const matchesCategoria = filterCategoria === 'todas' || 
+        pedido.detalles?.some(detalle => {
+          const producto = productos.find(p => p.id_producto === detalle.id_producto)
+          return producto?.id_categoria?.toString() === filterCategoria
+        })
+
+      // Filtro por caja (revisar productos del pedido)
+      const matchesCaja = filterCaja === 'todas' ||
+        pedido.detalles?.some(detalle => {
+          const producto = productos.find(p => p.id_producto === detalle.id_producto)
+          return producto?.id_caja?.toString() === filterCaja
+        })
+
+      // Filtro por rango de fechas
+      const pedidoFecha = new Date(pedido.fecha)
+      const matchesFechaInicio = !filterFechaInicio || 
+        pedidoFecha >= new Date(filterFechaInicio + 'T00:00:00')
+      const matchesFechaFin = !filterFechaFin || 
+        pedidoFecha <= new Date(filterFechaFin + 'T23:59:59')
+
+      return matchesSearch && matchesEstado && matchesCliente && 
+             matchesCategoria && matchesCaja && matchesFechaInicio && matchesFechaFin
+    })
+  }, [pedidos, searchTerm, filterEstado, filterCliente, filterCategoria, 
+      filterCaja, filterFechaInicio, filterFechaFin, activeTab, clientes, productos])
 
   const handleCreatePedido = async (pedidoData) => {
     const result = await createPedido(pedidoData)
@@ -84,7 +119,7 @@ function Pedidos({ user }) {
     if (result.success) {
       showToast(result.message, 'success')
       setShowPedidoModal(false)
-      await fetchProductos() // Actualizar disponibilidad
+      await fetchProductos()
     } else {
       showToast(result.message, 'error')
     }
@@ -122,7 +157,6 @@ function Pedidos({ user }) {
   const handleConfirmarPago = async (pagoData) => {
     if (!pedidoParaEntregar) return
 
-    // Registrar el pago
     const resultPago = await registrarPago(pedidoParaEntregar.id_pedido, pagoData)
     
     if (!resultPago.success) {
@@ -167,54 +201,54 @@ function Pedidos({ user }) {
       <Sidebar user={user} />
 
       <div className="flex-1 overflow-auto pt-16 lg:pt-0">
-        {/* Header */}
+        {/* Header MEJORADO - Similar a Productos */}
         <div className="bg-white shadow-md border-b border-gray-200 sticky top-0 z-20">
           <div className="px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
+              <div className="min-w-0 flex-1">
                 <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan1-600 via-ocean1-600 to-pink-600 bg-clip-text text-transparent">
-                  Gestión de Pedidos y Ventas
+                  Pedidos y Ventas
                 </h1>
-                <p className="text-gray-600 mt-1 text-sm sm:text-base">
-                  Administra reservas y ventas en un solo lugar
+                <p className="text-gray-600 mt-1 text-xs sm:text-sm lg:text-base">
+                  Administra reservas y ventas
                 </p>
               </div>
 
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setShowPedidoModal(true)}
-                  className="bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white px-4 py-2 rounded-xl font-semibold hover:from-cyan1-700 hover:to-ocean1-700 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl text-sm"
+                  className="bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white px-3 py-2 rounded-xl font-semibold hover:from-cyan1-700 hover:to-ocean1-700 transition-all duration-200 flex items-center justify-center space-x-1.5 text-xs sm:text-sm shadow-lg hover:shadow-xl"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                  <span>Nueva Reserva</span>
+                  <span>Reserva</span>
                 </button>
 
                 <button
                   onClick={() => setShowVentaModal(true)}
-                  className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 rounded-xl font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl text-sm"
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-2 rounded-xl font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-200 flex items-center justify-center space-x-1.5 text-xs sm:text-sm shadow-lg hover:shadow-xl"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
-                  <span>Venta Directa</span>
+                  <span>Venta</span>
                 </button>
               </div>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-2 mt-4 border-b">
+            {/* Tabs MEJORADOS */}
+            <div className="flex gap-2 mt-4 border-b overflow-x-auto">
               <button
                 onClick={() => setActiveTab('reservados')}
-                className={`px-6 py-3 font-semibold transition-all relative ${
+                className={`px-4 py-2 font-semibold transition-all relative whitespace-nowrap text-xs sm:text-sm ${
                   activeTab === 'reservados'
                     ? 'text-cyan1-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span>Reservados</span>
@@ -229,14 +263,14 @@ function Pedidos({ user }) {
 
               <button
                 onClick={() => setActiveTab('vendidos')}
-                className={`px-6 py-3 font-semibold transition-all relative ${
+                className={`px-4 py-2 font-semibold transition-all relative whitespace-nowrap text-xs sm:text-sm ${
                   activeTab === 'vendidos'
                     ? 'text-green-600'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span>Vendidos</span>
@@ -254,8 +288,9 @@ function Pedidos({ user }) {
 
         {/* Contenido */}
         <div className="p-4 sm:p-6 lg:p-8">
+          {/* CAMBIO IMPORTANTE: Pasar pedidosFiltrados en lugar de pedidos */}
           <PedidoStats
-            pedidos={pedidos}
+            pedidos={pedidosFiltrados}
             pedidosFiltrados={pedidosFiltrados}
             activeTab={activeTab}
           />
@@ -267,12 +302,22 @@ function Pedidos({ user }) {
             setFilterEstado={setFilterEstado}
             filterCliente={filterCliente}
             setFilterCliente={setFilterCliente}
+            filterCategoria={filterCategoria}
+            setFilterCategoria={setFilterCategoria}
+            filterCaja={filterCaja}
+            setFilterCaja={setFilterCaja}
+            filterFechaInicio={filterFechaInicio}
+            setFilterFechaInicio={setFilterFechaInicio}
+            filterFechaFin={filterFechaFin}
+            setFilterFechaFin={setFilterFechaFin}
             clientes={clientes}
+            categorias={categorias}
+            cajas={cajas}
             activeTab={activeTab}
           />
 
           {/* Lista de Pedidos */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
             {isLoading ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="bg-white rounded-xl shadow-lg p-6 animate-pulse">
@@ -289,12 +334,12 @@ function Pedidos({ user }) {
                   </svg>
                 </div>
                 <p className="text-gray-500 text-lg font-semibold">
-                  No hay {activeTab === 'reservados' ? 'reservas' : 'ventas'} que mostrar
+                  No hay {activeTab === 'reservados' ? 'reservas' : 'ventas'}
                 </p>
                 <p className="text-gray-400 text-sm mt-2">
                   {activeTab === 'reservados' 
-                    ? 'Crea tu primera reserva usando el botón "Nueva Reserva"'
-                    : 'Registra tu primera venta con el botón "Venta Directa"'
+                    ? 'Crea tu primera reserva'
+                    : 'Registra tu primera venta'
                   }
                 </p>
               </div>

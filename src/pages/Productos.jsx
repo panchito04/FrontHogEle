@@ -1,4 +1,4 @@
-// src/pages/Productos.jsx - VERSIÓN CORREGIDA
+// src/pages/Productos.jsx - VERSIÓN COMPLETA CON MODAL DE DETALLES
 import { useState, useEffect, useMemo } from 'react'
 import Sidebar from '../components/Sidebar'
 import CameraCapture from '../components/CameraCapture'
@@ -15,6 +15,7 @@ import ProductFilters from '../components/productos/ProductFilters'
 import ProductCard from '../components/productos/ProductCard'
 import ProductCardSkeleton from '../components/productos/ProductCardSkeleton'
 import ProductModal from '../components/productos/ProductModal'
+import ProductDetailModal from '../components/productos/ProductDetailModal'
 import DeleteConfirmModal from '../components/productos/DeleteConfirmModal'
 
 import BoxCard from '../components/cajas/BoxCard'
@@ -35,6 +36,7 @@ function Productos({ user }) {
   const [filterCaja, setFilterCaja] = useState('todas')
 
   const [showProductModal, setShowProductModal] = useState(false)
+  const [showProductDetailModal, setShowProductDetailModal] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
   const [showBoxModal, setShowBoxModal] = useState(false)
   const [showBoxDetailModal, setShowBoxDetailModal] = useState(false)
@@ -42,6 +44,7 @@ function Productos({ user }) {
   const [showCamera, setShowCamera] = useState(false)
 
   const [editingProduct, setEditingProduct] = useState(null)
+  const [selectedProduct, setSelectedProduct] = useState(null)
   const [editingBox, setEditingBox] = useState(null)
   const [selectedBox, setSelectedBox] = useState(null)
   const [deletingProductId, setDeletingProductId] = useState(null)
@@ -99,6 +102,7 @@ function Productos({ user }) {
   useEffect(() => {
     const handleModalBack = () => {
       if (showCamera) { setShowCamera(false); setCameraInitialFile(null); return true }
+      if (showProductDetailModal) { setShowProductDetailModal(false); setSelectedProduct(null); return true }
       if (showProductModal) { setShowProductModal(false); setEditingProduct(null); setFilePreview(null); return true }
       if (showBoxModal) { setShowBoxModal(false); setEditingBox(null); return true }
       if (showBoxDetailModal) { setShowBoxDetailModal(false); setSelectedBox(null); return true }
@@ -107,7 +111,7 @@ function Productos({ user }) {
       return false
     }
 
-    if (showCamera || showProductModal || showBoxModal || showBoxDetailModal || showCategoryModal || showDeleteConfirm) {
+    if (showCamera || showProductDetailModal || showProductModal || showBoxModal || showBoxDetailModal || showCategoryModal || showDeleteConfirm) {
       window.history.pushState({ modal: true }, '')
 
       const handlePopState = (e) => {
@@ -120,7 +124,7 @@ function Productos({ user }) {
       window.addEventListener('popstate', handlePopState, true)
       return () => window.removeEventListener('popstate', handlePopState, true)
     }
-  }, [showCamera, showProductModal, showBoxModal, showBoxDetailModal, showCategoryModal, showDeleteConfirm])
+  }, [showCamera, showProductDetailModal, showProductModal, showBoxModal, showBoxDetailModal, showCategoryModal, showDeleteConfirm])
 
   const handleCameraCapture = (file, previewUrl) => {
     setFilePreview(previewUrl)
@@ -239,6 +243,11 @@ function Productos({ user }) {
   const confirmDeleteProduct = (id) => {
     setDeletingProductId(id)
     setShowDeleteConfirm(true)
+  }
+
+  const handleViewProductDetail = (producto) => {
+    setSelectedProduct(producto)
+    setShowProductDetailModal(true)
   }
 
   const handleDeleteProduct = async () => {
@@ -413,6 +422,7 @@ function Productos({ user }) {
                           producto={producto}
                           onEdit={openEditProductModal}
                           onDelete={confirmDeleteProduct}
+                          onViewDetail={handleViewProductDetail}
                         />
                       ))}
 
@@ -449,7 +459,7 @@ function Productos({ user }) {
                         {/* Botón manual como respaldo */}
                         <button
                           onClick={() => {
-                            console.log('🔘 Botón manual presionado')
+                            console.log('📘 Botón manual presionado')
                             loadMore()
                           }}
                           disabled={isLoadingMore}
@@ -568,6 +578,15 @@ function Productos({ user }) {
           setDeletingProductId(null)
         }}
         onConfirm={handleDeleteProduct}
+      />
+
+      <ProductDetailModal
+        isOpen={showProductDetailModal}
+        onClose={() => {
+          setShowProductDetailModal(false)
+          setSelectedProduct(null)
+        }}
+        producto={selectedProduct}
       />
 
       {showCamera && (
