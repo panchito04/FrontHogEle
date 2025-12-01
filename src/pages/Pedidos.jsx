@@ -14,9 +14,10 @@ import PedidoModal from '../components/pedidos/PedidoModal'
 import VentaModal from '../components/pedidos/VentaModal'
 import PedidoDetailModal from '../components/pedidos/PedidoDetailModal'
 import DeleteConfirmModal from '../components/pedidos/DeleteConfirmModal'
+import PagoEntregaModal from '../components/pedidos/PagoEntregaModal'
 
 function Pedidos({ user }) {
-  const { pedidos, isLoading, fetchPedidos, createPedido, updatePedido, deletePedido } = usePedidos()
+  const { pedidos, isLoading, fetchPedidos, createPedido, updatePedido, deletePedido, registrarPago } = usePedidos()
   const { clientes, fetchClientes } = useClientes()
   const { productos, fetchProductos } = useProductos()
   const { toast, showToast, hideToast } = useToast()
@@ -30,9 +31,11 @@ function Pedidos({ user }) {
   const [showVentaModal, setShowVentaModal] = useState(false)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showPagoModal, setShowPagoModal] = useState(false)
 
   const [selectedPedido, setSelectedPedido] = useState(null)
   const [deletingPedidoId, setDeletingPedidoId] = useState(null)
+  const [pedidoParaEntregar, setPedidoParaEntregar] = useState(null)
 
   useEffect(() => {
     const loadData = async () => {
@@ -109,6 +112,27 @@ function Pedidos({ user }) {
     } else {
       showToast(result.message, 'error')
     }
+  }
+
+  const handleEntregar = (pedido) => {
+    setPedidoParaEntregar(pedido)
+    setShowPagoModal(true)
+  }
+
+  const handleConfirmarPago = async (pagoData) => {
+    if (!pedidoParaEntregar) return
+
+    // Registrar el pago
+    const resultPago = await registrarPago(pedidoParaEntregar.id_pedido, pagoData)
+    
+    if (!resultPago.success) {
+      showToast(resultPago.message, 'error')
+      return
+    }
+
+    showToast('✅ Pago registrado y pedido entregado', 'success')
+    setPedidoParaEntregar(null)
+    await fetchProductos()
   }
 
   const handleDeletePedido = async () => {
@@ -284,6 +308,7 @@ function Pedidos({ user }) {
                   onViewDetail={openDetailModal}
                   onDelete={confirmDelete}
                   onUpdateEstado={handleUpdateEstado}
+                  onEntregar={handleEntregar}
                 />
               ))
             )}
@@ -329,6 +354,17 @@ function Pedidos({ user }) {
           setDeletingPedidoId(null)
         }}
         onConfirm={handleDeletePedido}
+      />
+
+      <PagoEntregaModal
+        isOpen={showPagoModal}
+        onClose={() => {
+          setShowPagoModal(false)
+          setPedidoParaEntregar(null)
+        }}
+        onConfirm={handleConfirmarPago}
+        pedido={pedidoParaEntregar}
+        productos={productos}
       />
 
       {toast && (

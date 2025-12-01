@@ -1,5 +1,5 @@
 // components/pedidos/PedidoCard.jsx
-function PedidoCard({ pedido, clientes, productos, onViewDetail, onDelete, onUpdateEstado }) {
+function PedidoCard({ pedido, clientes, productos, onViewDetail, onDelete, onUpdateEstado, onEntregar }) {
   const getClienteNombre = (id) => {
     const cliente = clientes.find(c => c.id_cliente === id)
     return cliente?.nombre || 'Cliente desconocido'
@@ -180,7 +180,7 @@ function PedidoCard({ pedido, clientes, productos, onViewDetail, onDelete, onUpd
 
         {pedido.estado === 'pendiente' && (
           <button
-            onClick={() => onUpdateEstado(pedido.id_pedido, 'entregado')}
+            onClick={() => onEntregar(pedido)}
             className="flex items-center justify-center gap-1 px-3 py-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors font-medium text-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
