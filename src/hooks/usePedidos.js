@@ -1,137 +1,212 @@
-// hooks/usePedidos.js
+// src/hooks/usePedidos.js
 import { useState } from 'react'
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000'
 
 export const usePedidos = () => {
   const [pedidos, setPedidos] = useState([])
-  const [detallesPedidos, setDetallesPedidos] = useState({})
-  const [pagosPedidos, setPagosPedidos] = useState({})
   const [isLoading, setIsLoading] = useState(false)
 
+  // ✅ FETCH PEDIDOS
   const fetchPedidos = async () => {
+    setIsLoading(true)
     try {
-      setIsLoading(true)
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pedidos`)
+      console.log('🔍 Fetching pedidos desde:', `${API_URL}/api/pedidos`)
       
-      if (!response.ok) throw new Error('Error al obtener pedidos')
-      
-      const data = await response.json()
-      setPedidos(data)
-
-      // Obtener detalles y pagos de cada pedido
-      const detallesMap = {}
-      const pagosMap = {}
-      
-      for (const pedido of data) {
-        try {
-          // Detalles
-          const detalleRes = await fetch(
-            `${import.meta.env.VITE_API_URL}/api/pedidos/${pedido.id_pedido}/detalles`
-          )
-          if (detalleRes.ok) {
-            detallesMap[pedido.id_pedido] = await detalleRes.json()
-          }
-
-          // Pagos
-          const pagoRes = await fetch(
-            `${import.meta.env.VITE_API_URL}/api/pagos/pedido/${pedido.id_pedido}`
-          )
-          if (pagoRes.ok) {
-            pagosMap[pedido.id_pedido] = await pagoRes.json()
-          }
-        } catch (err) {
-          console.error(`Error al cargar datos del pedido ${pedido.id_pedido}:`, err)
+      const response = await fetch(`${API_URL}/api/pedidos`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
         }
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
-      
-      setDetallesPedidos(detallesMap)
-      setPagosPedidos(pagosMap)
-      
-      return { success: true }
+
+      const result = await response.json()
+      console.log('📦 Pedidos recibidos:', result)
+
+      // Soporta ambos formatos
+      let pedidosData = []
+      if (result.success && result.data) {
+        pedidosData = result.data
+      } else if (Array.isArray(result)) {
+        pedidosData = result
+      }
+
+      setPedidos(pedidosData)
+      return { success: true, message: 'Pedidos cargados' }
     } catch (error) {
-      console.error('Error:', error)
-      return { success: false, message: 'Error al cargar pedidos' }
+      console.error('❌ Error al cargar pedidos:', error)
+      setPedidos([])
+      return { success: false, message: error.message }
     } finally {
       setIsLoading(false)
     }
   }
 
+  // ✅ CREAR PEDIDO
   const createPedido = async (pedidoData) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pedidos`, {
+      console.log('📤 Creando pedido:', pedidoData)
+      
+      const response = await fetch(`${API_URL}/api/pedidos`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(pedidoData)
       })
 
+      const result = await response.json()
+      console.log('📦 Respuesta del servidor:', result)
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Error al crear pedido')
+        // El servidor devolvió un error con detalles
+        throw new Error(result.message || `Error ${response.status}`)
       }
 
-      await fetchPedidos()
-      return { 
-        success: true, 
-        message: pedidoData.es_venta_directa 
-          ? '✅ Venta registrada exitosamente' 
-          : '✅ Pedido creado exitosamente' 
+      if (result.success) {
+        await fetchPedidos() // Recargar lista
+        return {
+          success: true,
+          message: result.message || 'Pedido creado exitosamente'
+        }
+      } else {
+        throw new Error(result.message || 'Error al crear pedido')
       }
     } catch (error) {
-      console.error('Error:', error)
-      return { success: false, message: error.message }
+      console.error('❌ Error al crear pedido:', error)
+      return {
+        success: false,
+        message: error.message || 'Error al crear pedido'
+      }
     }
   }
 
-  const updatePedido = async (id, data) => {
+  // ✅ ACTUALIZAR PEDIDO
+  const updatePedido = async (id, updateData) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pedidos/${id}`, {
+      console.log('🔄 Actualizando pedido:', id, updateData)
+      
+      const response = await fetch(`${API_URL}/api/pedidos/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateData)
       })
 
+      const result = await response.json()
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Error al actualizar pedido')
+        throw new Error(result.message || `Error ${response.status}`)
       }
 
-      await fetchPedidos()
-      return { success: true, message: '✅ Pedido actualizado exitosamente' }
+      if (result.success) {
+        await fetchPedidos()
+        return {
+          success: true,
+          message: result.message || 'Pedido actualizado'
+        }
+      } else {
+        throw new Error(result.message || 'Error al actualizar')
+      }
     } catch (error) {
-      console.error('Error:', error)
-      return { success: false, message: error.message }
+      console.error('❌ Error al actualizar pedido:', error)
+      return {
+        success: false,
+        message: error.message
+      }
     }
   }
 
+  // ✅ ELIMINAR PEDIDO
   const deletePedido = async (id) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pedidos/${id}`, {
-        method: 'DELETE'
+      console.log('🗑️ Eliminando pedido:', id)
+      
+      const response = await fetch(`${API_URL}/api/pedidos/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       })
 
+      const result = await response.json()
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Error al eliminar pedido')
+        throw new Error(result.message || `Error ${response.status}`)
       }
 
-      await fetchPedidos()
-      return { 
-        success: true, 
-        message: '✅ Pedido eliminado. Productos disponibles nuevamente.' 
+      if (result.success) {
+        await fetchPedidos()
+        return {
+          success: true,
+          message: result.message || 'Pedido eliminado'
+        }
+      } else {
+        throw new Error(result.message || 'Error al eliminar')
       }
     } catch (error) {
-      console.error('Error:', error)
-      return { success: false, message: error.message }
+      console.error('❌ Error al eliminar pedido:', error)
+      return {
+        success: false,
+        message: error.message
+      }
+    }
+  }
+
+  // ✅ REGISTRAR PAGO
+  const registrarPago = async (idPedido, pagoData) => {
+    try {
+      console.log('💰 Registrando pago para pedido:', idPedido, pagoData)
+      
+      const response = await fetch(`${API_URL}/api/pedidos/${idPedido}/pago`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(pagoData)
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.message || `Error ${response.status}`)
+      }
+
+      if (result.success) {
+        await fetchPedidos()
+        return {
+          success: true,
+          message: result.message || 'Pago registrado'
+        }
+      } else {
+        throw new Error(result.message || 'Error al registrar pago')
+      }
+    } catch (error) {
+      console.error('❌ Error al registrar pago:', error)
+      return {
+        success: false,
+        message: error.message
+      }
     }
   }
 
   return {
     pedidos,
-    detallesPedidos,
-    pagosPedidos,
     isLoading,
     fetchPedidos,
     createPedido,
     updatePedido,
-    deletePedido
+    deletePedido,
+    registrarPago
   }
 }

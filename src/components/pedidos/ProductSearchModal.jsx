@@ -1,4 +1,4 @@
-// components/pedidos/ProductSearchModal.jsx
+// components/pedidos/ProductSearchModal.jsx - CORREGIDO
 import { useState, useEffect, useRef } from 'react'
 
 function ProductSearchModal({ isOpen, onClose, onSelect, productos, productosExcluidos = [] }) {
@@ -51,6 +51,14 @@ function ProductSearchModal({ isOpen, onClose, onSelect, productos, productosExc
     const precio = precioPersonalizado[producto.id_producto] 
       ? parseFloat(precioPersonalizado[producto.id_producto])
       : producto.precio
+
+    // ✅ LOG PARA DEBUGGING
+    console.log('🔍 Producto a enviar:', {
+      id_producto: producto.id_producto,
+      nombre: producto.nombre,
+      precio: precio,
+      cantidad_piezas: producto.cantidad
+    })
 
     onSelect(producto, precio)
     setPrecioPersonalizado({})
@@ -134,14 +142,11 @@ function ProductSearchModal({ isOpen, onClose, onSelect, productos, productosExc
               {productosFiltrados.map((producto) => (
                 <div 
                   key={producto.id_producto}
-                  // Mismo estilo visual del contenedor
                   className="bg-gradient-to-br from-white to-gray-50 rounded-xl p-3 sm:p-4 border-2 border-gray-200 hover:border-indigo-400 hover:shadow-lg transition-all duration-200"
                 >
-                  {/* CAMBIO: Layout flex-row para poner imagen grande a la izquierda */}
                   <div className="flex gap-3 sm:gap-4 h-full">
                     
-                    {/* COLUMNA IZQUIERDA: IMAGEN GRANDE */}
-                    {/* Se aumentó de w-16 a w-28 (móvil) y w-40 (escritorio) */}
+                    {/* Imagen */}
                     <div className="w-28 h-28 sm:w-40 sm:h-40 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 self-start border border-gray-200">
                       {producto.imagen_url ? (
                         <img 
@@ -158,41 +163,39 @@ function ProductSearchModal({ isOpen, onClose, onSelect, productos, productosExc
                       )}
                     </div>
 
-                    {/* COLUMNA DERECHA: INFO + INPUTS */}
+                    {/* Info */}
                     <div className="flex-1 flex flex-col justify-between min-w-0">
-                      
-                      {/* Bloque Superior: Info */}
                       <div className="space-y-2">
                         <div>
-                            <h4 className="font-bold text-gray-900 text-sm sm:text-base line-clamp-2 leading-tight">
+                          <h4 className="font-bold text-gray-900 text-sm sm:text-base line-clamp-2 leading-tight">
                             {producto.nombre}
-                            </h4>
-                            {producto.descripcion && (
+                          </h4>
+                          {producto.descripcion && (
                             <p className="text-xs text-gray-600 line-clamp-1 mt-1">
-                                {producto.descripcion}
+                              {producto.descripcion}
                             </p>
-                            )}
+                          )}
                         </div>
 
                         {/* Tags */}
                         <div className="flex items-center gap-1.5 flex-wrap">
-                            {producto.categoria?.nombre && (
+                          {producto.categoria?.nombre && (
                             <span className="bg-purple-100 text-purple-700 text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium">
-                                {producto.categoria.nombre}
+                              {producto.categoria.nombre}
                             </span>
-                            )}
-                            {producto.caja?.codigo && (
+                          )}
+                          {producto.caja?.codigo && (
                             <span className="bg-blue-100 text-blue-700 text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium">
-                                📦 {producto.caja.codigo}
+                              📦 {producto.caja.codigo}
                             </span>
-                            )}
-                            <span className="bg-green-100 text-green-700 text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium">
+                          )}
+                          <span className="bg-green-100 text-green-700 text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium">
                             {producto.cantidad} pzs
-                            </span>
+                          </span>
                         </div>
                       </div>
 
-                      {/* Bloque Inferior: Precio y Botón */}
+                      {/* Precio y Botón */}
                       <div className="flex flex-col gap-2 mt-2">
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
@@ -222,7 +225,6 @@ function ProductSearchModal({ isOpen, onClose, onSelect, productos, productosExc
                           <span>Agregar</span>
                         </button>
                       </div>
-
                     </div>
                   </div>
                 </div>

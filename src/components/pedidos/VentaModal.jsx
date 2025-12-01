@@ -70,34 +70,45 @@ function VentaModal({ isOpen, onClose, onSubmit, clientes, productos }) {
     setShowClientSearch(false)
   }
 
-  const handleProductSelect = (producto, precioPersonalizado) => {
-    if (formData.detalles.some(d => d.id_producto === producto.id_producto)) {
-      alert('⚠️ Este producto ya está en la venta')
-      return
-    }
+  // SOLO MOSTRAR LA FUNCIÓN handleProductSelect corregida para VentaModal.jsx
 
-    const nuevoDetalle = {
-      id_producto: producto.id_producto,
-      nombre_producto: producto.nombre,
-      cantidad: 1,
-      precio_unitario: precioPersonalizado || producto.precio,
-      cantidad_piezas: producto.cantidad
-    }
-
-    const nuevosDetalles = [...formData.detalles, nuevoDetalle]
-    const nuevoTotal = nuevosDetalles.reduce((sum, d) => sum + (d.cantidad * d.precio_unitario), 0)
-
-    setFormData({
-      ...formData,
-      detalles: nuevosDetalles,
-      pago: {
-        ...formData.pago,
-        monto: nuevoTotal.toFixed(2)
-      }
-    })
-    setShowProductSearch(false)
+const handleProductSelect = (producto, precioPersonalizado) => {
+  // ✅ VERIFICAR QUE PRODUCTO TENGA id_producto
+  if (!producto.id_producto) {
+    console.error('❌ ERROR: Producto sin id_producto', producto)
+    alert('❌ Error: El producto no tiene un ID válido')
+    return
   }
 
+  if (formData.detalles.some(d => d.id_producto === producto.id_producto)) {
+    alert('⚠️ Este producto ya está en la venta')
+    return
+  }
+
+  // ✅ CREAR DETALLE CON TODA LA INFO NECESARIA
+  const nuevoDetalle = {
+    id_producto: producto.id_producto, // ✅ CRÍTICO
+    nombre_producto: producto.nombre,
+    cantidad: 1,
+    precio_unitario: precioPersonalizado || producto.precio,
+    cantidad_piezas: producto.cantidad
+  }
+
+  console.log('✅ Detalle de venta creado:', nuevoDetalle)
+
+  const nuevosDetalles = [...formData.detalles, nuevoDetalle]
+  const nuevoTotal = nuevosDetalles.reduce((sum, d) => sum + (d.cantidad * d.precio_unitario), 0)
+
+  setFormData({
+    ...formData,
+    detalles: nuevosDetalles,
+    pago: {
+      ...formData.pago,
+      monto: nuevoTotal.toFixed(2)
+    }
+  })
+  setShowProductSearch(false)
+}
   const removeDetalle = (index) => {
     const nuevosDetalles = formData.detalles.filter((_, i) => i !== index)
     const nuevoTotal = nuevosDetalles.reduce((sum, d) => sum + (d.cantidad * d.precio_unitario), 0)

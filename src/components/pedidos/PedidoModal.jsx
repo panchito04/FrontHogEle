@@ -1,4 +1,4 @@
-// components/pedidos/PedidoModal.jsx
+// components/pedidos/PedidoModal.jsx - VERIFICAR handleProductSelect
 import { useState, useEffect } from 'react'
 import { saveFormData, loadFormData, clearFormData } from '../../utils/formPersistence'
 import ProductSearchModal from './ProductSearchModal'
@@ -15,18 +15,14 @@ function PedidoModal({ isOpen, onClose, onSubmit, clientes, productos }) {
   
   const [showProductSearch, setShowProductSearch] = useState(false)
   const [showClientSearch, setShowClientSearch] = useState(false)
-  const [isLoaded, setIsLoaded] = useState(false) // Para evitar guardar datos vacíos mientras carga
+  const [isLoaded, setIsLoaded] = useState(false)
 
-  // 1. Cargar datos guardados al montar (con PREGUNTA)
   useEffect(() => {
     if (isOpen) {
       const savedData = loadFormData(FORM_KEY)
-      
-      // Verificamos si hay datos reales guardados (no solo el objeto vacío)
       const hasData = savedData && (savedData.id_cliente || savedData.detalles?.length > 0 || savedData.observaciones)
 
       if (hasData) {
-        // PREGUNTA AL USUARIO
         const userWantsToRecover = window.confirm(
           '💾 Tienes un pedido sin terminar guardado automáticamente.\n\n¿Deseas recuperar los datos del pedido anterior?'
         )
@@ -34,20 +30,17 @@ function PedidoModal({ isOpen, onClose, onSubmit, clientes, productos }) {
         if (userWantsToRecover) {
           setFormData(savedData)
         } else {
-          // Si dice que no, limpiamos el almacenamiento
           clearFormData(FORM_KEY)
           setFormData({ id_cliente: '', observaciones: '', detalles: [] })
         }
       }
-      setIsLoaded(true) // Marcamos que ya terminó la lógica de carga
+      setIsLoaded(true)
     }
   }, [isOpen])
 
-  // 2. Guardar datos automáticamente (Solo si ya cargó y hubo cambios)
   useEffect(() => {
     if (isLoaded && isOpen) {
-        // Guardamos siempre que haya algo mínimo
-        saveFormData(FORM_KEY, formData)
+      saveFormData(FORM_KEY, formData)
     }
   }, [formData, isLoaded, isOpen])
 
@@ -57,20 +50,32 @@ function PedidoModal({ isOpen, onClose, onSubmit, clientes, productos }) {
   }
 
   const handleProductSelect = (producto, precioPersonalizado) => {
+    // ✅ VERIFICAR QUE PRODUCTO TENGA id_producto
+    if (!producto.id_producto) {
+      console.error('❌ ERROR: Producto sin id_producto', producto)
+      alert('❌ Error: El producto no tiene un ID válido')
+      return
+    }
+
     if (formData.detalles.some(d => d.id_producto === producto.id_producto)) {
       alert('⚠️ Este producto ya está en la reserva')
       return
     }
 
+    // ✅ CREAR DETALLE CON TODA LA INFO NECESARIA
+    const nuevoDetalle = {
+      id_producto: producto.id_producto, // ✅ CRÍTICO
+      nombre_producto: producto.nombre,
+      cantidad: 1,
+      precio_unitario: precioPersonalizado || producto.precio,
+      cantidad_piezas: producto.cantidad
+    }
+
+    console.log('✅ Detalle creado:', nuevoDetalle)
+
     setFormData({
       ...formData,
-      detalles: [...formData.detalles, {
-        id_producto: producto.id_producto,
-        nombre_producto: producto.nombre,
-        cantidad: 1,
-        precio_unitario: precioPersonalizado || producto.precio,
-        cantidad_piezas: producto.cantidad
-      }]
+      detalles: [...formData.detalles, nuevoDetalle]
     })
     setShowProductSearch(false)
   }
@@ -88,36 +93,40 @@ function PedidoModal({ isOpen, onClose, onSubmit, clientes, productos }) {
     )
   }
 
-  // 3. Validación Estricta al Enviar
   const handleSubmit = (e) => {
     e.preventDefault()
     
-    // Validación de Cliente
     if (!formData.id_cliente) {
       alert('⚠️ El campo "Cliente" es obligatorio.\nPor favor selecciona uno.')
       return
     }
 
-    // Validación de Productos
     if (formData.detalles.length === 0) {
       alert('⚠️ El pedido debe tener al menos un "Producto".\nPor favor agrega productos a la reserva.')
       return
     }
 
+    // ✅ VERIFICAR QUE TODOS LOS DETALLES TENGAN id_producto
+    const detallesSinId = formData.detalles.filter(d => !d.id_producto)
+    if (detallesSinId.length > 0) {
+      console.error('❌ Detalles sin id_producto:', detallesSinId)
+      alert('❌ Error: Algunos productos no tienen ID. Por favor vuelve a agregarlos.')
+      return
+    }
+
+    console.log('📤 Enviando pedido:', formData)
     onSubmit(formData)
     
-    // Limpiamos todo al terminar con éxito
     clearFormData(FORM_KEY)
     setFormData({ id_cliente: '', observaciones: '', detalles: [] })
   }
 
   const handleClose = () => {
-    // Si hay datos, preguntamos si quiere mantener el borrador al salir voluntariamente
     if (formData.id_cliente || formData.detalles.length > 0) {
-        if (!window.confirm('¿Deseas mantener este borrador guardado para más tarde?')) {
-            clearFormData(FORM_KEY)
-            setFormData({ id_cliente: '', observaciones: '', detalles: [] })
-        }
+      if (!window.confirm('¿Deseas mantener este borrador guardado para más tarde?')) {
+        clearFormData(FORM_KEY)
+        setFormData({ id_cliente: '', observaciones: '', detalles: [] })
+      }
     }
     onClose()
   }
@@ -226,6 +235,8 @@ function PedidoModal({ isOpen, onClose, onSubmit, clientes, productos }) {
                           <p className="text-sm text-gray-600 mt-1">
                             1 pack ({detalle.cantidad_piezas} piezas) × Bs. {detalle.precio_unitario.toFixed(2)}
                           </p>
+                          {/* ✅ DEBUG: Mostrar ID */}
+                          <p className="text-xs text-gray-400 mt-1">ID: {detalle.id_producto}</p>
                         </div>
                         <div className="text-right ml-4">
                           <p className="text-xl font-bold text-cyan1-600">
@@ -281,7 +292,6 @@ function PedidoModal({ isOpen, onClose, onSubmit, clientes, productos }) {
         </div>
       </div>
 
-      {/* Modales de búsqueda */}
       {showClientSearch && (
         <ClientSearchModal
           isOpen={showClientSearch}
