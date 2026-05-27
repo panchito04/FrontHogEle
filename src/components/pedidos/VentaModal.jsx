@@ -20,6 +20,7 @@ function VentaModal({ isOpen, onClose, onSubmit, productos, user }) {
   
   const [showProductSearch, setShowProductSearch] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false) // Control de carga inicial
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // 1. Cargar datos guardados al montar
   useEffect(() => {
@@ -115,8 +116,9 @@ function VentaModal({ isOpen, onClose, onSubmit, productos, user }) {
     )
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
+    if (isSubmitting) return
     
     if (formData.detalles.length === 0) {
       alert('Debes agregar al menos un "Producto" a la venta.')
@@ -142,23 +144,30 @@ function VentaModal({ isOpen, onClose, onSubmit, productos, user }) {
       }
     }
 
-    onSubmit({
-      ...formData,
-      id_usuario: user?.id_usuario || null,
-      es_venta_directa: true,
-      pago: {
-        monto: parseFloat(formData.pago.monto),
-        metodo: formData.pago.metodo,
-        comprobante_url: formData.pago.comprobante_url || null
-      }
-    })
-    
-    clearFormData(FORM_KEY)
-    setFormData({ 
-      observaciones: '', 
-      detalles: [],
-      pago: { monto: '', metodo: '', comprobante_url: '' }
-    })
+    setIsSubmitting(true)
+    try {
+      await onSubmit({
+        ...formData,
+        id_usuario: user?.id_usuario || null,
+        es_venta_directa: true,
+        pago: {
+          monto: parseFloat(formData.pago.monto),
+          metodo: formData.pago.metodo,
+          comprobante_url: formData.pago.comprobante_url || null
+        }
+      })
+      
+      clearFormData(FORM_KEY)
+      setFormData({ 
+        observaciones: '', 
+        detalles: [],
+        pago: { monto: '', metodo: '', comprobante_url: '' }
+      })
+    } catch (error) {
+      console.error('Error al registrar venta:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleClose = () => {
@@ -277,7 +286,7 @@ function VentaModal({ isOpen, onClose, onSubmit, productos, user }) {
           {formData.detalles.length > 0 && (
             <div className="border-t border-stone-200/50 pt-5 space-y-4">
               <h4 className="text-sm font-semibold text-stone-700 tracking-wider uppercase font-sans-premium flex items-center gap-1.5">
-                <svg className="w-4.5 h-4.5 text-cyan1-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-cyan1-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 Información de Pago
@@ -341,15 +350,27 @@ function VentaModal({ isOpen, onClose, onSubmit, productos, user }) {
             <button
               type="button"
               onClick={handleClose}
-              className="flex-1 px-4 py-3 bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 rounded-xl font-medium transition-all text-sm transform active:scale-95"
+              disabled={isSubmitting}
+              className="flex-1 px-4 py-3 bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 rounded-xl font-medium transition-all text-sm transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-3 bg-cyan1-600 hover:bg-cyan1-700 text-white rounded-xl font-medium transition-all shadow-md text-sm transform active:scale-95 flex items-center justify-center gap-1.5"
+              disabled={isSubmitting}
+              className="flex-1 px-4 py-3 bg-cyan1-600 hover:bg-cyan1-700 text-white rounded-xl font-semibold transition-all shadow-md text-sm transform active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span>Registrar Venta</span>
+              {isSubmitting ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Procesando...</span>
+                </>
+              ) : (
+                <span>Registrar Venta</span>
+              )}
             </button>
           </div>
         </form>
