@@ -16,12 +16,12 @@ const BoxCard = ({ caja, onViewDetail, onEdit, onDelete }) => {
     <div 
       className="bg-white rounded-2xl shadow-sm border border-stone-200/70 overflow-hidden transition-all duration-300 transform active:scale-[0.98] group flex flex-col justify-between"
     >
-      <div className="p-5.5 space-y-4">
+      <div className="p-5 sm:p-6 space-y-4">
         {/* Header row */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <h3 className="font-serif-editorial text-xl font-normal text-stone-900 group-hover:text-cyan1-600 transition-colors leading-tight">
-              Caja {caja.codigo}
+              {caja.codigo?.toLowerCase().startsWith('caja') ? caja.codigo : `Caja ${caja.codigo}`}
             </h3>
             <p className="text-[11px] text-stone-400 font-sans-premium font-light tracking-wide mt-1 truncate">
               {caja.descripcion || 'Sin descripción asignada'}
@@ -71,8 +71,8 @@ const BoxCard = ({ caja, onViewDetail, onEdit, onDelete }) => {
       </div>
 
       {/* Actions footer */}
-      <div className="p-4 pt-0">
-        <div className="flex gap-2 border-t border-stone-200/40 pt-3">
+      <div className="px-5 sm:px-6 pb-5 pt-0">
+        <div className="flex gap-2 border-t border-stone-200/40 pt-4">
           <button
             onClick={() => onViewDetail(caja)}
             className="flex-1 px-3 py-2 bg-white hover:bg-stone-50 text-cyan1-600 border border-stone-200 rounded-xl font-medium transition-all flex items-center justify-center gap-1.5 text-xs active:scale-95"
