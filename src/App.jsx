@@ -35,7 +35,7 @@ function AppContent({ isAuthenticated, setIsAuthenticated, user, setUser }) {
 
         const toast = document.createElement('div')
         toast.id = 'back-toast'
-        toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-[9999] flex items-center space-x-2 animate-slide-up'
+        toast.className = 'fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-[9999] flex items-center space-x-2 animate-toast-slide-up'
         
         if (location.pathname === '/home') {
           toast.innerHTML = `
@@ -194,10 +194,18 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan1-600 via-ocean1-600 to-pink-500">
-        <div className="text-center">
-          <div className="w-20 h-20 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white text-lg font-semibold">Verificando sesión...</p>
+      <div className="min-h-screen flex items-center justify-center bg-cream-luxury">
+        <div className="text-center p-8 bg-white/40 backdrop-blur-md border border-stone-200/40 rounded-3xl max-w-xs w-full shadow-sm">
+          <div className="relative flex justify-center mb-6">
+            <div className="w-16 h-16 border-4 border-cyan1-600/10 border-t-cyan1-600 rounded-full animate-spin"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <svg className="w-6 h-6 text-cyan1-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+            </div>
+          </div>
+          <h3 className="text-stone-900 text-lg font-serif-editorial tracking-wide mb-1">Verificando Sesión</h3>
+          <p className="text-stone-400 text-[10px] font-sans-premium font-light tracking-widest uppercase">Garantizando Conexión Segura</p>
         </div>
       </div>
     )

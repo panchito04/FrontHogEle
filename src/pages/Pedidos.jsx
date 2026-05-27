@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import Sidebar from '../components/Sidebar'
 import Toast from '../components/common/Toast'
+import PageHeader from '../components/common/PageHeader'
 
 import { usePedidos } from '../hooks/usePedidos'
 import { useClientes } from '../hooks/useClientes'
@@ -29,7 +30,6 @@ function Pedidos({ user }) {
   const [activeTab, setActiveTab] = useState('reservados')
   const [searchTerm, setSearchTerm] = useState('')
   const [filterEstado, setFilterEstado] = useState('todos')
-  const [filterCliente, setFilterCliente] = useState('todos')
   const [filterCategoria, setFilterCategoria] = useState('todas')
   const [filterCaja, setFilterCaja] = useState('todas')
   const [filterFechaInicio, setFilterFechaInicio] = useState('')
@@ -82,10 +82,6 @@ function Pedidos({ user }) {
       // Filtro por estado
       const matchesEstado = filterEstado === 'todos' || pedido.estado === filterEstado
 
-      // Filtro por cliente
-      const matchesCliente = filterCliente === 'todos' || 
-        pedido.id_cliente?.toString() === filterCliente
-
       // Filtro por categoría (revisar productos del pedido)
       const matchesCategoria = filterCategoria === 'todas' || 
         pedido.detalles?.some(detalle => {
@@ -107,10 +103,10 @@ function Pedidos({ user }) {
       const matchesFechaFin = !filterFechaFin || 
         pedidoFecha <= new Date(filterFechaFin + 'T23:59:59')
 
-      return matchesSearch && matchesEstado && matchesCliente && 
+      return matchesSearch && matchesEstado && 
              matchesCategoria && matchesCaja && matchesFechaInicio && matchesFechaFin
     })
-  }, [pedidos, searchTerm, filterEstado, filterCliente, filterCategoria, 
+  }, [pedidos, searchTerm, filterEstado, filterCategoria, 
       filterCaja, filterFechaInicio, filterFechaFin, activeTab, clientes, productos])
 
   const handleCreatePedido = async (pedidoData) => {
@@ -129,7 +125,7 @@ function Pedidos({ user }) {
     const result = await createPedido(ventaData)
     
     if (result.success) {
-      showToast('✅ Venta registrada exitosamente', 'success')
+      showToast('Venta registrada exitosamente', 'success')
       setShowVentaModal(false)
       await fetchProductos()
     } else {
@@ -164,7 +160,7 @@ function Pedidos({ user }) {
       return
     }
 
-    showToast('✅ Pago registrado y pedido entregado', 'success')
+    showToast('Pago registrado y pedido entregado', 'success')
     setPedidoParaEntregar(null)
     await fetchProductos()
   }
@@ -189,106 +185,87 @@ function Pedidos({ user }) {
 
   const confirmDelete = (pedido) => {
     if (pedido.estado === 'pagado' || pedido.estado === 'entregado') {
-      showToast('❌ No se puede eliminar un pedido pagado o entregado', 'error')
+      showToast('No se puede eliminar un pedido pagado o entregado', 'error')
       return
     }
     setDeletingPedidoId(pedido.id_pedido)
     setShowDeleteConfirm(true)
   }
 
+  const headerActions = [
+    {
+      label: 'Registrar Reserva',
+      variant: 'secondary',
+      onClick: () => setShowPedidoModal(true),
+      icon: (
+        <svg className="w-4 h-4 text-cyan1-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+      )
+    },
+    {
+      label: 'Registrar Venta',
+      variant: 'primary',
+      onClick: () => setShowVentaModal(true),
+      icon: (
+        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      )
+    }
+  ]
+
   return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="flex flex-col lg:flex-row h-screen bg-cream-luxury font-sans-premium">
       <Sidebar user={user} />
 
-      <div className="flex-1 overflow-auto pt-16 lg:pt-0">
-        {/* Header MEJORADO - Similar a Productos */}
-        <div className="bg-white shadow-md border-b border-gray-200 sticky top-0 z-20">
-          <div className="px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan1-600 via-ocean1-600 to-pink-600 bg-clip-text text-transparent">
-                  Pedidos y Ventas
-                </h1>
-                <p className="text-gray-600 mt-1 text-xs sm:text-sm lg:text-base">
-                  Administra reservas y ventas
-                </p>
-              </div>
+      <div className="flex-1 overflow-auto pt-16 lg:pt-0 pb-20 lg:pb-8">
+        <PageHeader 
+          title="Pedidos y Ventas"
+          description="Monitorea y registra reservas y ventas directas"
+          actions={headerActions}
+        />
 
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setShowPedidoModal(true)}
-                  className="bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white px-3 py-2 rounded-xl font-semibold hover:from-cyan1-700 hover:to-ocean1-700 transition-all duration-200 flex items-center justify-center space-x-1.5 text-xs sm:text-sm shadow-lg hover:shadow-xl"
-                >
-                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  <span>Reserva</span>
-                </button>
-
-                <button
-                  onClick={() => setShowVentaModal(true)}
-                  className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-2 rounded-xl font-semibold hover:from-green-700 hover:to-emerald-700 transition-all duration-200 flex items-center justify-center space-x-1.5 text-xs sm:text-sm shadow-lg hover:shadow-xl"
-                >
-                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  <span>Venta</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Tabs MEJORADOS */}
-            <div className="flex gap-2 mt-4 border-b overflow-x-auto">
+        {/* Contenido Principal */}
+        <div className="px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+          
+          {/* Segmented Pill Selector (Aesthetic Tabs) */}
+          <div className="flex justify-center sm:justify-start">
+            <div className="bg-stone-200/50 p-1 rounded-xl flex space-x-1 border border-stone-200/40">
               <button
                 onClick={() => setActiveTab('reservados')}
-                className={`px-4 py-2 font-semibold transition-all relative whitespace-nowrap text-xs sm:text-sm ${
+                className={`px-5 py-2 rounded-lg text-xs sm:text-sm font-medium tracking-wide transition-all duration-300 flex items-center space-x-2 ${
                   activeTab === 'reservados'
-                    ? 'text-cyan1-600'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-white text-cyan1-600 shadow-sm font-semibold'
+                    : 'text-stone-500 hover:text-stone-800 hover:bg-white/30'
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>Reservados</span>
-                  <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-xs font-bold">
-                    {pedidos.filter(p => p.estado === 'pendiente').length}
-                  </span>
-                </div>
-                {activeTab === 'reservados' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan1-600 to-ocean1-600" />
-                )}
+                <span>Reservas</span>
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  activeTab === 'reservados' ? 'bg-cyan1-50 text-cyan1-700' : 'bg-stone-200 text-stone-600'
+                }`}>
+                  {pedidos.filter(p => p.estado === 'pendiente').length}
+                </span>
               </button>
 
               <button
                 onClick={() => setActiveTab('vendidos')}
-                className={`px-4 py-2 font-semibold transition-all relative whitespace-nowrap text-xs sm:text-sm ${
+                className={`px-5 py-2 rounded-lg text-xs sm:text-sm font-medium tracking-wide transition-all duration-300 flex items-center space-x-2 ${
                   activeTab === 'vendidos'
-                    ? 'text-green-600'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-cyan1-600 text-white shadow-sm font-semibold'
+                    : 'text-stone-500 hover:text-stone-800 hover:bg-white/30'
                 }`}
               >
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>Vendidos</span>
-                  <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-bold">
-                    {pedidos.filter(p => p.estado === 'pagado' || p.estado === 'entregado').length}
-                  </span>
-                </div>
-                {activeTab === 'vendidos' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-green-600 to-emerald-600" />
-                )}
+                <span>Ventas</span>
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  activeTab === 'vendidos' ? 'bg-white/20 text-white' : 'bg-stone-200 text-stone-600'
+                }`}>
+                  {pedidos.filter(p => p.estado === 'pagado' || p.estado === 'entregado').length}
+                </span>
               </button>
             </div>
           </div>
-        </div>
 
-        {/* Contenido */}
-        <div className="p-4 sm:p-6 lg:p-8">
-          {/* CAMBIO IMPORTANTE: Pasar pedidosFiltrados en lugar de pedidos */}
           <PedidoStats
             pedidos={pedidosFiltrados}
             pedidosFiltrados={pedidosFiltrados}
@@ -300,8 +277,6 @@ function Pedidos({ user }) {
             setSearchTerm={setSearchTerm}
             filterEstado={filterEstado}
             setFilterEstado={setFilterEstado}
-            filterCliente={filterCliente}
-            setFilterCliente={setFilterCliente}
             filterCategoria={filterCategoria}
             setFilterCategoria={setFilterCategoria}
             filterCaja={filterCaja}
@@ -310,36 +285,35 @@ function Pedidos({ user }) {
             setFilterFechaInicio={setFilterFechaInicio}
             filterFechaFin={filterFechaFin}
             setFilterFechaFin={setFilterFechaFin}
-            clientes={clientes}
             categorias={categorias}
             cajas={cajas}
             activeTab={activeTab}
           />
 
-          {/* Lista de Pedidos */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
+          {/* Grid de Pedidos */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
             {isLoading ? (
-              Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="bg-white rounded-xl shadow-lg p-6 animate-pulse">
-                  <div className="h-6 bg-gray-200 rounded mb-4"></div>
-                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+              Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="bg-white/60 border border-stone-200/50 rounded-2xl p-6 space-y-4 animate-pulse">
+                  <div className="h-6 bg-stone-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-stone-200 rounded w-full"></div>
+                  <div className="h-10 bg-stone-200 rounded w-full"></div>
                 </div>
               ))
             ) : pedidosFiltrados.length === 0 ? (
-              <div className="col-span-full text-center py-20 bg-white rounded-2xl">
-                <div className="bg-gray-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              <div className="col-span-full py-16 bg-white/40 border border-stone-200/40 rounded-3xl text-center flex flex-col items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-stone-200/50 flex items-center justify-center text-stone-400 mb-4">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                 </div>
-                <p className="text-gray-500 text-lg font-semibold">
-                  No hay {activeTab === 'reservados' ? 'reservas' : 'ventas'}
-                </p>
-                <p className="text-gray-400 text-sm mt-2">
+                <h3 className="font-serif-editorial text-lg text-stone-800">
+                  No hay {activeTab === 'reservados' ? 'reservas' : 'ventas'} registradas
+                </h3>
+                <p className="text-stone-500 text-xs mt-1.5 max-w-xs font-light">
                   {activeTab === 'reservados' 
-                    ? 'Crea tu primera reserva'
-                    : 'Registra tu primera venta'
+                    ? 'Comienza registrando una reserva con el botón superior'
+                    : 'Comienza registrando una venta con el botón superior'
                   }
                 </p>
               </div>
@@ -359,23 +333,46 @@ function Pedidos({ user }) {
             )}
           </div>
         </div>
+
+        {/* Floating Action Button for Mobile Users */}
+        <div className="fixed bottom-24 right-5 lg:hidden flex flex-col space-y-3.5 z-30">
+          <button
+            onClick={() => setShowPedidoModal(true)}
+            className="w-12 h-12 rounded-full bg-white text-cyan1-600 shadow-lg border border-stone-200/50 flex items-center justify-center active:scale-95 transition-transform"
+            title="Nueva Reserva"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </button>
+          
+          <button
+            onClick={() => setShowVentaModal(true)}
+            className="w-14 h-14 rounded-full bg-cyan1-600 text-white shadow-xl flex items-center justify-center active:scale-95 transition-transform"
+            title="Nueva Venta"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+          </button>
+        </div>
       </div>
 
-      {/* Modales */}
+      {/* Modales unificados y actualizados */}
       <PedidoModal
         isOpen={showPedidoModal}
         onClose={() => setShowPedidoModal(false)}
         onSubmit={handleCreatePedido}
-        clientes={clientes}
         productos={productos}
+        user={user}
       />
 
       <VentaModal
         isOpen={showVentaModal}
         onClose={() => setShowVentaModal(false)}
         onSubmit={handleCreateVenta}
-        clientes={clientes}
         productos={productos}
+        user={user}
       />
 
       {showDetailModal && selectedPedido && (
@@ -424,4 +421,4 @@ function Pedidos({ user }) {
   )
 }
 
-export default Pedidos
+export default Pedidos

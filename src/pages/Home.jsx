@@ -2,14 +2,13 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import Sidebar from '../components/Sidebar'
-import HomeHeader from '../components/home/HomeHeader'
+import PageHeader from '../components/common/PageHeader'
 import LoadingState from '../components/home/LoadingState'
 import StatsGrid from '../components/home/StatsGrid'
 import SalesChart from '../components/home/SalesChart'
 import OrdersStatus from '../components/home/OrdersStatus'
 import TopProducts from '../components/home/TopProducts'
 import RecentOrders from '../components/home/RecentOrders'
-import RecentClients from '../components/home/RecentClients'
 import LowStockAlert from '../components/home/LowStockAlert'
 
 function Home({ user }) {
@@ -43,58 +42,72 @@ function Home({ user }) {
     }
   }
 
+  const actions = [
+    {
+      label: isLoading ? 'Actualizando...' : 'Actualizar',
+      variant: 'primary',
+      onClick: fetchStats,
+      icon: (
+        <svg className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      )
+    }
+  ]
+
   return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="flex flex-col lg:flex-row h-screen bg-cream-luxury">
       <Sidebar user={user} />
       
-      <div className="flex-1 overflow-auto lg:ml-0 pt-16 lg:pt-0">
-        <HomeHeader user={user} onRefresh={fetchStats} isLoading={isLoading} />
+      {/* Scrollable Container - pt-16 for mobile top bar, pb-20 for bottom navigation bar */}
+      <div className="flex-1 overflow-auto pt-16 pb-20 lg:pt-0 lg:pb-8">
+        <PageHeader 
+          title="Dashboard" 
+          description={`Bienvenido de nuevo, ${user?.nombre || 'Administrador'}`} 
+          actions={actions}
+        />
 
         <div className="p-4 sm:p-6 lg:p-8">
           {isLoading ? (
             <LoadingState />
           ) : error ? (
-            <div className="bg-gradient-to-br from-red-50 to-red-100 border-2 border-red-200 rounded-xl p-8 text-center shadow-lg">
-              <div className="bg-red-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <div className="bg-[#402422]/5 border border-[#d97c75]/25 rounded-2xl p-8 text-center shadow-sm max-w-xl mx-auto">
+              <div className="bg-[#402422]/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-[#d97c75]/10">
+                <svg className="w-8 h-8 text-[#d97c75]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-red-800 mb-2">Error al cargar datos</h3>
-              <p className="text-red-700 mb-6">{error}</p>
+              <h3 className="text-lg font-bold text-stone-900 mb-2 font-serif-editorial">Error de Conexión</h3>
+              <p className="text-stone-600 text-sm mb-6 font-light tracking-wide">{error}</p>
               <button
                 onClick={fetchStats}
-                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-md hover:shadow-lg font-medium"
+                className="px-6 py-2.5 bg-cyan1-600 text-white rounded-xl hover:bg-cyan1-700 transition-all shadow-md font-medium text-sm transform active:scale-95"
               >
-                <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
                 Reintentar
               </button>
             </div>
           ) : (
-            <>
+            <div className="space-y-6 sm:space-y-8">
               {/* Cards de estadísticas principales */}
               <StatsGrid stats={stats} />
 
               {/* Gráfica de ventas y estado de pedidos */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
                 <SalesChart ventasPorMes={stats.ventasPorMes} />
                 <OrdersStatus pedidosPorEstado={stats.pedidosPorEstado} />
               </div>
 
               {/* Top productos y pedidos recientes */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
                 <TopProducts topProductos={stats.topProductos} />
                 <RecentOrders pedidosRecientes={stats.pedidosRecientes} />
               </div>
 
-              {/* Clientes recientes y productos con bajo stock */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <RecentClients actividadReciente={stats.actividadReciente} />
+              {/* Alerta de bajo stock - Ancho completo para el Administrador */}
+              <div className="w-full">
                 <LowStockAlert productosBajoStock={stats.productosBajoStock} />
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>

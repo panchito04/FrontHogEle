@@ -32,43 +32,96 @@ export default function PedidoDetailModal({ isOpen, onClose, pedido, clientes, p
         </div>
 
         <div className="p-3 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6">
-          {/* Info Cliente */}
-          <div className="bg-gray-50 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 sm:border-2">
-            <h4 className="font-bold text-gray-900 mb-2 sm:mb-3 lg:mb-4 flex items-center text-sm sm:text-base lg:text-lg">
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 mr-1.5 sm:mr-2 text-cyan1-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <span className="truncate">Información del Cliente</span>
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 lg:gap-4">
-              <div>
-                <p className="text-[10px] sm:text-xs lg:text-sm text-gray-600 mb-0.5">Nombre</p>
-                <p className="font-bold text-gray-900 text-xs sm:text-sm lg:text-base truncate">{cliente?.nombre || 'Desconocido'}</p>
-              </div>
-              {cliente?.email && (
+          {/* Info Cliente o Registro */}
+          {pedido.id_cliente && cliente ? (
+            <div className="bg-gray-50 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 sm:border-2">
+              <h4 className="font-bold text-gray-900 mb-2 sm:mb-3 lg:mb-4 flex items-center text-sm sm:text-base lg:text-lg">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 mr-1.5 sm:mr-2 text-cyan1-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span className="truncate">Información del Cliente</span>
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 lg:gap-4">
                 <div>
-                  <p className="text-[10px] sm:text-xs lg:text-sm text-gray-600 mb-0.5">Email</p>
-                  <p className="font-medium text-gray-900 text-xs sm:text-sm lg:text-base truncate">{cliente.email}</p>
+                  <p className="text-[10px] sm:text-xs lg:text-sm text-gray-600 mb-0.5">Nombre</p>
+                  <p className="font-bold text-gray-900 text-xs sm:text-sm lg:text-base truncate">{cliente.nombre}</p>
                 </div>
-              )}
-              {cliente?.telefono && (
+                {cliente.email && (
+                  <div>
+                    <p className="text-[10px] sm:text-xs lg:text-sm text-gray-600 mb-0.5">Email</p>
+                    <p className="font-medium text-gray-900 text-xs sm:text-sm lg:text-base truncate">{cliente.email}</p>
+                  </div>
+                )}
+                {cliente.telefono && (
+                  <div>
+                    <p className="text-[10px] sm:text-xs lg:text-sm text-gray-600 mb-0.5">Teléfono</p>
+                    <p className="font-medium text-gray-900 text-xs sm:text-sm lg:text-base">{cliente.telefono}</p>
+                  </div>
+                )}
                 <div>
-                  <p className="text-[10px] sm:text-xs lg:text-sm text-gray-600 mb-0.5">Teléfono</p>
-                  <p className="font-medium text-gray-900 text-xs sm:text-sm lg:text-base">{cliente.telefono}</p>
+                  <p className="text-[10px] sm:text-xs lg:text-sm text-gray-600 mb-0.5">Fecha del Pedido</p>
+                  <p className="font-medium text-gray-900 text-xs sm:text-sm lg:text-base">
+                    {new Date(pedido.fecha).toLocaleDateString('es-ES', {
+                      day: '2-digit',
+                      month: 'long',
+                      year: 'numeric'
+                    })}
+                  </p>
                 </div>
-              )}
-              <div>
-                <p className="text-[10px] sm:text-xs lg:text-sm text-gray-600 mb-0.5">Fecha del Pedido</p>
-                <p className="font-medium text-gray-900 text-xs sm:text-sm lg:text-base">
-                  {new Date(pedido.fecha).toLocaleDateString('es-ES', {
-                    day: '2-digit',
-                    month: 'long',
-                    year: 'numeric'
-                  })}
-                </p>
+                {pedido.usuario && (
+                  <div>
+                    <p className="text-[10px] sm:text-xs lg:text-sm text-gray-600 mb-0.5">Registrado por</p>
+                    <p className="font-bold text-cyan1-600 text-xs sm:text-sm lg:text-base truncate">
+                      {pedido.usuario.nombre}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-gray-50 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 border border-gray-200 sm:border-2">
+              <h4 className="font-bold text-gray-900 mb-2 sm:mb-3 lg:mb-4 flex items-center text-sm sm:text-base lg:text-lg">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 mr-1.5 sm:mr-2 text-cyan1-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="truncate">Información de Operación</span>
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 lg:gap-4">
+                <div>
+                  <p className="text-[10px] sm:text-xs lg:text-sm text-gray-600 mb-0.5">Tipo</p>
+                  <p className="font-bold text-gray-900 text-xs sm:text-sm lg:text-base">
+                    {pedido.estado === 'pendiente' ? 'Reserva' : 'Venta Directa'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] sm:text-xs lg:text-sm text-gray-600 mb-0.5">Fecha y Hora</p>
+                  <p className="font-medium text-gray-900 text-xs sm:text-sm lg:text-base">
+                    {new Date(pedido.fecha).toLocaleDateString('es-ES', {
+                      day: '2-digit',
+                      month: 'long',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+                {pedido.usuario && (
+                  <div>
+                    <p className="text-[10px] sm:text-xs lg:text-sm text-gray-600 mb-0.5">Operador</p>
+                    <p className="font-bold text-cyan1-600 text-xs sm:text-sm lg:text-base truncate">
+                      {pedido.usuario.nombre}
+                    </p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-[10px] sm:text-xs lg:text-sm text-gray-600 mb-0.5">Estado</p>
+                  <span className="inline-block font-semibold text-gray-900 text-xs sm:text-sm lg:text-base capitalize">
+                    {pedido.estado}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Productos */}
           <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 border border-indigo-200 sm:border-2">

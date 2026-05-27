@@ -1,145 +1,138 @@
 // src/components/cajas/BoxDetailModal.jsx
 import React from 'react'
+import Modal from '../common/Modal'
+import { formatCurrency } from '../../utils/formatters'
 
 const BoxDetailModal = ({ isOpen, onClose, selectedBox }) => {
   if (!isOpen || !selectedBox) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full my-8">
-        <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h3 className="text-3xl font-bold mb-2">{selectedBox.codigo}</h3>
-              <p className="text-cyan-100">{selectedBox.descripcion || 'Sin descripción'}</p>
-              
-              <div className="grid grid-cols-3 gap-4 mt-4">
-                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
-                  <p className="text-cyan-200 text-xs">Total Productos</p>
-                  <p className="text-2xl font-bold">{selectedBox.total_productos}</p>
-                </div>
-                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
-                  <p className="text-cyan-200 text-xs">Disponibles</p>
-                  <p className="text-2xl font-bold text-green-300">{selectedBox.productos_disponibles}</p>
-                </div>
-                <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
-                  <p className="text-cyan-200 text-xs">Vendidos</p>
-                  <p className="text-2xl font-bold text-red-300">{selectedBox.productos_vendidos}</p>
-                </div>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="bg-white bg-opacity-20 hover:bg-opacity-30 p-2 rounded-lg transition-all"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Caja ${selectedBox.codigo}`}
+      subtitle={selectedBox.descripcion || 'Lote de importación registrado'}
+      maxWidth="max-w-4xl"
+      theme="default"
+    >
+      <div className="p-5 sm:p-6 space-y-6">
+        
+        {/* Statistics Grid */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-[#FAF8F5] border border-stone-200/60 rounded-2xl p-3.5 text-center">
+            <p className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider font-sans-premium mb-1">Total</p>
+            <p className="text-xl sm:text-2xl font-bold text-stone-900 font-sans-premium">{selectedBox.total_productos}</p>
+          </div>
+          <div className="bg-[#FAF8F5] border border-stone-200/60 rounded-2xl p-3.5 text-center">
+            <p className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider font-sans-premium mb-1">Disponibles</p>
+            <p className="text-xl sm:text-2xl font-bold text-emerald-600 font-sans-premium">{selectedBox.productos_disponibles}</p>
+          </div>
+          <div className="bg-[#FAF8F5] border border-stone-200/60 rounded-2xl p-3.5 text-center">
+            <p className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider font-sans-premium mb-1">Vendidos</p>
+            <p className="text-xl sm:text-2xl font-bold text-[#d97c75] font-sans-premium">{selectedBox.productos_vendidos}</p>
           </div>
         </div>
-        
-        <div className="p-6">
-          <div className="bg-gray-50 rounded-xl p-4 mb-6 grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="text-gray-600 font-semibold mb-1">📅 Fecha de Llegada</p>
-              <p className="text-gray-800">{new Date(selectedBox.fecha_llegada).toLocaleDateString()}</p>
-            </div>
-            {selectedBox.proveedor && (
-              <div>
-                <p className="text-gray-600 font-semibold mb-1">👤 Proveedor</p>
-                <p className="text-gray-800">{selectedBox.proveedor}</p>
-              </div>
-            )}
-            {selectedBox.costo_total && (
-              <div>
-                <p className="text-gray-600 font-semibold mb-1">💰 Inversión Total</p>
-                <p className="text-gray-800">Bs. {parseFloat(selectedBox.costo_total).toFixed(2)}</p>
-              </div>
-            )}
-            <div>
-              <p className="text-gray-600 font-semibold mb-1">📊 Estado</p>
-              <p className="text-gray-800">
-                {selectedBox.estado === 'completada' ? '✓ Completada' :
-                 selectedBox.estado === 'archivada' ? '📁 Archivada' :
-                 '⏳ En Proceso'}
-              </p>
-            </div>
-          </div>
 
-          {selectedBox.observaciones && (
-            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-4 mb-6">
-              <p className="text-sm font-bold text-gray-700 mb-2">📝 Observaciones</p>
-              <p className="text-sm text-gray-600">{selectedBox.observaciones}</p>
+        {/* Info panel */}
+        <div className="bg-[#FAF8F5]/80 border border-stone-200/50 rounded-2xl p-4.5 grid grid-cols-2 gap-4 text-xs sm:text-sm font-sans-premium">
+          <div>
+            <p className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider mb-0.5">Fecha de Llegada</p>
+            <p className="font-semibold text-stone-950">{new Date(selectedBox.fecha_llegada).toLocaleDateString('es-ES')}</p>
+          </div>
+          {selectedBox.proveedor && (
+            <div>
+              <p className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider mb-0.5">Proveedor</p>
+              <p className="font-semibold text-stone-950 truncate">{selectedBox.proveedor}</p>
             </div>
           )}
+          {selectedBox.costo_total && (
+            <div>
+              <p className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider mb-0.5">Inversión Total</p>
+              <p className="font-semibold text-stone-955">{formatCurrency(parseFloat(selectedBox.costo_total))}</p>
+            </div>
+          )}
+          <div>
+            <p className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider mb-0.5">Estado del Lote</p>
+            <p className="font-semibold text-stone-950 capitalize">
+              {selectedBox.estado === 'completada' ? 'Completada' :
+               selectedBox.estado === 'archivada' ? 'Archivada' :
+               'En Proceso'}
+            </p>
+          </div>
+        </div>
 
-          <h4 className="text-xl font-bold text-gray-800 mb-4">
-            📦 Productos en esta Caja ({selectedBox.productos?.length || 0})
+        {/* Observations */}
+        {selectedBox.observaciones && (
+          <div className="bg-[#423a23]/5 border border-[#cca64c]/20 rounded-2xl p-4.5">
+            <p className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider mb-1.5 font-sans-premium">Observaciones de Aduana / Notas</p>
+            <p className="text-xs sm:text-sm text-stone-700 font-sans-premium font-light leading-relaxed">{selectedBox.observaciones}</p>
+          </div>
+        )}
+
+        {/* Products list */}
+        <div>
+          <h4 className="font-serif-editorial text-lg text-stone-900 mb-4 tracking-wide border-b border-stone-200/50 pb-2">
+            Productos en esta Caja ({selectedBox.productos?.length || 0})
           </h4>
 
           {selectedBox.productos && selectedBox.productos.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 max-h-80 overflow-y-auto pr-1">
               {selectedBox.productos.map((producto) => (
                 <div 
                   key={producto.id_producto}
-                  className={`bg-white border-2 rounded-xl p-3 hover:shadow-lg transition-all ${
-                    producto.vendido ? 'border-red-200' : 'border-green-200'
-                  }`}
+                  className="bg-white border border-stone-200/60 rounded-xl p-3 shadow-inner flex flex-col justify-between"
                 >
-                  {producto.imagen_url && (
-                    <img 
-                      src={producto.imagen_url} 
-                      alt={producto.nombre}
-                      className="w-full h-32 object-cover rounded-lg mb-2"
-                    />
-                  )}
-                  <h5 className="font-bold text-gray-800 text-sm mb-1 line-clamp-2">
-                    {producto.nombre}
-                  </h5>
-                  <div className="flex items-center justify-between">
-                    <span className="text-green-600 font-bold text-lg">
-                      Bs. {parseFloat(producto.precio).toFixed(2)}
+                  <div>
+                    {producto.imagen_url && (
+                      <img 
+                        src={producto.imagen_url} 
+                        alt={producto.nombre}
+                        className="w-full h-24 object-cover rounded-lg mb-2.5 border border-stone-100"
+                      />
+                    )}
+                    <h5 className="font-semibold text-stone-900 text-xs mb-1 line-clamp-2 font-sans-premium">
+                      {producto.nombre}
+                    </h5>
+                  </div>
+                  
+                  <div className="pt-2 border-t border-stone-100/60 flex items-center justify-between mt-2">
+                    <span className="text-sm font-bold text-stone-900 font-sans-premium">
+                      {formatCurrency(producto.precio)}
                     </span>
                     {producto.vendido ? (
-                      <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full font-bold">
-                        VENDIDO
+                      <span className="text-[9px] bg-[#402422] text-[#d97c75] border border-[#d97c75]/15 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">
+                        Vendido
                       </span>
                     ) : (
-                      <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full font-bold">
-                        DISPONIBLE
+                      <span className="text-[9px] bg-[#234c48] text-[#35c3a8] border border-[#35c3a8]/15 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider animate-pulse">
+                        Disponible
                       </span>
                     )}
                   </div>
-                  {producto.categoria && (
-                    <p className="text-xs text-gray-500 mt-2">
-                      🏷️ {producto.categoria.nombre}
-                    </p>
-                  )}
-                  <p className="text-xs text-gray-500 mt-1">
-                    Stock: {producto.cantidad_disponible || 0}/{producto.cantidad || 0}
-                  </p>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 bg-gray-50 rounded-xl">
-              <svg className="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            <div className="text-center py-10 bg-[#FAF8F5] border border-dashed border-stone-200/80 rounded-2xl">
+              <svg className="w-12 h-12 text-stone-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414" />
               </svg>
-              <p className="text-gray-500 font-semibold">Esta caja aún no tiene productos</p>
+              <p className="text-stone-900 font-medium text-sm font-sans-premium">Esta caja no tiene productos asignados</p>
             </div>
           )}
+        </div>
 
+        {/* Footer Actions */}
+        <div className="mt-6 pt-4 border-t border-stone-200/50 flex justify-end">
           <button
             onClick={onClose}
-            className="w-full mt-6 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-300 transition-all"
+            className="w-full sm:w-auto px-5 py-2.5 bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 rounded-xl font-medium transition-all text-sm transform active:scale-95 flex items-center justify-center gap-1.5"
           >
-            Cerrar
+            <span>Cerrar</span>
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }
 

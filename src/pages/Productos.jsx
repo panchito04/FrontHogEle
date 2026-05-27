@@ -1,6 +1,7 @@
 // src/pages/Productos.jsx - VERSIÓN COMPLETA CON MODAL DE DETALLES
 import { useState, useEffect, useMemo } from 'react'
 import Sidebar from '../components/Sidebar'
+import PageHeader from '../components/common/PageHeader'
 import CameraCapture from '../components/CameraCapture'
 import Toast from '../components/common/Toast'
 
@@ -179,6 +180,7 @@ function Productos({ user }) {
 
     if (formData.id_categoria) form.append('id_categoria', parseInt(formData.id_categoria))
     if (formData.id_caja) form.append('id_caja', parseInt(formData.id_caja))
+    if (user?.id_usuario) form.append('id_usuario', parseInt(user.id_usuario))
 
     if (formData.imagen_file) {
       form.append('imagen', formData.imagen_file)
@@ -326,53 +328,70 @@ function Productos({ user }) {
     }
   }
 
+  const headerActions = [
+    {
+      label: 'Nueva Caja',
+      variant: 'secondary',
+      onClick: openCreateBoxModal,
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+      )
+    },
+    {
+      label: 'Nueva Categoría',
+      variant: 'secondary',
+      onClick: () => setShowCategoryModal(true),
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+        </svg>
+      )
+    },
+    {
+      label: 'Nuevo Producto',
+      variant: 'primary',
+      onClick: openCreateProductModal,
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+      )
+    }
+  ]
+
   return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="flex flex-col lg:flex-row h-screen bg-cream-luxury">
       <Sidebar user={user} />
 
-      <div className="flex-1 overflow-auto pt-16 lg:pt-0">
-        <div className="bg-white shadow-md border-b border-gray-200 sticky top-0 z-20">
-          <div className="px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan1-600 via-ocean1-600 to-pink-600 bg-clip-text text-transparent">
-                  Acciones Registro
-                </h1>
-              </div>
+      {/* Scrollable Container - pt-16 for mobile top bar, pb-20 for bottom navigation bar */}
+      <div className="flex-1 overflow-auto pt-16 pb-20 lg:pt-0 lg:pb-8">
+        <PageHeader 
+          title="Catálogo de Productos" 
+          description="Gestión de inventario y lotes de importación"
+          actions={headerActions}
+        />
 
-              <div className="flex flex-wrap gap-2">
-                <button onClick={openCreateBoxModal} className="bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-3 py-2 rounded-xl font-semibold hover:from-cyan-700 hover:to-blue-700 transition-all duration-200 flex items-center justify-center space-x-1.5 text-xs sm:text-sm shadow-lg hover:shadow-xl">
-                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
-                  <span className="hidden sm:inline">Nueva Caja</span>
-                  <span className="sm:hidden">Caja</span>
-                </button>
-                <button onClick={() => setShowCategoryModal(true)} className="bg-gradient-to-r from-ocean1-600 to-pink-600 text-white px-3 py-2 rounded-xl font-semibold hover:from-ocean1-700 hover:to-pink-700 transition-all duration-200 flex items-center justify-center space-x-1.5 text-xs sm:text-sm shadow-lg hover:shadow-xl">
-                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                  </svg>
-                  <span className="hidden sm:inline">Nueva Categoría</span>
-                  <span className="sm:hidden">Categoría</span>
-                </button>
-                <button onClick={openCreateProductModal} className="bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white px-3 py-2 rounded-xl font-semibold hover:from-cyan1-700 hover:to-ocean1-700 transition-all duration-200 flex items-center justify-center space-x-1.5 shadow-lg hover:shadow-xl text-xs sm:text-sm">
-                  <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  <span className="hidden sm:inline">Nuevo Producto</span>
-                  <span className="sm:hidden">Producto</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="flex gap-2 mt-4 border-b">
-              <button onClick={() => setActiveTab('productos')} className={`px-4 py-2 font-semibold transition-all ${activeTab === 'productos' ? 'border-b-2 border-cyan1-600 text-cyan1-600' : 'text-gray-500 hover:text-gray-700'}`}>
-                📦 Productos
-              </button>
-              <button onClick={() => setActiveTab('cajas')} className={`px-4 py-2 font-semibold transition-all ${activeTab === 'cajas' ? 'border-b-2 border-cyan1-600 text-cyan1-600' : 'text-gray-500 hover:text-gray-700'}`}>
-                📦 Cajas ({cajas.length})
-              </button>
-            </div>
+        {/* Tab Selector Section */}
+        <div className="px-4 sm:px-6 lg:px-8 pt-4">
+          <div className="flex bg-stone-100 p-1 rounded-xl max-w-[260px] border border-stone-200">
+            <button 
+              onClick={() => setActiveTab('productos')} 
+              className={`flex-1 py-1.5 px-3 text-xs font-semibold rounded-lg transition-all duration-300 font-sans-premium flex items-center justify-center gap-1.5 ${
+                activeTab === 'productos' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
+              }`}
+            >
+              Productos
+            </button>
+            <button 
+              onClick={() => setActiveTab('cajas')} 
+              className={`flex-1 py-1.5 px-3 text-xs font-semibold rounded-lg transition-all duration-300 font-sans-premium flex items-center justify-center gap-1.5 ${
+                activeTab === 'cajas' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
+              }`}
+            >
+              Cajas ({cajas.length})
+            </button>
           </div>
         </div>
 
@@ -459,7 +478,7 @@ function Productos({ user }) {
                         {/* Botón manual como respaldo */}
                         <button
                           onClick={() => {
-                            console.log('📘 Botón manual presionado')
+                            console.log('Botón manual presionado')
                             loadMore()
                           }}
                           disabled={isLoadingMore}

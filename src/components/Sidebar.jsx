@@ -1,30 +1,19 @@
 // src/components/Sidebar.jsx
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
 import { authService } from '../services/authService'
 import logo from '../assets/logoHogar.jpg'
 
 function Sidebar({ user }) {
   const location = useLocation()
   const navigate = useNavigate()
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const menuItems = [
     {
       name: 'Inicio',
       path: '/home',
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-      )
-    },
-    {
-      name: 'Clientes',
-      path: '/clientes',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
         </svg>
       )
     },
@@ -32,8 +21,8 @@ function Sidebar({ user }) {
       name: 'Productos',
       path: '/productos',
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
         </svg>
       )
     },
@@ -41,8 +30,8 @@ function Sidebar({ user }) {
       name: 'Ventas',
       path: '/pedidos',
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
         </svg>
       )
     },
@@ -50,8 +39,8 @@ function Sidebar({ user }) {
       name: 'Pagos',
       path: '/pagos',
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
       )
     }
@@ -66,138 +55,67 @@ function Sidebar({ user }) {
 
   return (
     <>
-      {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white z-50 shadow-lg">
-        <div className="flex items-center justify-between p-4">
-          {/* Botón de menú a la IZQUIERDA */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-          >
-            {isMobileMenuOpen ? (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
-          </button>
-
-          {/* Logo en el CENTRO */}
-          <div className="flex items-center space-x-2 absolute left-1/2 transform -translate-x-1/2">
-            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
-              <img
-                src={logo}
-                alt="Logo"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <h2 className="text-base font-bold">Hogar Elegante</h2>
+      {/* MOBILE VIEW (Top Bar & Docked Bottom Navigation) */}
+      <div className="lg:hidden">
+        {/* Top Header */}
+        <div className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md border-b border-stone-200/60 z-30 px-5 h-16 flex items-center justify-between shadow-sm">
+          <div className="flex items-center space-x-3">
+            <img 
+              src={logo} 
+              alt="Logo" 
+              className="w-9 h-9 rounded-full object-cover border border-cyan1-600/20 shadow-sm flex-shrink-0" 
+            />
+            <span className="font-serif-editorial text-lg text-stone-900 tracking-wide">
+              Hogar Elegante
+            </span>
           </div>
-
-          {/* Espacio vacío a la derecha para balance */}
-          <div className="w-10"></div>
-        </div>
-      </div>
-
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={() => setIsMobileMenuOpen(false)}
-        ></div>
-      )}
-
-      {/* Mobile Sidebar */}
-      <div
-        className={`lg:hidden fixed top-0 left-0 h-screen w-72 bg-gradient-to-b from-cyan1-600 to-ocean1-700 text-white z-50 transform transition-transform duration-300 ease-in-out shadow-2xl ${
-          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        <div className="flex flex-col h-full">
-          {/* Header del Sidebar con botón de cerrar */}
-          <div className="p-4 border-b border-cyan1-500 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
-                <img
-                  src={logo}
-                  alt="Logo"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold">Hogar Elegante</h2>
-                <p className="text-indigo-200 text-xs">Sistema de Gestión</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Info del usuario */}
+          
           {user && (
-            <div className="p-4 border-b border-cyan1-500">
-              <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
-                <p className="text-xs text-indigo-100">Bienvenido/a</p>
-                <p className="font-semibold text-sm">{user.nombre}</p>
-                <p className="text-xs text-indigo-200 mt-1">
-                  Rol: <span className="font-semibold capitalize">{user.rol}</span>
-                </p>
-              </div>
+            <div className="flex items-center space-x-3">
+              <span className="text-xs font-sans-premium text-stone-500 font-light truncate max-w-[120px] capitalize">
+                {user.nombre}
+              </span>
+              <button 
+                onClick={handleLogout} 
+                className="text-stone-400 hover:text-red-600 p-1.5 bg-stone-50 rounded-lg border border-stone-200 transition-colors"
+                title="Cerrar sesión"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
             </div>
           )}
+        </div>
 
-          {/* Menú de navegación */}
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-            {menuItems.map((item) => {
-              const isActive = location.pathname === item.path
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                    isActive
-                      ? 'bg-white text-cyan1-600 shadow-lg transform scale-105'
-                      : 'hover:bg-white/10 hover:translate-x-1'
-                  }`}
-                >
+        {/* Docked Bottom Navigation Bar (Instagram/Facebook Style) */}
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-stone-200/80 shadow-[0_-3px_12px_rgba(0,0,0,0.03)] h-16 flex justify-around items-center pb-safe px-2">
+          {menuItems.map((item) => {
+            const isActive = location.pathname === item.path
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className="flex flex-col items-center justify-center w-16 py-1 relative active:scale-90 transition-transform duration-200"
+              >
+                <div className={`${isActive ? 'text-cyan1-600' : 'text-stone-400'} transition-all duration-300`}>
                   {item.icon}
-                  <span className="font-medium">{item.name}</span>
-                </Link>
-              )
-            })}
-          </nav>
-
-          {/* Botón de cerrar sesión */}
-          <div className="p-4 border-t border-cyan1-500">
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-red-500/20 transition-colors duration-200 text-red-100 hover:text-white"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              <span className="font-medium">Cerrar Sesión</span>
-            </button>
-          </div>
+                </div>
+                <span className={`text-[10px] mt-0.5 tracking-wide font-sans-premium transition-all duration-300 ${isActive ? 'text-cyan1-600 font-semibold' : 'text-stone-400 font-light'}`}>
+                  {item.name}
+                </span>
+              </Link>
+            )
+          })}
         </div>
       </div>
 
-      {/* Desktop Sidebar */}
-      <div className="hidden lg:flex h-screen w-64 bg-gradient-to-b from-cyan1-600 to-ocean1-700 text-white flex-col shadow-2xl">
-        {/* Logo y usuario */}
-        <div className="p-6 border-b border-cyan1-500">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md">
+      {/* DESKTOP VIEW (Luxury Side Navigation) */}
+      <div className="hidden lg:flex h-screen w-64 bg-cyan1-600 text-white flex-col shadow-xl border-r border-white/5 relative">
+        {/* Brand identity header */}
+        <div className="p-6 border-b border-white/10">
+          <div className="flex items-center space-x-3.5 mb-5">
+            <div className="w-12 h-12 rounded-full overflow-hidden border border-white/20 shadow-md flex-shrink-0">
               <img
                 src={logo}
                 alt="Logo"
@@ -205,53 +123,55 @@ function Sidebar({ user }) {
               />
             </div>
             <div>
-              <h2 className="text-xl font-bold">Hogar Elegante</h2>
-              <p className="text-indigo-200 text-sm">Sistema de Gestión</p>
+              <h2 className="font-serif-editorial text-lg tracking-wide leading-tight">Hogar Elegante</h2>
+              <p className="text-stone-300 text-xs font-light tracking-widest uppercase">Admin</p>
             </div>
           </div>
           
           {user && (
-            <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
-              <p className="text-sm text-indigo-100">Bienvenido/a</p>
-              <p className="font-semibold">{user.nombre}</p>
-              <p className="text-xs text-indigo-200 mt-1">
-                Rol: <span className="font-semibold capitalize">{user.rol}</span>
+            <div className="bg-white/5 rounded-xl p-3 border border-white/5">
+              <p className="text-[11px] text-stone-300 font-light uppercase tracking-wider">Operador</p>
+              <p className="font-medium text-sm mt-0.5 truncate">{user.nombre}</p>
+              <p className="text-[10px] text-ocean1-600 mt-1 font-light tracking-wide uppercase">
+                {user.rol}
               </p>
             </div>
           )}
         </div>
 
-        {/* Menú de navegación */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        {/* Navigation Menu */}
+        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                className={`flex items-center space-x-3.5 px-4 py-3 rounded-xl transition-all duration-300 text-sm font-sans-premium ${
                   isActive
-                    ? 'bg-white text-cyan1-600 shadow-lg transform scale-105'
-                    : 'hover:bg-white/10 hover:translate-x-1'
+                    ? 'bg-white text-cyan1-600 shadow-md font-semibold translate-x-1'
+                    : 'text-stone-200 hover:bg-white/5 hover:translate-x-1'
                 }`}
               >
-                {item.icon}
-                <span className="font-medium">{item.name}</span>
+                <span className={`${isActive ? 'text-cyan1-600' : 'text-stone-300'}`}>
+                  {item.icon}
+                </span>
+                <span className="tracking-wide">{item.name}</span>
               </Link>
             )
           })}
         </nav>
 
-        {/* Botón de cerrar sesión */}
-        <div className="p-4 border-t border-cyan1-500">
+        {/* Footer Logout Option */}
+        <div className="p-4 border-t border-white/10">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-red-500/20 transition-colors duration-200 text-red-100 hover:text-white"
+            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-red-500/10 transition-colors duration-300 text-red-200 hover:text-white text-sm font-medium"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            <svg className="w-5.5 h-5.5 text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-            <span className="font-medium">Cerrar Sesión</span>
+            <span>Cerrar Sesión</span>
           </button>
         </div>
       </div>

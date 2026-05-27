@@ -35,21 +35,22 @@ export default {
       keyframes: {
         slideUp: {
           '0%': { 
-            transform: 'translate(-50%, 100%)',
+            transform: 'translateY(16px)',
             opacity: '0'
           },
           '100%': { 
-            transform: 'translate(-50%, 0)',
+            transform: 'translateY(0)',
             opacity: '1'
           },
         },
         fadeOut: {
           '0%': { 
-            opacity: '1'
+            opacity: '1',
+            transform: 'translateY(0)'
           },
           '100%': { 
             opacity: '0',
-            transform: 'translate(-50%, 20px)'
+            transform: 'translateY(16px)'
           },
         },
       },

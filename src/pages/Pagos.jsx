@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
+import PageHeader from '../components/common/PageHeader'
+import Modal from '../components/common/Modal'
+import FormField from '../components/common/FormField'
 
 function Pagos({ user }) {
+  const location = useLocation()
   const [pagos, setPagos] = useState([])
   const [pedidos, setPedidos] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -14,7 +19,7 @@ function Pagos({ user }) {
     comprobante_url: ''
   })
 
-   useEffect(() => {
+  useEffect(() => {
     if (location.state?.openModal) {
       setShowModal(true)
       window.history.replaceState({}, document.title)
@@ -29,15 +34,22 @@ function Pagos({ user }) {
     try {
       setIsLoading(true)
       const [pagosRes, pedidosRes] = await Promise.all([
-  fetch(`${import.meta.env.VITE_API_URL}/api/pagos`),
-  fetch(`${import.meta.env.VITE_API_URL}/api/pedidos`)
-])
+        fetch(`${import.meta.env.VITE_API_URL}/api/pagos`),
+        fetch(`${import.meta.env.VITE_API_URL}/api/pedidos`)
+      ])
       
       const pagosData = await pagosRes.json()
       const pedidosData = await pedidosRes.json()
       
-      setPagos(pagosData)
-      setPedidos(pedidosData)
+      const pgData = Array.isArray(pagosData) 
+        ? pagosData 
+        : (pagosData && Array.isArray(pagosData.data) ? pagosData.data : [])
+      const pData = Array.isArray(pedidosData) 
+        ? pedidosData 
+        : (pedidosData && Array.isArray(pedidosData.data) ? pedidosData.data : [])
+      
+      setPagos(pgData)
+      setPedidos(pData)
     } catch (error) {
       console.error('Error al obtener datos:', error)
       alert('Error al cargar los datos')
@@ -50,14 +62,14 @@ function Pagos({ user }) {
     e.preventDefault()
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/pagos`, {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    ...newPago,
-    id_pedido: parseInt(newPago.id_pedido),
-    monto: parseFloat(newPago.monto)
-  })
-})
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...newPago,
+          id_pedido: parseInt(newPago.id_pedido),
+          monto: parseFloat(newPago.monto)
+        })
+      })
       
       if (response.ok) {
         alert('Pago registrado exitosamente')
@@ -74,170 +86,209 @@ function Pagos({ user }) {
   }
 
   const getPedidoInfo = (id_pedido) => {
+    if (!Array.isArray(pedidos)) return 'Desconocido'
     const pedido = pedidos.find(p => p.id_pedido === id_pedido)
     return pedido ? `Pedido #${pedido.id_pedido}` : 'Desconocido'
   }
 
   const getMetodoBadge = (metodo) => {
     const metodos = {
-      'Efectivo': 'bg-green-100 text-green-800',
-      'Tarjeta': 'bg-blue-100 text-blue-800',
-      'Transferencia': 'bg-purple-100 text-ocean1-800',
-      'QR': 'bg-indigo-100 text-cyan1-800',
-      'Otro': 'bg-gray-100 text-gray-800'
+      'Efectivo': 'bg-emerald-50 text-emerald-800 border border-emerald-200/50',
+      'Tarjeta': 'bg-blue-50 text-blue-800 border border-blue-200/50',
+      'Transferencia': 'bg-purple-50 text-purple-800 border border-purple-200/50',
+      'QR': 'bg-cyan1-50 text-cyan1-700 border border-cyan1-200/50',
+      'Otro': 'bg-stone-50 text-stone-600 border border-stone-200/50'
     }
-    return metodos[metodo] || 'bg-gray-100 text-gray-800'
+    return metodos[metodo] || 'bg-stone-50 text-stone-600 border border-stone-200/50'
   }
 
   const getMetodoIcon = (metodo) => {
     switch(metodo) {
       case 'Efectivo':
         return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
         )
       case 'Tarjeta':
         return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
           </svg>
         )
       case 'Transferencia':
         return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
           </svg>
         )
       case 'QR':
         return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
           </svg>
         )
       default:
         return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         )
     }
   }
 
-  const filteredPagos = pagos.filter(pago => {
+  const filteredPagos = Array.isArray(pagos) ? pagos.filter(pago => {
     const searchLower = searchTerm.toLowerCase()
     const pedidoInfo = getPedidoInfo(pago.id_pedido).toLowerCase()
     return (
-      pago.id_pago.toString().includes(searchLower) ||
+      pago.id_pago?.toString().includes(searchLower) ||
       pedidoInfo.includes(searchLower) ||
       pago.metodo?.toLowerCase().includes(searchLower) ||
-      pago.monto.toString().includes(searchLower)
+      pago.monto?.toString().includes(searchLower)
     )
-  })
+  }) : []
 
   const totalMonto = filteredPagos.reduce((sum, pago) => sum + parseFloat(pago.monto || 0), 0)
 
+  const headerActions = [
+    {
+      label: 'Registrar Pago',
+      variant: 'primary',
+      onClick: () => setShowModal(true),
+      icon: (
+        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+      )
+    }
+  ]
+
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex flex-col lg:flex-row h-screen bg-cream-luxury font-sans-premium">
       <Sidebar user={user} />
       
-      <div className="flex-1 overflow-auto lg:ml-0 pt-16 lg:pt-0">
-        {/* Header */}
-        <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
-          <div className="px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-cyan1-600 to-ocean1-600 bg-clip-text text-transparent">
-                  Gestión de Pagos
-                </h1>
-                <p className="text-gray-600 mt-1 text-sm sm:text-base">Administra todos los pagos recibidos</p>
-              </div>
-              <button
-                onClick={() => setShowModal(true)}
-                className="bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold hover:from-cyan1-700 hover:to-ocean1-700 transition duration-200 flex items-center justify-center space-x-2 shadow-lg transform hover:scale-105 text-sm sm:text-base"
-              >
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                <span>Registrar Pago</span>
-              </button>
-            </div>
-          </div>
-        </div>
+      <div className="flex-1 overflow-auto pt-16 lg:pt-0 pb-20 lg:pb-8">
+        <PageHeader 
+          title="Gestión de Pagos"
+          description="Administra y rastrea todos los ingresos de caja del negocio"
+          actions={headerActions}
+        />
 
         {/* Contenido principal */}
-        <div className="p-4 sm:p-6 lg:p-8">
-          {/* Barra de búsqueda */}
-          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+        <div className="px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+          
+          {/* Métricas destacadas con diseño premium de boutique */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div className="bg-white/70 backdrop-blur-md rounded-2xl p-5 border border-stone-200/50 shadow-sm flex items-center space-x-4">
+              <div className="w-12 h-12 rounded-xl bg-cyan1-550 flex items-center justify-center text-cyan1-600 shadow-sm">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-xs text-stone-500 font-medium uppercase tracking-wider">Total Transacciones</p>
+                <p className="font-serif-editorial text-2xl font-bold text-stone-900 mt-0.5">{Array.isArray(pagos) ? pagos.length : 0}</p>
+              </div>
+            </div>
+
+            <div className="bg-white/70 backdrop-blur-md rounded-2xl p-5 border border-stone-200/50 shadow-sm flex items-center space-x-4">
+              <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-sm">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-xs text-stone-500 font-medium uppercase tracking-wider">Monto Recaudado</p>
+                <p className="font-serif-editorial text-2xl font-bold text-emerald-600 mt-0.5">Bs. {totalMonto.toFixed(2)}</p>
+              </div>
+            </div>
+
+            <div className="bg-white/70 backdrop-blur-md rounded-2xl p-5 border border-stone-200/50 shadow-sm flex items-center space-x-4">
+              <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 shadow-sm">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l-4-4" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-xs text-stone-500 font-medium uppercase tracking-wider">Filtrados / Buscados</p>
+                <p className="font-serif-editorial text-2xl font-bold text-purple-750 mt-0.5">{filteredPagos.length}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Barra de búsqueda estilizada */}
+          <div className="bg-white/50 backdrop-blur-md rounded-2xl p-4 border border-stone-200/40 shadow-sm">
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
               <input
                 type="text"
-                placeholder="Buscar por ID, pedido, método o monto..."
+                placeholder="Busca transacciones por ID, pedido, método de pago o valor..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition duration-200 text-sm sm:text-base"
+                className="block w-full pl-11 pr-4 py-2.5 bg-white/70 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-cyan1-600/20 focus:border-cyan1-600 transition-all duration-300 text-sm"
               />
             </div>
           </div>
 
-          {/* Vista Desktop - Tabla */}
-          <div className="hidden md:block bg-white rounded-xl shadow-lg overflow-hidden">
+          {/* Vista Desktop - Tabla Premium */}
+          <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-stone-200/60 overflow-hidden">
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
-                <svg className="animate-spin h-12 w-12 text-cyan1-600" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin h-9 w-9 text-cyan1-600" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               </div>
             ) : filteredPagos.length === 0 ? (
-              <div className="text-center py-20">
-                <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                <p className="text-gray-500 text-lg">No se encontraron pagos</p>
+              <div className="text-center py-16 flex flex-col items-center">
+                <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center text-stone-400 mb-3">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <h4 className="font-serif-editorial text-base text-stone-800">No se encontraron pagos</h4>
+                <p className="text-stone-400 text-xs mt-1">Prueba redefiniendo tu búsqueda</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gradient-to-r from-indigo-50 to-purple-50">
+                <table className="min-w-full divide-y divide-stone-100">
+                  <thead className="bg-stone-50">
                     <tr>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">ID</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Pedido</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Monto</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Método</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Fecha</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Comprobante</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Acciones</th>
+                      <th className="px-6 py-4 text-left text-[10px] font-semibold text-stone-500 uppercase tracking-wider">Transacción</th>
+                      <th className="px-6 py-4 text-left text-[10px] font-semibold text-stone-500 uppercase tracking-wider">Origen Pedido</th>
+                      <th className="px-6 py-4 text-left text-[10px] font-semibold text-stone-500 uppercase tracking-wider">Monto Total</th>
+                      <th className="px-6 py-4 text-left text-[10px] font-semibold text-stone-500 uppercase tracking-wider">Método de Pago</th>
+                      <th className="px-6 py-4 text-left text-[10px] font-semibold text-stone-500 uppercase tracking-wider">Fecha</th>
+                      <th className="px-6 py-4 text-left text-[10px] font-semibold text-stone-500 uppercase tracking-wider">Comprobante</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-white divide-y divide-stone-100">
                     {filteredPagos.map((pago) => (
-                      <tr key={pago.id_pago} className="hover:bg-gray-50 transition-colors duration-150">
+                      <tr key={pago.id_pago} className="hover:bg-stone-50/50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-medium text-gray-900">#{pago.id_pago}</span>
+                          <span className="text-xs font-semibold text-stone-400 font-sans-premium">#{pago.id_pago}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm font-medium text-cyan1-600">{getPedidoInfo(pago.id_pedido)}</span>
+                          <span className="text-xs font-medium text-cyan1-600">{getPedidoInfo(pago.id_pedido)}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-lg font-bold text-green-600">Bs. {parseFloat(pago.monto).toFixed(2)}</span>
+                          <span className="text-sm font-bold text-stone-900">Bs. {parseFloat(pago.monto).toFixed(2)}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-3 py-1 inline-flex items-center space-x-1 text-xs leading-5 font-semibold rounded-full ${getMetodoBadge(pago.metodo)}`}>
+                          <span className={`px-2.5 py-1 inline-flex items-center gap-1.5 text-xs font-medium rounded-full ${getMetodoBadge(pago.metodo)}`}>
                             {getMetodoIcon(pago.metodo)}
                             <span>{pago.metodo}</span>
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-sm text-gray-600">
+                          <span className="text-xs text-stone-600">
                             {new Date(pago.fecha).toLocaleDateString('es-ES', {
                               day: '2-digit',
-                              month: '2-digit',
+                              month: 'short',
                               year: 'numeric'
                             })}
                           </span>
@@ -248,29 +299,16 @@ function Pagos({ user }) {
                               href={pago.comprobante_url} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="text-cyan1-600 hover:text-cyan1-900 flex items-center space-x-1"
+                              className="text-cyan1-600 hover:text-cyan1-800 inline-flex items-center gap-1 text-xs font-semibold transition-colors"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                               </svg>
-                              <span className="text-sm">Ver</span>
+                              <span>Ver</span>
                             </a>
                           ) : (
-                            <span className="text-sm text-gray-400">Sin comprobante</span>
+                            <span className="text-xs text-stone-400 italic font-light">Sin enlace</span>
                           )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <button className="text-cyan1-600 hover:text-cyan1-900 mr-3 transition-colors">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                          </button>
-                          <button className="text-red-600 hover:text-red-900 transition-colors">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
                         </td>
                       </tr>
                     ))}
@@ -280,228 +318,157 @@ function Pagos({ user }) {
             )}
           </div>
 
-          {/* Vista Mobile - Cards */}
+          {/* Vista Mobile - Premium Cards */}
           <div className="md:hidden space-y-4">
             {isLoading ? (
               <div className="flex items-center justify-center py-20">
-                <svg className="animate-spin h-12 w-12 text-cyan1-600" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin h-9 w-9 text-cyan1-600" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               </div>
             ) : filteredPagos.length === 0 ? (
-              <div className="text-center py-20 bg-white rounded-xl">
-                <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                <p className="text-gray-500 text-lg">No se encontraron pagos</p>
+              <div className="text-center py-16 bg-white/60 rounded-2xl border border-stone-200/50">
+                <p className="text-stone-500 font-serif-editorial">No se encontraron registros</p>
               </div>
             ) : (
               filteredPagos.map((pago) => (
-                <div key={pago.id_pago} className="bg-white rounded-xl shadow-lg p-4 hover:shadow-xl transition-shadow duration-200">
-                  <div className="flex items-start justify-between mb-3">
+                <div key={pago.id_pago} className="bg-white rounded-2xl shadow-sm border border-stone-200/50 p-4 space-y-3">
+                  <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900">{getPedidoInfo(pago.id_pedido)}</h3>
-                      <p className="text-xs text-gray-500">Pago #{pago.id_pago}</p>
+                      <h4 className="font-serif-editorial text-base text-stone-900 leading-tight">
+                        {getPedidoInfo(pago.id_pedido)}
+                      </h4>
+                      <p className="text-[10px] text-stone-400 uppercase tracking-wider font-semibold font-sans-premium mt-0.5">
+                        Transacción #{pago.id_pago}
+                      </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-green-600">Bs. {parseFloat(pago.monto).toFixed(2)}</p>
-                      <span className={`px-3 py-1 inline-flex items-center space-x-1 text-xs font-semibold rounded-full ${getMetodoBadge(pago.metodo)} mt-1`}>
+                      <p className="text-base font-bold text-stone-950">Bs. {parseFloat(pago.monto).toFixed(2)}</p>
+                      <span className={`px-2 py-0.5 inline-flex items-center gap-1 text-[10px] font-medium rounded-full mt-1.5 ${getMetodoBadge(pago.metodo)}`}>
                         {getMetodoIcon(pago.metodo)}
                         <span>{pago.metodo}</span>
                       </span>
                     </div>
                   </div>
 
-                  <div className="space-y-2 border-t border-gray-100 pt-3">
-                    <div className="flex items-center text-sm">
-                      <svg className="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="border-t border-stone-100 pt-3 flex items-center justify-between text-xs text-stone-500">
+                    <span className="flex items-center">
+                      <svg className="w-3.5 h-3.5 mr-1 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
-                      <span className="text-gray-600">
-                        {new Date(pago.fecha).toLocaleDateString('es-ES', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric'
-                        })}
-                      </span>
-                    </div>
+                      {new Date(pago.fecha).toLocaleDateString('es-ES', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      })}
+                    </span>
                     
                     {pago.comprobante_url && (
                       <a 
                         href={pago.comprobante_url} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="flex items-center text-sm text-cyan1-600 hover:text-cyan1-800"
+                        className="text-cyan1-600 hover:text-cyan1-850 inline-flex items-center gap-1 font-semibold"
                       >
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        <span>Ver comprobante</span>
+                        <span>Comprobante</span>
                       </a>
                     )}
-                  </div>
-
-                  <div className="flex space-x-2 mt-4 pt-3 border-t border-gray-100">
-                    <button className="flex-1 p-2 text-cyan1-600 hover:bg-indigo-50 rounded-lg transition-colors flex items-center justify-center">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                    </button>
-                    <button className="flex-1 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
                   </div>
                 </div>
               ))
             )}
           </div>
-
-          {/* Información adicional */}
-          <div className="mt-4 sm:mt-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 sm:p-6 border-2 border-indigo-100">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="flex items-center space-x-3 sm:space-x-4">
-                <div className="bg-white rounded-lg p-2 sm:p-3 shadow-sm">
-                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-cyan1-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-600 font-medium">Total de Pagos</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-gray-800">{pagos.length}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3 sm:space-x-4">
-                <div className="bg-white rounded-lg p-2 sm:p-3 shadow-sm">
-                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-600 font-medium">Monto Total</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-green-600">Bs. {totalMonto.toFixed(2)}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3 sm:space-x-4">
-                <div className="bg-white rounded-lg p-2 sm:p-3 shadow-sm">
-                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-ocean1-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-xs sm:text-sm text-gray-600 font-medium">Filtrados</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-cyan1-600">{filteredPagos.length}</p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* Modal para registrar pago */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="bg-gradient-to-r from-cyan1-600 to-ocean1-600 p-4 sm:p-6 text-white">
-              <h3 className="text-xl sm:text-2xl font-bold">Registrar Pago</h3>
-              <p className="text-indigo-100 mt-1 text-sm sm:text-base">Completa los datos del pago</p>
-            </div>
+      {/* Modal de Registro de Pago Modular y Estilizado */}
+      <Modal
+        isOpen={showModal}
+        onClose={() => {
+          setShowModal(false)
+          setNewPago({ id_pedido: '', monto: '', metodo: '', comprobante_url: '' })
+        }}
+        title="Registrar Pago de Caja"
+        subtitle="Agrega una nueva transacción vinculada a un pedido existente"
+        maxWidth="max-w-md"
+        theme="payment"
+      >
+        <form onSubmit={handleCreatePago} className="p-5 space-y-4">
+          <FormField 
+            label="Selecciona un Pedido"
+            id="id_pedido"
+            type="select"
+            required
+            value={newPago.id_pedido}
+            placeholder="Elige una orden pendiente o completada..."
+            onChange={(e) => setNewPago({...newPago, id_pedido: e.target.value})}
+            options={Array.isArray(pedidos) ? pedidos.map(pedido => ({
+              value: pedido.id_pedido,
+              label: `Pedido #${pedido.id_pedido} - Estado: ${pedido.estado}`
+            })) : []}
+          />
+
+          <FormField 
+            label="Monto de Transacción (Bs.)"
+            id="monto"
+            type="number"
+            required
+            placeholder="0.00"
+            value={newPago.monto}
+            onChange={(e) => setNewPago({...newPago, monto: e.target.value})}
+          />
+
+          <FormField 
+            label="Método de Pago"
+            id="metodo"
+            type="select"
+            required
+            placeholder="Elige la forma de cobro..."
+            value={newPago.metodo}
+            onChange={(e) => setNewPago({...newPago, metodo: e.target.value})}
+            options={[
+              { value: 'Efectivo', label: 'Efectivo' },
+              { value: 'Tarjeta', label: 'Tarjeta de Crédito/Débito' },
+              { value: 'Transferencia', label: 'Transferencia Bancaria' },
+              { value: 'QR', label: 'Pago QR' },
+              { value: 'Otro', label: 'Otro' }
+            ]}
+          />
+
+          <FormField 
+            label="Enlace del Comprobante (Opcional)"
+            id="comprobante_url"
+            type="url"
+            placeholder="https://ejemplo.com/archivo-digital.pdf"
+            value={newPago.comprobante_url}
+            onChange={(e) => setNewPago({...newPago, comprobante_url: e.target.value})}
+          />
+
+          <div className="flex gap-3 pt-3">
+            <button
+              type="button"
+              onClick={() => {
+                setShowModal(false)
+                setNewPago({ id_pedido: '', monto: '', metodo: '', comprobante_url: '' })
+              }}
+              className="flex-1 py-3 text-stone-600 bg-white border border-stone-200 hover:bg-stone-50 rounded-xl transition-all font-medium text-sm text-center active:scale-[0.98]"
+            >
+              Cancelar
+            </button>
             
-            <form onSubmit={handleCreatePago} className="p-4 sm:p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Pedido *
-                </label>
-                <select
-                  required
-                  value={newPago.id_pedido}
-                  onChange={(e) => setNewPago({...newPago, id_pedido: e.target.value})}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent text-sm sm:text-base"
-                >
-                  <option value="">Selecciona un pedido</option>
-                  {pedidos.map(pedido => (
-                    <option key={pedido.id_pedido} value={pedido.id_pedido}>
-                      Pedido #{pedido.id_pedido} - {pedido.estado}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Monto (Bs.) *
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={newPago.monto}
-                  onChange={(e) => setNewPago({...newPago, monto: e.target.value})}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent text-sm sm:text-base"
-                  placeholder="0.00"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Método de Pago *
-                </label>
-                <select
-                  required
-                  value={newPago.metodo}
-                  onChange={(e) => setNewPago({...newPago, metodo: e.target.value})}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent text-sm sm:text-base"
-                >
-                  <option value="">Selecciona un método</option>
-                  <option value="Efectivo">Efectivo</option>
-                  <option value="Tarjeta">Tarjeta</option>
-                  <option value="Transferencia">Transferencia</option>
-                  <option value="QR">QR</option>
-                  <option value="Otro">Otro</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  URL del Comprobante
-                </label>
-                <input
-                  type="url"
-                  value={newPago.comprobante_url}
-                  onChange={(e) => setNewPago({...newPago, comprobante_url: e.target.value})}
-                  className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent text-sm sm:text-base"
-                  placeholder="https://example.com/comprobante.pdf"
-                />
-                <p className="text-xs text-gray-500 mt-1">Opcional: Link al comprobante digital</p>
-              </div>
-
-              <div className="flex space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowModal(false)
-                    setNewPago({ id_pedido: '', monto: '', metodo: '', comprobante_url: '' })
-                  }}
-                  className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition duration-200 text-sm sm:text-base"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white rounded-lg font-semibold hover:from-cyan1-700 hover:to-ocean1-700 transition duration-200 text-sm sm:text-base"
-                >
-                  Guardar
-                </button>
-              </div>
-            </form>
+            <button
+              type="submit"
+              className="flex-1 py-3 text-white bg-cyan1-600 hover:bg-cyan1-700 rounded-xl transition-all font-semibold text-sm text-center shadow-md active:scale-[0.98]"
+            >
+              Guardar Pago
+            </button>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
     </div>
   )
 }

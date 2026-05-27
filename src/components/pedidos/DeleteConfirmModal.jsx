@@ -21,7 +21,7 @@ export default function DeleteConfirmModal({ isOpen, onClose, onConfirm }) {
             </div>
 
             <div className="min-w-0 flex-1">
-              <h3 className="text-lg sm:text-xl lg:text-2xl font-bold truncate">⚠️ Confirmar Eliminación</h3>
+              <h3 className="text-lg sm:text-xl lg:text-2xl font-bold truncate">Confirmar Eliminación</h3>
               <p className="text-red-100 mt-0.5 sm:mt-1 text-xs sm:text-sm truncate">Esta acción no se puede deshacer</p>
             </div>
           </div>

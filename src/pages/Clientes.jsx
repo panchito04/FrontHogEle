@@ -63,10 +63,10 @@ const handleCreateCliente = async (e) => {
   )
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex flex-col lg:flex-row h-screen bg-gray-100">
       <Sidebar user={user} />
       
-      <div className="flex-1 overflow-auto lg:ml-0 pt-16 lg:pt-0">
+      <div className="flex-1 overflow-auto pt-16 pb-20 lg:pt-0">
         {/* Header */}
         <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
           <div className="px-4 sm:px-6 lg:px-8 py-4 lg:py-6">

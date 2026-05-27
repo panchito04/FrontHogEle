@@ -4,72 +4,78 @@ import { useNavigate } from 'react-router-dom'
 function TopProducts({ topProductos }) {
   const navigate = useNavigate()
 
-  const colors = [
-    'from-yellow-400 to-yellow-500',
-    'from-gray-400 to-gray-500',
-    'from-orange-400 to-orange-500',
-    'from-green-400 to-green-500',
-    'from-blue-400 to-blue-500'
-  ]
-  
-  const textColors = [
-    'text-yellow-600',
-    'text-gray-600',
-    'text-orange-600',
-    'text-green-600',
-    'text-blue-600'
+  const rankThemes = [
+    { bg: 'bg-[#423a23] text-[#cca64c] border-[#cca64c]/20', label: '1' },
+    { bg: 'bg-stone-200 text-stone-700 border-stone-300', label: '2' },
+    { bg: 'bg-[#402422]/10 text-[#d97c75] border-[#d97c75]/20', label: '3' },
+    { bg: 'bg-stone-100 text-stone-600 border-stone-200', label: '4' },
+    { bg: 'bg-stone-100 text-stone-600 border-stone-200', label: '5' }
   ]
 
-  const handleProductClick = (productoId) => {
-    navigate(`/productos/${productoId}`)
+  const handleProductClick = () => {
+    navigate(`/productos`)
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold text-gray-800 flex items-center">
-          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center mr-3">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+    <div className="bg-white/95 rounded-2xl shadow-sm p-5 sm:p-6 border border-stone-200/80 animate-slide-up">
+      <div className="flex items-center justify-between mb-5 border-b border-stone-200/60 pb-4">
+        <h3 className="font-serif-editorial text-base sm:text-lg font-normal text-stone-900 flex items-center">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 bg-cyan1-600/5 rounded-xl border border-cyan1-600/10 flex items-center justify-center mr-3 text-cyan1-600">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
           </div>
-          Productos Más Vendidos
+          Mas Vendidos
         </h3>
-        <span className="text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full font-medium">Top 5</span>
+        
+        <span className="text-[10px] font-semibold text-stone-500 bg-stone-100 border border-stone-200 px-3 py-1 rounded-full uppercase tracking-wider font-sans-premium">
+          Top 5
+        </span>
       </div>
+
       {topProductos && topProductos.length > 0 ? (
-        <div className="space-y-3">
-          {topProductos.map((producto, index) => (
-            <div
-              key={index}
-              onClick={() => handleProductClick(producto.id_producto)}
-              className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl hover:shadow-lg transition-all transform hover:-translate-y-1 border border-green-100 cursor-pointer"
-            >
-              <div className="flex items-center flex-1">
-                <div className={`w-10 h-10 bg-gradient-to-br ${colors[index]} rounded-xl flex items-center justify-center text-white font-bold text-lg mr-4 shadow-md`}>
-                  {index === 0 ? '🏆' : index + 1}
+        <div className="space-y-2.5">
+          {topProductos.map((producto, index) => {
+            const currentRank = rankThemes[index] || rankThemes[4];
+            return (
+              <div
+                key={index}
+                onClick={handleProductClick}
+                className="flex items-center justify-between p-3 sm:p-4 bg-[#FAF8F5] hover:bg-[#FAF8F5]/40 border border-stone-200/50 hover:border-cyan1-600/20 rounded-xl transition-all duration-300 transform active:scale-[0.99] cursor-pointer group"
+              >
+                <div className="flex items-center flex-1 min-w-0 pr-2">
+                  <div className={`w-8 h-8 sm:w-9 sm:h-9 border rounded-xl flex items-center justify-center font-bold text-sm mr-3 shadow-sm transition-colors ${currentRank.bg}`}>
+                    {currentRank.label}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs sm:text-sm font-semibold text-stone-900 block truncate group-hover:text-cyan1-600 transition-colors font-sans-premium">
+                      {producto.nombre}
+                    </span>
+                    <span className="text-[10px] sm:text-[11px] text-stone-500 font-sans-premium font-light">Piezas vendidas</span>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <span className="text-sm font-semibold text-gray-800 block truncate">{producto.nombre}</span>
-                  <span className="text-xs text-gray-600">Producto único vendido</span>
+
+                <div className="text-right ml-3 flex-shrink-0">
+                  <span className="text-sm sm:text-base font-bold text-stone-900 block font-sans-premium leading-none">
+                    {producto.cantidad}
+                  </span>
+                  <span className="text-[9px] text-stone-400 font-sans-premium font-light uppercase tracking-wider">Unidades</span>
                 </div>
               </div>
-              <div className="text-right ml-3">
-                <span className={`text-lg font-bold ${textColors[index]}`}>{producto.cantidad}</span>
-                <span className="block text-xs text-gray-500">ventas</span>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       ) : (
-        <div className="text-center py-12">
-          <div className="bg-gray-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        <div className="text-center py-10 bg-[#FAF8F5]/80 rounded-2xl border border-dashed border-stone-200/80">
+          <div className="bg-stone-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-stone-200">
+            <svg className="w-8 h-8 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
             </svg>
           </div>
-          <p className="text-gray-500 font-medium">No hay productos vendidos</p>
-          <p className="text-gray-400 text-sm mt-1">Las ventas aparecerán aquí</p>
+          
+          <p className="text-stone-900 font-serif-editorial text-lg tracking-wide">Sin Ventas</p>
+          <p className="text-stone-400 text-xs mt-1 font-sans-premium font-light">Los productos con mayor rotacion se listaran aqui</p>
         </div>
       )}
     </div>

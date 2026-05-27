@@ -1,11 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Animación para el toast de navegación hacia atrás */
-@keyframes slide-up {
+body, html, #root {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+
+@layer utilities {
+  .font-serif-editorial {
+    font-family: 'Playfair Display', serif;
+  }
+
+  .font-sans-premium {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+}
+
+/* Fondo decorativo minimalista cálido con textura orgánica */
+.bg-cream-luxury {
+  background-color: #FAF8F5;
+  background-image: radial-gradient(circle at 50% 0%, rgba(53, 195, 168, 0.05) 0%, transparent 70%),
+                    radial-gradient(circle at 0% 100%, rgba(35, 76, 72, 0.04) 0%, transparent 50%);
+}
+
+
+/* Animación específica para los toasts flotantes (centrado X y deslizamiento Y) */
+@keyframes toast-slide-up {
   from {
-    transform: translate(-50%, 100px);
+    transform: translate(-50%, 40px);
     opacity: 0;
   }
   to {
@@ -14,24 +39,22 @@
   }
 }
 
-.animate-slide-up {
-  animation: slide-up 0.3s ease-out forwards;
+.animate-toast-slide-up {
+  animation: toast-slide-up 0.3s ease-out forwards;
 }
 
-/* Opcional: animación de salida */
-@keyframes slide-down {
+/* Animación de salida para los toasts flotantes */
+@keyframes toast-slide-down {
   from {
     transform: translate(-50%, 0);
     opacity: 1;
   }
   to {
-    transform: translate(-50%, 100px);
+    transform: translate(-50%, 40px);
     opacity: 0;
   }
 }
 
-
-
-.animate-slide-down {
-  animation: slide-down 0.3s ease-in forwards;
+.animate-toast-slide-down {
+  animation: toast-slide-down 0.3s ease-in forwards;
 }

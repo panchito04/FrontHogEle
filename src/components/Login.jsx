@@ -1,9 +1,10 @@
-// src/components/Login.jsx (o src/pages/Login.jsx)
+// src/components/Login.jsx
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { authService } from '../services/authService'
 import Toast from './common/Toast'
 import { useToast } from '../hooks/useToast'
+import logoHogar from '../assets/logoHogar.jpg'
 
 function Login({ setIsAuthenticated, setUser }) {
   const [email, setEmail] = useState('')
@@ -38,118 +39,147 @@ function Login({ setIsAuthenticated, setUser }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan1-600 via-ocean1-600 to-pink-500 p-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          <div className="bg-gradient-to-r from-cyan1-600 to-ocean1-600 p-8 text-center">
-            <div className="w-20 h-20 bg-white rounded-full mx-auto mb-4 flex items-center justify-center">
-              <svg className="w-10 h-10 text-cyan1-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
+    <div className="min-h-screen flex flex-col justify-between bg-cream-luxury font-sans-premium p-6 sm:py-12">
+      {/* Elemento decorativo superior - Línea de diseño minimalista */}
+      <div className="hidden sm:block absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-cyan1-600 via-ocean1-600 to-cyan1-700" />
+
+      {/* Contenedor central - Mobile First */}
+      <div className="flex-1 flex items-center justify-center my-auto w-full max-w-[390px] mx-auto">
+        <div className="w-full flex flex-col">
+          
+          {/* Cabecera / Identidad de Marca */}
+          <div className="text-center mb-10 mt-4">
+            {/* Logo oficial (Hogar Elegante) */}
+            <div className="w-16 h-16 mx-auto mb-6 flex items-center justify-center relative">
+              <div className="absolute inset-0 border border-cyan1-600/20 rounded-full animate-pulse" />
+              <img 
+                src={logoHogar} 
+                alt="Hogar Elegante" 
+                className="w-14 h-14 rounded-full object-cover relative z-10 border border-cyan1-600/30"
+              />
             </div>
-            <h2 className="text-3xl font-bold text-white mb-2">Bienvenido</h2>
-            <p className="text-indigo-100">Inicia sesión en tu cuenta</p>
-          </div>
-
-          <div className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Correo electrónico
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                    </svg>
-                  </div>
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="tu@email.com"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                  Contraseña
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  </div>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent transition duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="••••••••"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    id="remember"
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="h-4 w-4 text-cyan1-600 focus:ring-cyan1-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">
-                    Mantener sesión iniciada
-                  </label>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-gradient-to-r from-cyan1-600 to-ocean1-600 text-white py-3 px-4 rounded-lg font-semibold hover:from-cyan1-700 hover:to-ocean1-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan1-500 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
-              >
-                {isLoading ? (
-                  <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Iniciando sesión...
-                  </span>
-                ) : (
-                  'Iniciar sesión'
-                )}
-              </button>
-            </form>
-
-            <p className="mt-8 text-center text-sm text-gray-600">
-              ¿No tienes una cuenta?{' '}
-              <Link
-                to="/register"
-                className="font-medium text-cyan1-600 hover:text-cyan1-500"
-              >
-                Regístrate aquí
-              </Link>
+            
+            <h1 className="font-serif-editorial text-3xl font-normal text-stone-900 tracking-wide mb-2">
+              Hogar Elegante
+            </h1>
+            <p className="text-sm font-light text-stone-500 tracking-wider uppercase">
+              Iniciar Sesión
             </p>
           </div>
-        </div>
 
-        <p className="mt-8 text-center text-sm text-white">
-          © 2024 Hogar Elegante. Todos los derechos reservados.
-        </p>
+          {/* Formulario */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            
+            {/* Campo: Correo */}
+            <div className="space-y-2">
+              <label htmlFor="email" className="block text-xs font-semibold text-stone-600 tracking-wider uppercase">
+                Correo Electrónico
+              </label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400 group-focus-within:text-cyan1-600 transition-colors duration-200">
+                  <svg className="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                  </svg>
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="block w-full pl-10 pr-4 py-3.5 bg-white border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-cyan1-600/20 focus:border-cyan1-600 transition-all duration-300 disabled:bg-stone-50 disabled:text-stone-400 text-[15px]"
+                  placeholder="ejemplo@correo.com"
+                />
+              </div>
+            </div>
+
+            {/* Campo: Contraseña */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label htmlFor="password" className="block text-xs font-semibold text-stone-600 tracking-wider uppercase">
+                  Contraseña
+                </label>
+              </div>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400 group-focus-within:text-cyan1-600 transition-colors duration-200">
+                  <svg className="h-4.5 w-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                  </svg>
+                </div>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="block w-full pl-10 pr-4 py-3.5 bg-white border border-stone-200 rounded-xl text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-cyan1-600/20 focus:border-cyan1-600 transition-all duration-300 disabled:bg-stone-50 disabled:text-stone-400 text-[15px]"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            {/* Mantener sesión */}
+            <div className="flex items-center">
+              <label className="relative flex items-center cursor-pointer select-none">
+                <input
+                  id="remember"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-5 h-5 bg-white border border-stone-300 rounded-md peer-checked:bg-cyan1-600 peer-checked:border-cyan1-600 flex items-center justify-center transition-all duration-200">
+                  <svg className="w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span className="ml-2.5 text-[13px] text-stone-600 font-light">
+                  Recordarme en este dispositivo
+                </span>
+              </label>
+            </div>
+
+            {/* Botón de envío */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-cyan1-600 hover:bg-cyan1-700 text-white py-4 px-6 rounded-xl font-medium tracking-wide shadow-md hover:shadow-lg focus:outline-none transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-[0.98] mt-2 text-[15px]"
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2.5">
+                  <svg className="animate-spin h-5 w-5 text-white/80" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Identificando...</span>
+                </span>
+              ) : (
+                'Acceder'
+              )}
+            </button>
+          </form>
+
+          {/* Registro alternativo */}
+          <div className="mt-8 text-center">
+            <span className="text-[13px] text-stone-500 font-light">¿No tienes cuenta? </span>
+            <Link
+              to="/register"
+              className="text-[13px] text-cyan1-600 hover:text-cyan1-700 font-medium underline underline-offset-4 decoration-cyan1-600/30"
+            >
+              Crea una aquí
+            </Link>
+          </div>
+        </div>
       </div>
 
+      {/* Pie de página sutil */}
+      <div className="mt-8 text-center text-xs font-light text-stone-400 tracking-wider">
+        © 2024 HOGAR ELEGANTE.
+      </div>
+
+      {/* Mensajes Flotantes */}
       {toast && (
         <Toast
           message={toast.message}

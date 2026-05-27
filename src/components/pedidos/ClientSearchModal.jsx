@@ -29,7 +29,7 @@ function ClientSearchModal({ isOpen, onClose, onSelect, clientes }) {
         <div className="bg-gradient-to-r from-cyan1-600 to-ocean1-600 p-6 text-white rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-2xl font-bold">👥 Buscar Cliente</h3>
+              <h3 className="text-2xl font-bold">Buscar Cliente</h3>
               <p className="text-cyan1-100 mt-1">
                 {clientesFiltrados.length} clientes encontrados
               </p>
@@ -131,7 +131,7 @@ function ClientSearchModal({ isOpen, onClose, onSelect, clientes }) {
         {/* Footer */}
         <div className="p-4 border-t bg-gray-50 rounded-b-2xl">
           <p className="text-sm text-gray-600 text-center">
-            💡 Haz clic en un cliente para seleccionarlo
+            Haz clic en un cliente para seleccionarlo
           </p>
         </div>
       </div>

@@ -52,8 +52,8 @@ function ProductSearchModal({ isOpen, onClose, onSelect, productos, productosExc
       ? parseFloat(precioPersonalizado[producto.id_producto])
       : producto.precio
 
-    // ✅ LOG PARA DEBUGGING
-    console.log('🔍 Producto a enviar:', {
+    // LOG PARA DEBUGGING
+    console.log('Producto a enviar:', {
       id_producto: producto.id_producto,
       nombre: producto.nombre,
       precio: precio,
@@ -74,7 +74,7 @@ function ProductSearchModal({ isOpen, onClose, onSelect, productos, productosExc
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 sm:p-6 text-white rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-xl sm:text-2xl font-bold">🔍 Buscar Producto</h3>
+              <h3 className="text-xl sm:text-2xl font-bold">Buscar Producto</h3>
               <p className="text-indigo-100 mt-1 text-sm">
                 {productosFiltrados.length} productos disponibles
               </p>
@@ -186,7 +186,7 @@ function ProductSearchModal({ isOpen, onClose, onSelect, productos, productosExc
                           )}
                           {producto.caja?.codigo && (
                             <span className="bg-blue-100 text-blue-700 text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium">
-                              📦 {producto.caja.codigo}
+                              {producto.caja.codigo}
                             </span>
                           )}
                           <span className="bg-green-100 text-green-700 text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium">
@@ -236,7 +236,7 @@ function ProductSearchModal({ isOpen, onClose, onSelect, productos, productosExc
         {/* Footer */}
         <div className="p-3 sm:p-4 border-t bg-gray-50 rounded-b-2xl">
           <p className="text-xs sm:text-sm text-gray-600 text-center">
-            💡 Puedes modificar el precio antes de agregar el producto
+            Puedes modificar el precio antes de agregar el producto
           </p>
         </div>
       </div>

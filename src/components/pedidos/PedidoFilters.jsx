@@ -2,12 +2,11 @@
 export default function PedidoFilters({ 
   searchTerm, setSearchTerm, 
   filterEstado, setFilterEstado,
-  filterCliente, setFilterCliente,
   filterCategoria, setFilterCategoria,
   filterCaja, setFilterCaja,
   filterFechaInicio, setFilterFechaInicio,
   filterFechaFin, setFilterFechaFin,
-  clientes, categorias, cajas, activeTab 
+  categorias, cajas, activeTab 
 }) {
   return (
     <div className="bg-white rounded-lg sm:rounded-xl shadow-md sm:shadow-lg p-2 sm:p-3 lg:p-6 mb-3 sm:mb-4 lg:mb-6">
@@ -22,7 +21,7 @@ export default function PedidoFilters({
             </div>
             <input
               type="text"
-              placeholder="Buscar por ID, cliente..."
+              placeholder="Buscar por ID, observaciones..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="block w-full pl-7 sm:pl-9 lg:pl-10 pr-2 sm:pr-3 py-1.5 sm:py-2 lg:py-2.5 text-[10px] sm:text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 focus:border-transparent"
@@ -30,24 +29,8 @@ export default function PedidoFilters({
           </div>
         </div>
 
-        {/* Grid de filtros - 2 columnas en móvil */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 lg:gap-3">
-          {/* Filtro Cliente */}
-          <div>
-            <select
-              value={filterCliente}
-              onChange={(e) => setFilterCliente(e.target.value)}
-              className="w-full px-1.5 sm:px-2 lg:px-3 py-1.5 sm:py-2 lg:py-2.5 text-[10px] sm:text-xs lg:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan1-600 truncate"
-            >
-              <option value="todos">Todos clientes</option>
-              {clientes.map(cliente => (
-                <option key={cliente.id_cliente} value={cliente.id_cliente}>
-                  {cliente.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-
+        {/* Grid de filtros */}
+        <div className={`grid gap-1.5 sm:gap-2 lg:gap-3 ${activeTab === 'vendidos' ? 'grid-cols-3' : 'grid-cols-2'}`}>
           {/* Filtro Estado (solo en vendidos) */}
           {activeTab === 'vendidos' && (
             <div>
@@ -123,13 +106,12 @@ export default function PedidoFilters({
         </div>
 
         {/* Botón limpiar filtros */}
-        {(searchTerm || filterCliente !== 'todos' || filterEstado !== 'todos' || 
+        {(searchTerm || filterEstado !== 'todos' || 
           filterCategoria !== 'todas' || filterCaja !== 'todas' || 
           filterFechaInicio || filterFechaFin) && (
           <button
             onClick={() => {
               setSearchTerm('')
-              setFilterCliente('todos')
               setFilterEstado('todos')
               setFilterCategoria('todas')
               setFilterCaja('todas')
